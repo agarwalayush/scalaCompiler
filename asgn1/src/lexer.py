@@ -8,12 +8,16 @@ primitives = {'Byte','Short','Int','Long','Float','Double','Char','String','Bool
 
 # List of token names.   This is always required
 tokens = (
-    'NUMBER',
+    'INT',
+    'LONG',
+    'FLOAT',
+    'CHAR',
     'STRING',
-    'PLUS',
-    'MINUS',
-    'TIMES',
-    'DIVIDE',
+    'ARITH_OP',
+    'REL_OP',
+    'BIT_OP',
+    'LOGIC_OP',
+    'UNARY_OP',
     'LPAREN',
     'RPAREN',
     'BLOCK_BEGIN',
@@ -27,21 +31,38 @@ tokens = (
 )
 
 # Regular expression rules for simple tokens
-t_PLUS    = r'\+'
-t_MINUS   = r'-'
-t_TIMES   = r'\*'
-t_DIVIDE  = r'/'
+
+t_ARITH_OP = r'(\+|-|\*|/|%)'
+t_REL_OP = r'(<|>|<=|>=|!=|==)'
+t_LOGIC_OP = r'(&&|\|\|)'
+t_BIT_OP = r'(&|\||\^|~|<<|>>)'
+t_UNARY_OP = r'(-|!)'
 t_LPAREN  = r'\('
 t_RPAREN  = r'\)'
 t_BLOCK_BEGIN  = r'\{'
 t_SQUARE_BEGIN  = r'\['
 t_BLOCK_END  = r'\}'
 t_SQUARE_END  = r'\]'
-t_SYMBOL  = r'(_|:|=|=>|<-|<:|<%|>:|\#|@)'
+t_SYMBOL  = r'(_|:|=|=>|<-|<:|<%|>:|\#|@|,|.)'
 
-def t_NUMBER(t):
+def t_INT(t):
     r'\d+'
     t.value = int(t.value)
+    return t
+
+def t_LONG(t):
+    r'\d+(L|l)'
+    t.value = int(t.value)
+    return t
+
+def t_FLOAT(t):
+    r'^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$'
+    t.value = float(t.value)
+    return t
+
+def t_CHAR(t):
+    r'\'.\''
+    t.value = t[1:-1]
     return t
 
 def t_STRING(t):
@@ -59,6 +80,10 @@ def t_newline(t):
     t.lexer.lineno += len(t.value)
 
 t_ignore  = ' \t'
+
+def t_ccode_comment(t):
+    r'(/\*(.|\n)*?\*/)|(//.*)'
+    pass
 
 def t_error(t):
     print("Illegal character '%s'" % t.value[0])
