@@ -1,6 +1,3 @@
-USER=nishant
-# Your CSE username
-
 all : binary
 
 binary :
