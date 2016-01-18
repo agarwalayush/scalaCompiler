@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import ply.lex as lex
 import sys
-
+from collections import defaultdict
 reserved = {'abstract', 'case', 'catch', 'class', 'def', 'do', 'else', 'extends', 'false', 'final', 'finally', 'for', 'forSome', 'if', 'implicit', 'import', 'lazy', 'match', 'new', 'null', 'object', 'override', 'package', 'private', 'protected', 'return', 'sealed', 'super', 'this', 'throw', 'trait', 'try', 'true', 'type', 'val', 'var', 'while', 'with', 'yield' }
 
 primitives = {'Byte','Short','Int','Long','Float','Double','Char','String','Boolean','Unit','Null','Nothing','Any','AnyRef'}
@@ -27,7 +27,8 @@ tokens = (
     'IDENTIFIER',
     'PRIMITIVE',
     'RESERVED',
-    'SYMBOL'
+    'SYMBOL',
+    'PERIOD'
 )
 
 # Regular expression rules for simple tokens
@@ -43,20 +44,21 @@ t_BLOCK_BEGIN  = r'\{'
 t_SQUARE_BEGIN  = r'\['
 t_BLOCK_END  = r'\}'
 t_SQUARE_END  = r'\]'
-t_SYMBOL  = r'(_|:|=|=>|<-|<:|<%|>:|\#|@|,|.)'
+t_SYMBOL  = r'(_|:|=|=>|<-|<:|<%|>:|\#|@|,)'
+t_PERIOD = r'\.'
 
 def t_INT(t):
-    r'\d+'
+    r'[-+]?\d+'
     t.value = int(t.value)
     return t
 
 def t_LONG(t):
-    r'\d+(L|l)'
+    r'[-+]?\d+(L|l)'
     t.value = int(t.value)
     return t
 
 def t_FLOAT(t):
-    r'^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$'
+    r'((\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)e(\+|-)?(\d+))([lL]|[fF])?'
     t.value = float(t.value)
     return t
 
@@ -91,10 +93,27 @@ def t_error(t):
 
 lexer = lex.lex()
 
-if __name__ == "__main__" :
-    lex.runmain()
-    while True:
-        tok = lexer.token()
-        if not tok:
-            break
-        print(tok)
+#if __name__ == "__main__" :
+#    lex.runmain()
+
+filep = open(sys.argv[1])
+data = filep.read()
+lexer.input(data)
+
+tk = defaultdict(list)
+num_tk = {}
+while True:
+    tok = lexer.token()
+    if not tok:
+        break
+    if(tok.type not in tk):
+        num_tk[tok.type] = 0
+    if(tok.value not in tk[tok.type]):
+        tk[tok.type].append(tok.value)
+    num_tk[tok.type] += 1
+print ("Token", "Occurences", "Lexemes")
+for x in tk.keys():
+    #print (x)
+    print (x, num_tk[x], tk[x])
+    
+
