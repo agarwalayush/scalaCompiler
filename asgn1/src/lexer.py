@@ -33,6 +33,11 @@ tokens = (
 
 # Regular expression rules for simple tokens
 
+def t_FLOAT(t):
+    r'^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$'
+    t.value = float(t.value)
+    return t
+
 t_ARITH_OP = r'(\+|-|\*|/|%)'
 t_REL_OP = r'(<|>|<=|>=|!=|==)'
 t_LOGIC_OP = r'(&&|\|\|)'
@@ -44,8 +49,8 @@ t_BLOCK_BEGIN  = r'\{'
 t_SQUARE_BEGIN  = r'\['
 t_BLOCK_END  = r'\}'
 t_SQUARE_END  = r'\]'
-t_SYMBOL  = r'(_|:|=|=>|<-|<:|<%|>:|\#|@|,)'
-t_PERIOD = r'\.'
+t_SYMBOL  = r'(_|:|=|=>|<-|<:|<%|>:|\#|@|,|\.)'
+
 
 def t_INT(t):
     r'[-+]?\d+'
@@ -55,11 +60,6 @@ def t_INT(t):
 def t_LONG(t):
     r'[-+]?\d+(L|l)'
     t.value = int(t.value)
-    return t
-
-def t_FLOAT(t):
-    r'((\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)e(\+|-)?(\d+))([lL]|[fF])?'
-    t.value = float(t.value)
     return t
 
 def t_CHAR(t):
@@ -93,27 +93,21 @@ def t_error(t):
 
 lexer = lex.lex()
 
-#if __name__ == "__main__" :
-#    lex.runmain()
-
-filep = open(sys.argv[1])
-data = filep.read()
-lexer.input(data)
-
-tk = defaultdict(list)
-num_tk = {}
-while True:
-    tok = lexer.token()
-    if not tok:
-        break
-    if(tok.type not in tk):
-        num_tk[tok.type] = 0
-    if(tok.value not in tk[tok.type]):
-        tk[tok.type].append(tok.value)
-    num_tk[tok.type] += 1
-print ("Token", "Occurences", "Lexemes")
-for x in tk.keys():
-    #print (x)
-    print (x, num_tk[x], tk[x])
-    
-
+if __name__ == "__main__" :
+    filep = open(sys.argv[1])
+    data = filep.read()
+    lexer.input(data)
+    tk = defaultdict(list)
+    num_tk = {}
+    while True:
+        tok = lexer.token()
+        if not tok:
+            break
+        if(tok.type not in tk):
+            num_tk[tok.type] = 0
+        if(tok.value not in tk[tok.type]):
+            tk[tok.type].append(tok.value)
+        num_tk[tok.type] += 1
+    print ("Token         ", "Occurences", "      Lexemes    ")
+    for x in tk.keys():
+        print ('{:16s} {:3d}            {}'.format(x, num_tk[x], tk[x]))
