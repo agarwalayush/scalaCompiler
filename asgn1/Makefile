@@ -5,3 +5,5 @@ binary :
 	cp src/lexer.py bin/lexer
 	chmod +x bin/lexer
 
+clean :
+		rm -r bin
