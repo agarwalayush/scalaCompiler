@@ -7,7 +7,8 @@
     private val g = gcd(n.abs, d.abs)
     val numer = n / g
     val denom = d / g
-    val floater = 13.2
+    val floater = 13
+    
     def this(n: Int) = this(n, 1)
 
     def add(that: Rational): Rational =

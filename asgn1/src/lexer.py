@@ -34,7 +34,7 @@ tokens = (
 # Regular expression rules for simple tokens
 
 def t_FLOAT(t):
-    r'^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$'
+    r'((\d+)(\.\d+)([eE](\+|-)?(\d+))? | (\d+)[eE](\+|-)?(\d+))([lL]|[fF])?'
     t.value = float(t.value)
     return t
 
