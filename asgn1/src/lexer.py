@@ -4,7 +4,8 @@ import sys
 from collections import defaultdict
 reserved = {'abstract', 'case', 'catch', 'class', 'def', 'do', 'else', 'extends', 'false', 'final', 'finally', 'for', 'forSome', 'if', 'implicit', 'import', 'lazy', 'match', 'new', 'null', 'object', 'override', 'package', 'private', 'protected', 'return', 'sealed', 'super', 'this', 'throw', 'trait', 'try', 'true', 'type', 'val', 'var', 'while', 'with', 'yield' }
 
-primitives = {'Byte','Short','Int','Long','Float','Double','Char','String','Boolean','Unit','Null','Nothing','Any','AnyRef'}
+primitives = {'Byte','Short','Int','Long','Float','Double','Char','String','Boolean','Unit','Null','Nothing','Any','AnyRef',
+        'List', 'Option', 'Iterator', 'Some', 'None', 'Array'}
 
 # List of token names.   This is always required
 tokens = (
