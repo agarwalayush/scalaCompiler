@@ -31,8 +31,6 @@ tokens = (
     'PERIOD'
 )
 
-# Regular expression rules for simple tokens
-
 def t_FLOAT(t):
     r'((\d+)(\.\d+)([eE](\+|-)?(\d+))? | (\d+)[eE](\+|-)?(\d+))([lL]|[fF])?'
     t.value = float(t.value)
@@ -40,8 +38,8 @@ def t_FLOAT(t):
 
 t_ARITH_OP = r'(\+|-|\*|/|%)'
 t_REL_OP = r'(<|>|<=|>=|!=|==)'
-t_LOGIC_OP = r'(&&|\|\|)'
-t_BIT_OP = r'(&|\||\^|~|<<|>>)'
+t_LOGIC_OP = r'&&|\|\|'
+t_BIT_OP = r'\b(&|\||\^|~|<<|>>)\b'
 t_UNARY_OP = r'(-|!)'
 t_LPAREN  = r'\('
 t_RPAREN  = r'\)'
