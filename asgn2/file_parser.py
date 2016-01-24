@@ -15,7 +15,7 @@ def parse_file(file_name) :
     with open(file_name,"r") as file :
         for line in file.readlines():
             list_i = line.split(',')
-            list_i[4] = (list_i[4])
+            list_i[4] = list_i[4].replace('\n', '')
             for i in range(2,4) :
                 if check_variable(list_i[i]) :
                     vset.add(list_i[i])
@@ -26,5 +26,30 @@ class instruction3ac :
     def __init__(self,type, in1, in2, out) :
         self.type, self.in1, self.in2, self.out = type, in1, in2, out
 
+
+def addStimulator(obj):
+    return "mov eax, [{}]\nadd eax, [{}]\nmov [{}], eax\n".format(obj.in1, obj.in2, obj.out)
+
+def subStimulator(obj):
+    return "mov eax, [{}]\nsub eax, [{}]\nmov [{}], eax\n".format(obj.in1, obj.in2, obj.out)
+
+def multStimulator(obj):
+    return "mov eax, [{}]\nimul eax, [{}]\nmov [{}], eax\n".format(obj.in1, obj.in2, obj.out)
+
+def divStimulator(obj):
+    return "mov eax, [{}]\n mov edx, 0\nmov ebx, [{}] \nidiv ebx \nmov [{}], eax\n".format(obj.in1, obj.in2, obj.out)
+
+
+
+def assemblyGenerator(ins_list):
+    assembly = ''
+    functionMap = {'+': addStimulator, '-': subStimulator, '*': multStimulator, '/': divStimulator}
+    for i in ins_list:
+            assembly+= functionMap[i.type](i)
+    print(assembly)
+
 if __name__ == "__main__" :
-    parse_file('instr.il')
+    (ins_list, var_list) = parse_file('instr.il')
+    assemblyGenerator(ins_list)
+
+
