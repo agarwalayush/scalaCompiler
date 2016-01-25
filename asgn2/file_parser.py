@@ -14,9 +14,11 @@ def parse_file(file_name) :
     vset = set()
     with open(file_name,"r") as file :
         for line in file.readlines():
-            list_i = line.split(',')
-            list_i[4] = list_i[4].replace('\n', '')
-            for i in range(2,4) :
+            list_temp = line.split(',')
+            list_i = [None]*5
+            list_i[:len(list_temp)] = list_temp
+            list_i[len(list_temp)-1] = list_i[len(list_temp)-1].replace('\n', '')
+            for i in range(2,len(list_temp)) :
                 if check_variable(list_i[i]) :
                     vset.add(list_i[i])
             ret_val.append(instruction3ac(list_i[1],list_i[3],list_i[4],list_i[2]))
@@ -28,25 +30,23 @@ class instruction3ac :
 
 
 def addStimulator(obj):
-    return "mov eax, [{}]\nadd eax, [{}]\nmov [{}], eax\n".format(obj.in1, obj.in2, obj.out)
+    return ["mov eax, "+ obj.in1,"add eax, "+ obj.in2,"mov [{}], eax".format(obj.out)]
 
 def subStimulator(obj):
-    return "mov eax, [{}]\nsub eax, [{}]\nmov [{}], eax\n".format(obj.in1, obj.in2, obj.out)
+    return ["mov eax, "+ obj.in1,"sub eax, "+ obj.in2,"mov [{}], eax".format(obj.out)]
 
 def multStimulator(obj):
-    return "mov eax, [{}]\nimul eax, [{}]\nmov [{}], eax\n".format(obj.in1, obj.in2, obj.out)
+    return ["mov eax, "+ obj.in1,"imul eax, "+obj.in2,"mov [{}], eax".format(obj.out)]
 
 def divStimulator(obj):
-    return "mov eax, [{}]\n mov edx, 0\nmov ebx, [{}] \nidiv ebx \nmov [{}], eax\n".format(obj.in1, obj.in2, obj.out)
-
-
+    return ["mov eax, "+ obj.in1, "mov edx, 0", "mov ebx, "+ obj.in2 ,"idiv ebx","mov [{}], eax\n".format(obj.out)]
 
 def assemblyGenerator(ins_list):
-    assembly = ''
+    assembly = []
     functionMap = {'+': addStimulator, '-': subStimulator, '*': multStimulator, '/': divStimulator}
     for i in ins_list:
             assembly+= functionMap[i.type](i)
-    print(assembly)
+    print('\n'.join(assembly))
 
 if __name__ == "__main__" :
     (ins_list, var_list) = parse_file('instr.il')
