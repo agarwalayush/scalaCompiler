@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys
-
+import classes
 def check_variable(var_bar) :
     try :
         int(var_bar)
