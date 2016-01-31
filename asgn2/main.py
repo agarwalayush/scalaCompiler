@@ -1,7 +1,9 @@
-import classes
-import il_parser
-import itertools
+#/usr/bin/env python
+import data
+from il_parser import *
 import register_allocator
+import assembly_generator
+import sys
 
 '''def addStimulator(obj):
     return ["mov eax, "+ obj.in1,"add eax, "+ obj.in2,"mov [{}], eax".format(obj.out)]
@@ -26,11 +28,5 @@ def assemblyGenerator(operator, ):
     print('\n'.join(assembly))
 
 if __name__ == "__main__" :
-    parse_file('instr.il')
-    start  = 0
-    while(condition): #reached end of raw
-        (in1, in2) = fillblock(start)
-        #update start and condition
-        initblock()
-        generate()
-
+    parse_il(sys.argv[1])
+    assembly_generator.assembly_generator()
