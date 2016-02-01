@@ -69,7 +69,6 @@ def getz(var):
 #flag: 1 if there is a constraint on atmost 1 on zprime and L to be a memory location, else 0
 
 def getreg(x, y, ino, flag = 0, special = None):
-    print(x,y,flag)
     if special != None :
         data.L = special
         data.debug = 0

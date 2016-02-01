@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys
-import data 
+import data
 
 def check_variable(var_bar) :
     try :
@@ -13,9 +13,8 @@ def check_variable(var_bar) :
 def check_branching(type) :
     return type in ['jump', 'call', 'goto']
 
-def parse_il(file_name) :
-    with open(file_name,"r") as file :
-        for line in file.readlines():
+def parse_il(file_object) :
+        for line in file_object.readlines():
             list_temp = line.split(',')
             list_i = [None]*5
             list_i[:len(list_temp)] = list_temp

@@ -53,3 +53,14 @@ def print_symbol_table() :
     print(fmt.format(*adesc),'|')
     print('-'*(sum(lens)+len(lens)*2)+'|')
     print('  |\n'.join(table),' |')
+
+debug_flag = 0
+
+def debug(*arg,**kwarg) :
+    if debug_flag :
+         print('\033[91m',)
+         for a in arg :
+             print(a,end=', ')
+         for k,v in kwarg.items() :
+             print(k,'=',v,end=', ')
+         print('\033[0m')

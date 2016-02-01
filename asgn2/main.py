@@ -3,30 +3,21 @@ import data
 import il_parser
 import register_allocator
 import assembly_generator
-import sys
 
-'''def addStimulator(obj):
-    return ["mov eax, "+ obj.in1,"add eax, "+ obj.in2,"mov [{}], eax".format(obj.out)]
-
-def subStimulator(obj):
-    return ["mov eax, "+ obj.in1,"sub eax, "+ obj.in2,"mov [{}], eax".format(obj.out)]
-
-def multStimulator(obj):
-    return ["mov eax, "+ obj.in1,"imul eax, "+obj.in2,"mov [{}], eax".format(obj.out)]
-
-def divStimulator(obj):
-    return ["mov eax, "+ obj.in1, "mov edx, 0", "mov ebx, "+ obj.in2 ,"idiv ebx","mov [{}], eax\n".format(obj.out)]
-'''
-
-def assemblyGenerator(operator, ):
-    assembly = []
-    functionMap = {'+': addStimulator, '-': subStimulator, '*': multStimulator, '/': divStimulator}
-    for i in ins_list:
-        (x, y, z, inno) = (i.out, i.in1, i.in2, i.no)
-        (reg1, reg2, reg3) = allocator(x, y, z, inno, v_set, r_set)
-        assembly+= functionMap[i.type](i)
-    print('\n'.join(assembly))
+from data import debug
 
 if __name__ == "__main__" :
-    il_parser.parse_il(sys.argv[1])
+
+    import argparse
+    parser = argparse.ArgumentParser(description='Generate Assembly Code from 3-instruction code')
+    parser.add_argument('file', metavar='file_name', type=argparse.FileType('r'), 
+                        help='file containing 3-instruction code.')
+    parser.add_argument('-d','--debug', dest='debug', action='store_const',
+                        const=1, default=0,
+                        help='Turn on Debugging.')
+    args = parser.parse_args()
+    from sys import stderr
+    data.debug_flag = args.debug
+    debug("Debugging Mode On",b=args.debug)
+    il_parser.parse_il(args.file)
     assembly_generator.assembly_generator()
