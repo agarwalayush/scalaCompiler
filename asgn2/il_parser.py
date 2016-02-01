@@ -10,6 +10,9 @@ def check_variable(var_bar) :
     except:
         return True
 
+def check_branching(type) :
+    return type in ['jump', 'call', 'goto']
+
 def parse_il(file_name) :
     with open(file_name,"r") as file :
         for line in file.readlines():
@@ -17,8 +20,10 @@ def parse_il(file_name) :
             list_i = [None]*5
             list_i[:len(list_temp)] = list_temp
             list_i[len(list_temp)-1] = list_i[len(list_temp)-1].replace('\n', '')
-            for i in range(2,len(list_temp)) :
-                if check_variable(list_i[i]) :
-                    data.vset.add(list_i[i])
+            if not check_branching(list_i[1]):
+                for i in range(2,len(list_temp)) :
+                    if check_variable(list_i[i]) :
+                        data.vset.add(list_i[i])
+
             data.raw.append(data.instruction3ac(int(list_i[0]),list_i[1],list_i[3],list_i[4],list_i[2]))
 
