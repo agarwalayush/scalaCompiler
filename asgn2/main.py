@@ -1,6 +1,6 @@
 #/usr/bin/env python
 import data
-from il_parser import *
+import il_parser
 import register_allocator
 import assembly_generator
 import sys
@@ -28,5 +28,5 @@ def assemblyGenerator(operator, ):
     print('\n'.join(assembly))
 
 if __name__ == "__main__" :
-    parse_il(sys.argv[1])
+    il_parser.parse_il(sys.argv[1])
     assembly_generator.assembly_generator()

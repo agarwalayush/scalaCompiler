@@ -1,5 +1,3 @@
-
-INF = 10000000000
 #class for the parsed instructions, add type, target for extra fuinctionality
 class instruction3ac :
     def __init__(self, no, type, in1, in2, out) :
@@ -21,7 +19,7 @@ block = []
 vset = set()
 
 #rset is a list of all the general purpose registers
-rset = ['eax', 'ebx', 'ecx', 'edx', 'esi', 'edi']
+rset = ['eax', 'ebx', 'ecx', 'edx']
 
 #symtable[] is a list st symtable[instruction_no.]<var : nextuse>. nextuse = INF means that the variable is dead
 symtable = []

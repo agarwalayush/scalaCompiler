@@ -1,6 +1,5 @@
 import data
 import math
-
 def initblock():
     #builds the symtable[] once block[] and numins are filled and initializes other data structures
     data.rdesc.clear()
@@ -37,11 +36,11 @@ def initblock():
         i = i - 1
 
 #This function transforms a memory location to include the sqaure brackets
-def transform(str):
-    if str in data.rset :
-        return str
+def transform(st):
+    if st in data.rset :
+        return st
     else:
-        return "[" + str + "]"
+        return "[" + str(st) + "]"
 
 #This function initializes some global variables
 
@@ -54,8 +53,8 @@ def ini():
 
 # This function pushes the variable stored at "reg" into memory and frees it 
 def push(register):
-    data.out.add("mov [{}], {}".format(data.rdesc[register], register))
-    data.adesc[rdesc[register]] = None
+    data.out.append("mov [{}], {}".format(data.rdesc[register], register))
+    data.adesc[data.rdesc[register]] = None
     data.rdesc[register] = None
 
 #This function takes a variable var and assigns zprime
@@ -70,50 +69,64 @@ def getz(var):
 #flag: 1 if there is a constraint on atmost 1 on zprime and L to be a memory location, else 0
 
 def getreg(x, y, ino, flag = 0, special = None):
+    print(x,y,flag)
     if special != None :
-        L = special
-    elif adesc[y] != None and symtable[ino][y] == INF:
-        L = adesc[y]
-    elif adesc[x] != None:
-        L = adesc[x]
-    if L == None:
-        for k in rset.keys():
-            if rdesc[k] == None:
-                L = k
-    if L == None :
-        if(symtable[ino][x] != INF or (flag == 1 and zprime not in rset)):
+        data.L = special
+        data.debug = 0
+    elif data.adesc[y] != None and data.symtable[ino][y] == math.inf:
+        data.L = data.adesc[y]
+        data.debug = 1
+    elif data.adesc[x] != None:
+        data.L = data.adesc[x]
+        data.debug = 2
+    if data.L == None:
+        for k in data.rset:
+            if data.rdesc[k] == None:
+#                print("fuck " + str(ino))
+                data.L = k
+                data.debug = 3
+    if data.L == None :
+        if(data.symtable[ino][x] != math.inf or (flag == 1 and data.zprime not in data.rset)):
            nxtuse = -1
-           for k in rset.keys():
-               if nxtuse < symtable[ino][rdesc[k]]:
-                   L = rdesc[k]
-                   nxtuse = symtable[ino][rdesc[k]]
+           for k in data.rset:
+               if k == data.zprime :
+                   continue
+               if nxtuse < data.symtable[ino][data.rdesc[k]]:
+                   data.L = k
+                   data.debug = 4
+                   nxtuse = data.symtable[ino][data.rdesc[k]]
         else:
-            L = x
-    if L in rset and rdesc[L] != None:
-        push(L)
+            data.L = x
+            data.debug = 5
+    if data.L in data.rset and data.rdesc[data.L] != None:
+        push(data.L)
 
 #This function gives Y' and moves Y' to L if value of Y in not already in L
 def gety(var):
-    if rdesc[var] != None:
-        yprime = rdesc[var]
+    if data.adesc[var] != None:
+        data.yprime = data.adesc[var]
     else:
-        yprime = var
-    if yprime != L :
-        out.add("mov " + transform(L) + ", " + transform(yprime))
+        data.yprime = var
+    if data.yprime != data.L :
+        data.out.append("mov " + transform(data.L) + ", " + transform(data.yprime))
 
 #This function frees a register if the variable it stores becomes dead
 #TODO: handle the global variable
 def freereg(var, ino):
-    if symtable[ino][var] == INF and adesc[var] != None:
-        rdesc[adesc[var]] = None
-        adesc[var] = None
+    if data.symtable[ino][var] == math.inf and data.adesc[var] != None:
+        data.rdesc[data.adesc[var]] = None
+        data.adesc[var] = None
 
 #This function updates the address descriptor corresdonding to the out variable
-def update(var):
-    if L in rset:
-        adesc[var] = L
+def update(x):
+    if data.L in data.rset:
+        data.adesc[x] = data.L
+        data.rdesc[data.L] = x
     else:
-        adesc[var] = None
-    for k in rset:
-        if L != k and rdesc[k] == x:
-            rdesc[k] = None
+        data.adesc[x] = None
+    for v in data.vset :
+        if data.adesc[v] == data.L and v != x:
+            data.adesc[v] = None
+    for k in data.rset:
+        if data.L != k and data.rdesc[k] == x:
+            data.rdesc[k] = None
