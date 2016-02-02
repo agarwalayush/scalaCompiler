@@ -60,7 +60,7 @@ def ini():
 # This function pushes the variable stored at "reg" into memory and frees it 
 def push(register):
     if data.rdesc[register] != None :
-        data.out.append("mov %{}, {}".format(register, data.rdesc[register]))
+        data.out.append("movl %{}, {}".format(register, data.rdesc[register]))
         data.adesc[data.rdesc[register]] = None
         data.rdesc[register] = None
 
@@ -109,7 +109,7 @@ def gety(var):
         else:
             data.yprime = var
     if data.yprime != data.L :
-        data.out.append("mov " + transform(data.yprime) + ", " + transform(data.L))
+        data.out.append("movl " + transform(data.yprime) + ", " + transform(data.L))
 
 
                 #This function frees a register if the variable it stores becomes dead
@@ -133,3 +133,9 @@ def update(x):
     for k in data.rset:
         if data.L != k and data.rdesc[k] == x:
             data.rdesc[k] = None
+
+#This function save's all the registers to memory at the end of a basic block
+def save_to_memory() :
+    for k in data.rset :
+        push(k)
+    
