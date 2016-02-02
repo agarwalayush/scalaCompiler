@@ -137,7 +137,7 @@ def DIV(i) :
     try :
         int(z)
         reg = register_allocator.empty_reg(['edx', 'eax'], i)
-        data.out.append("movl $" + z + ", " + reg)
+        data.out.append('mov $' + z + ", %" + reg)
         data.zprime = reg
     except :
         if data.adesc[z] == 'eax':
@@ -164,6 +164,7 @@ def MOD(i):
         int(z)
         data.zprime = z
         reg = register_allocator.empty_reg(['eax', 'edx'], i)
+        data.out.append('mov $' + z + ", %" + reg)
         data.zprime = reg
 
     except :
