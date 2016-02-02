@@ -1,6 +1,6 @@
 import register_allocator
 import data
-
+from data import debug
 
 def boilerplate() :
     '''Generates Variable space and other directives. '''
@@ -12,6 +12,7 @@ def assembly_generator() :
     def block_assembly_generator() :
         '''Generates assembly code for current block. '''
         data.numins = len(data.block)
+        
         register_allocator.initblock()
         for i in range(0, len(data.block)):
             register_allocator.ini()
@@ -40,28 +41,101 @@ def assembly_generator() :
         data.block = data.raw[breakpoints[i]:breakpoints[i+1]]
         block_assembly_generator()
 
+###  OP_CODE SRC, DEST
+
 def ADD(i) :
     (x, y, z) = (data.block[i].out, data.block[i].in1, data.block[i].in2)
-    register_allocator.getz(z)
-    register_allocator.getreg(x, y, i, 1)
+    try :
+        int(z)
+        data.zprime = z
+    except :
+        register_allocator.getz(z)
+        pass
+    register_allocator.getreg(x, y, i)
+    try :
+        int(y)
+        data.yprime = y
+    except :
+        pass
     register_allocator.gety(y)
-    data.out.append("addl " + register_allocator.transform(data.L) + ", " + register_allocator.transform(data.zprime))
+    data.out.append("addl " + register_allocator.transform(data.zprime) + ", " + register_allocator.transform(data.L))
     register_allocator.update(x)
     register_allocator.freereg(y, i)
     register_allocator.freereg(z, i)
 
 def SUB(i) :
     (x, y, z) = (data.block[i].out, data.block[i].in1, data.block[i].in2)
-    register_allocator.getz(z)
-    register_allocator.getreg(x, y, i, 1)
+    try :
+        int(z)
+        data.zprime = z
+    except :
+        register_allocator.getz(z)
+        pass
+    register_allocator.getreg(x, y, i)
+    try :
+        int(y)
+        data.yprime = y
+    except :
+        pass
     register_allocator.gety(y)
-    data.out.append("subl " + register_allocator.transform(data.L) + ", " + register_allocator.transform(data.zprime))
+    data.out.append("subl " + register_allocator.transform(data.zprime) + ", " + register_allocator.transform(data.L))
     register_allocator.update(x)
     register_allocator.freereg(y, i)
     register_allocator.freereg(z, i)
 
+def MUL(i) :
+    (x, y, z) = (data.block[i].out, data.block[i].in1, data.block[i].in2)
+    try :
+        int(z)
+        data.zprime = z
+    except :
+        register_allocator.getz(z)
+        pass
+    register_allocator.getreg(x, y, i)
+    try :
+        int(y)
+        data.yprime = y
+    except :
+        pass
+    register_allocator.gety(y)
+    data.out.append("imul " + register_allocator.transform(data.zprime) + ", " + register_allocator.transform(data.L))
+    register_allocator.update(x)
+    register_allocator.freereg(y, i)
+    register_allocator.freereg(z, i)
 
+def ASSIGN(i) :
+    (x, y) = (data.block[i].out, data.block[i].in1)
+    register_allocator.getreg(x, y, i)
+    try :
+        int(y)
+        data.yprime = y
+    except :
+        pass
+    register_allocator.gety(y)
+    register_allocator.update(x)
+    register_allocator.freereg(y, i)
 
-OP_MAP = {'+': ADD, '-': SUB}
+def DIV(i) :
+    (x, y, z) = (data.block[i].out, data.block[i].in1, data.block[i].in2)
+    register_allocator.push('edx')
+    try :
+        int(z)
+        data.zprime = z
+    except :
+        if data.adesc[z] == 'eax':
+            register_allocator.push(z)
+        register_allocator.getz(z)
+        pass
+    register_allocator.getreg(x, y, i, 'eax')
+    try :
+        int(y)
+        data.yprime = y
+    except :
+        pass
+    register_allocator.gety(y)
+    data.out.append("idiv " + register_allocator.transform(data.zprime))
+    register_allocator.update(x)
+    register_allocator.freereg(y, i)
+    register_allocator.freereg(z, i)
 
-
+OP_MAP = {'+': ADD, '-': SUB, '*': MUL, '=' : ASSIGN,'/' : DIV}

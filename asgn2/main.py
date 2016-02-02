@@ -18,6 +18,6 @@ if __name__ == "__main__" :
     args = parser.parse_args()
     from sys import stderr
     data.debug_flag = args.debug
-    debug("Debugging Mode On",b=args.debug)
+    debug("Debugging Mode On")
     il_parser.parse_il(args.file)
     assembly_generator.assembly_generator()

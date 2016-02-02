@@ -1,5 +1,7 @@
 import data
 import math
+from data import debug
+
 def initblock():
     #builds the symtable[] once block[] and numins are filled and initializes other data structures
     data.rdesc.clear()
@@ -37,10 +39,14 @@ def initblock():
 
 #This function transforms a memory location to include the sqaure brackets
 def transform(st):
-    if st in data.rset :
-        return st
-    else:
-        return "[" + str(st) + "]"
+    try :
+        int(st)
+        return '$'+str(st)
+    except :
+        if st in data.rset :
+            return '%'+st
+        else:
+            return str(st)
 
 #This function initializes some global variables
 
@@ -53,68 +59,66 @@ def ini():
 
 # This function pushes the variable stored at "reg" into memory and frees it 
 def push(register):
-    data.out.append("mov [{}], {}".format(data.rdesc[register], register))
-    data.adesc[data.rdesc[register]] = None
-    data.rdesc[register] = None
+    if data.rdesc[register] != None :
+        data.out.append("mov %{}, {}".format(register, data.rdesc[register]))
+        data.adesc[data.rdesc[register]] = None
+        data.rdesc[register] = None
 
 #This function takes a variable var and assigns zprime
 def getz(var):
-    if data.adesc[var] != None:
-        data.zprime = data.adesc[var]
-    else:
-        data.zprime = var
+    if var in data.vset : 
+        if data.adesc[var] != None:
+            data.zprime = data.adesc[var]
+        else:
+            data.zprime = var
 
 #This function takes variables x, y and the current instruction number returns a suitable memory location / register L
 #special: register is given when a particular register is needed, like eax for division
 #flag: 1 if there is a constraint on atmost 1 on zprime and L to be a memory location, else 0
 
-def getreg(x, y, ino, flag = 0, special = None):
+def getreg(x, y, ino,special = None):
     if special != None :
         data.L = special
-        data.debug = 0
-    elif data.adesc[y] != None and data.symtable[ino][y] == math.inf:
+    elif y in data.vset and data.adesc[y] != None and data.symtable[ino][y] == math.inf:
         data.L = data.adesc[y]
-        data.debug = 1
     elif data.adesc[x] != None:
         data.L = data.adesc[x]
-        data.debug = 2
     if data.L == None:
         for k in data.rset:
             if data.rdesc[k] == None:
-#                print("fuck " + str(ino))
                 data.L = k
-                data.debug = 3
     if data.L == None :
-        if(data.symtable[ino][x] != math.inf or (flag == 1 and data.zprime not in data.rset)):
+        if(data.symtable[ino][x] != math.inf or (data.zprime not in data.rset)):
            nxtuse = -1
            for k in data.rset:
                if k == data.zprime :
                    continue
                if nxtuse < data.symtable[ino][data.rdesc[k]]:
                    data.L = k
-                   data.debug = 4
                    nxtuse = data.symtable[ino][data.rdesc[k]]
         else:
             data.L = x
-            data.debug = 5
     if data.L in data.rset and data.rdesc[data.L] != None:
         push(data.L)
 
-#This function gives Y' and moves Y' to L if value of Y in not already in L
+#This function gives Y' and moves Y' to L if value of Y is not already in L
 def gety(var):
-    if data.adesc[var] != None:
-        data.yprime = data.adesc[var]
-    else:
-        data.yprime = var
+    if var in data.vset :
+        if data.adesc[var] != None:
+            data.yprime = data.adesc[var]
+        else:
+            data.yprime = var
     if data.yprime != data.L :
-        data.out.append("mov " + transform(data.L) + ", " + transform(data.yprime))
+        data.out.append("mov " + transform(data.yprime) + ", " + transform(data.L))
 
-#This function frees a register if the variable it stores becomes dead
+
+                #This function frees a register if the variable it stores becomes dead
 #TODO: handle the global variable
 def freereg(var, ino):
-    if data.symtable[ino][var] == math.inf and data.adesc[var] != None:
-        data.rdesc[data.adesc[var]] = None
-        data.adesc[var] = None
+    if var in data.vset :
+        if data.symtable[ino][var] == math.inf and data.adesc[var] != None:
+            data.rdesc[data.adesc[var]] = None
+            data.adesc[var] = None
 
 #This function updates the address descriptor corresdonding to the out variable
 def update(x):
