@@ -136,7 +136,9 @@ def DIV(i) :
     data.out.append("xor %edx, %edx")
     try :
         int(z)
-        data.zprime = z
+        reg = register_allocator.empty_reg(['edx', 'eax'], i)
+        data.out.append("movl $" + z + ", " + reg)
+        data.zprime = reg
     except :
         if data.adesc[z] == 'eax':
             register_allocator.push(z)
@@ -149,7 +151,7 @@ def DIV(i) :
     except :
         pass
     register_allocator.gety(y)
-    data.out.append("idiv " + register_allocator.transform(data.zprime))
+    data.out.append("idivl " + register_allocator.transform(data.zprime))
     register_allocator.update(x)
     register_allocator.freereg(y, i)
     register_allocator.freereg(z, i)
@@ -161,6 +163,9 @@ def MOD(i):
     try :
         int(z)
         data.zprime = z
+        reg = register_allocator.empty_reg(['eax', 'edx'], i)
+        data.zprime = reg
+
     except :
         if data.adesc[z] == 'eax':
             register_allocator.push(z)
@@ -173,7 +178,7 @@ def MOD(i):
     except :
         pass
     register_allocator.gety(y)
-    data.out.append("idiv " + register_allocator.transform(data.zprime))
+    data.out.append("idivl " + register_allocator.transform(data.zprime))
     data.L = 'edx'
     register_allocator.update(x)
     register_allocator.freereg(y, i)

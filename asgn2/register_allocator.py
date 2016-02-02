@@ -72,9 +72,25 @@ def getz(var):
         else:
             data.zprime = var
 
+def empty_reg(exclude, ino) :
+    nxtuse = -1
+    m = None
+    for k in data.rset :
+        if data.rdesc[k] == None and k not in exclude:
+            return k
+    for k in data.rset:
+        if k in exclude:
+            continue
+        if nxtuse < data.symtable[ino][data.rdesc[k]]:
+            m = k
+            nxtuse = data.symtable[ino][data.rdesc[k]]
+    push(m)
+    return m
+        
 #This function takes variables x, y and the current instruction number returns a suitable memory location / register L
 #special: register is given when a particular register is needed, like eax for division
 #flag: 1 if there is a constraint on atmost 1 on zprime and L to be a memory location, else 0
+
 
 def getreg(x, y, ino,special = None):
     if special != None :

@@ -1,3 +1,4 @@
+import sys
 #class for the parsed instructions, add type, target for extra fuinctionality
 class instruction3ac :
     def __init__(self, no, type, in1, in2, out) :
@@ -58,9 +59,9 @@ debug_flag = 0
 
 def debug(*arg,**kwarg) :
     if debug_flag :
-         print('\033[91m',)
+         print('\033[91m',file = sys.stderr)
          for a in arg :
-             print(a,end=', ')
+             print(a,end=', ', file = sys.stderr)
          for k,v in kwarg.items() :
-             print(k,'=',v,end=', ')
-         print('\033[0m')
+             print(k,'=',v,end=', ', file = sys.stderr)
+         print('\033[0m', file = sys.stderr)
