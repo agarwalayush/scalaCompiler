@@ -4,6 +4,13 @@ from data import debug
 
 def boilerplate() :
     '''Generates Variable space and other directives. '''
+    print(".section .data")
+    for v in data.vset:
+        print("{}:".format(v))
+        print("\t.long {}".format(1))
+    print("\n.section .text\n")
+    print('.global _start\n')
+    print('_start:')
     pass
 
 
@@ -26,7 +33,7 @@ def assembly_generator() :
             OP_MAP[data.block[i].type](i)
             register_allocator.save_to_memory()
         for line in data.out :
-            print (line)
+            print ("\t" + line)
 
     boilerplate()
     breakpoints = set()
