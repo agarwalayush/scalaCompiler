@@ -57,7 +57,7 @@ def ini():
 
 
 
-# This function pushes the variable stored at "reg" into memory and frees it 
+# This function pushes the variable stored at "reg" into memory and frees it
 def push(register):
     if data.rdesc[register] != None :
         data.out.append("movl %{}, {}".format(register, data.rdesc[register]))
@@ -66,7 +66,7 @@ def push(register):
 
 #This function takes a variable var and assigns zprime
 def getz(var):
-    if var in data.vset : 
+    if var in data.vset :
         if data.adesc[var] != None:
             data.zprime = data.adesc[var]
         else:
@@ -86,7 +86,7 @@ def empty_reg(exclude, ino) :
             nxtuse = data.symtable[ino][data.rdesc[k]]
     push(m)
     return m
-        
+
 #This function takes variables x, y and the current instruction number returns a suitable memory location / register L
 #special: register is given when a particular register is needed, like eax for division
 #flag: 1 if there is a constraint on atmost 1 on zprime and L to be a memory location, else 0
@@ -154,4 +154,4 @@ def update(x):
 def save_to_memory() :
     for k in data.rset :
         push(k)
-    
+

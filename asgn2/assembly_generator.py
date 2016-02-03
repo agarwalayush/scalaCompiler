@@ -9,9 +9,14 @@ def boilerplate() :
         print("{}:".format(v))
         print("\t.long {}".format(1))
     print("\n.section .text\n")
-    print('.global _start\n')
-    print('_start:')
+    print('.global main\n')
+    print('main:')
     pass
+
+
+def programEnd():
+    print("\tmovl $1, %eax\n\tmovl $0, %ebx\n\tint $0x80")
+    print('\nformat:  .asciz "%d\\n"')
 
 
 def assembly_generator() :
@@ -55,6 +60,8 @@ def assembly_generator() :
         elif data.raw[i].type == 'label' : data.out.append("{}:\n".format(data.raw[i].out))
         data.block = data.raw[breakpoints[i]:breakpoints[i+1]]
         block_assembly_generator()
+    programEnd()
+
 
 ###  OP_CODE SRC, DEST
 
@@ -253,4 +260,16 @@ def CALL(i) :
     data.out.append('call ' + data.block[i].out)
     data.out.append('\n')
 
-OP_MAP = {'+': ADD, '-': SUB, '*': MUL, '=' : ASSIGN,'/' : DIV, '%' : MOD, '^' : XOR, '&' : AND, '|' : OR, 'ret' : RETURN, 'call' : CALL}
+
+def PRINT(i):
+    x = data.block[i].out
+    try :
+        data.adesc[x]
+        data.out.append('pushl %' + data.adesc[x])
+    except:
+        data.out.append('pushl ' + x)
+    data.out.append('pushl $format')
+    register_allocator.save_to_memory()
+    data.out.append('call printf')
+
+OP_MAP = {'+': ADD, '-': SUB, '*': MUL, '=' : ASSIGN,'/' : DIV, '%' : MOD, '^' : XOR, '&' : AND, '|' : OR, 'ret' : RETURN, 'call' : CALL, 'print' : PRINT}
