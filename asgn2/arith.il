@@ -1,11 +1,12 @@
 1,%,t1,a,3
 2,+,t2,a,b
 3,print,t2
-8,print,t1
 4,-,t3,t2,t2
 5,+,t4,21,t3
 6,%,t5,b,b
 7,+,t6,t4,t5
 8,=,t4,6
-9,print,t4
-10,%,t1,7,t1
+9,read,t1
+10,print,t4
+11,%,t1,7,t1
+12,print,t1

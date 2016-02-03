@@ -9,6 +9,8 @@ def boilerplate() :
         print("{}:".format(v))
         print("\t.long {}".format(1))
     print("\n.section .text\n")
+    print('\nprintFormat:  .asciz "%d\\n"')
+    print('\nscanFormat:  .asciz "%d"\n')
     print('.global main\n')
     print('main:')
     pass
@@ -16,7 +18,6 @@ def boilerplate() :
 
 def programEnd():
     print("\tmovl $1, %eax\n\tmovl $0, %ebx\n\tint $0x80")
-    print('\nformat:  .asciz "%d\\n"')
 
 
 def assembly_generator() :
@@ -268,8 +269,18 @@ def PRINT(i):
         data.out.append('pushl %' + data.adesc[x])
     except:
         data.out.append('pushl ' + x)
-    data.out.append('pushl $format')
+    data.out.append('pushl $printFormat')
     register_allocator.save_to_memory()
     data.out.append('call printf')
+    data.out.append('addl $8, %esp')
 
-OP_MAP = {'+': ADD, '-': SUB, '*': MUL, '=' : ASSIGN,'/' : DIV, '%' : MOD, '^' : XOR, '&' : AND, '|' : OR, 'ret' : RETURN, 'call' : CALL, 'print' : PRINT}
+def READ(i):
+    x = data.block[i].out
+    data.out.append('pushl $' + x)
+    data.out.append('pushl $scanFormat')
+    register_allocator.save_to_memory()
+    data.out.append('call scanf')
+    data.out.append('addl $8, %esp')
+
+
+OP_MAP = {'+': ADD, '-': SUB, '*': MUL, '=' : ASSIGN,'/' : DIV, '%' : MOD, '^' : XOR, '&' : AND, '|' : OR, 'ret' : RETURN, 'call' : CALL, 'print' : PRINT, 'read' : READ}
