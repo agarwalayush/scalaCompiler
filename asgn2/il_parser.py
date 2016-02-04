@@ -11,7 +11,10 @@ def check_variable(var_bar) :
         return True
 
 def check_branching(type) :
-    return type in ['jump', 'call', 'goto', 'label', 'goto']
+    return type in ['jump', 'call', 'goto', 'label']
+
+def check_array(type) :
+    return type in ['array', '<-', '->']
 
 def parse_il(file_object) :
         for line in file_object.readlines():
@@ -20,9 +23,11 @@ def parse_il(file_object) :
             list_i = [None]*5
             list_i[:len(list_temp)] = list_temp
             list_i[len(list_temp)-1] = list_i[len(list_temp)-1].replace('\n', '')
-            if not check_branching(list_i[1]):
+            if not check_branching(list_i[1]) and not check_array(list_i[1]):
                 for i in range(2,len(list_temp)) :
                     if check_variable(list_i[i]) :
                         data.vset.add(list_i[i])
+            if list_i[1] == 'array':
+                data.arrayset[list_i[2]] = list_i[3]
             debug(list_i[0])
             data.raw.append(data.instruction3ac(int(list_i[0]),list_i[1],list_i[3],list_i[4],list_i[2]))

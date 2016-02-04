@@ -19,6 +19,7 @@ block = []
 #vset[] is a set of all the variables of the program. To be used in the .data section
 vset = set()
 
+arrayset = {}
 #rset is a list of all the general purpose registers
 rset = ['eax', 'ebx', 'ecx', 'edx']
 

@@ -8,6 +8,9 @@ def boilerplate() :
     for v in data.vset:
         print("{}:".format(v))
         print("\t.long {}".format(1))
+    for v in data.arrayset.keys():
+        print("{}:".format(v))
+        print("\t.zero {}".format(4*int(data.arrayset[v])))
     print("\n.section .text\n")
     print('\nprintFormat:  .asciz "%d\\n"')
     print('\nscanFormat:  .asciz "%d"\n')
@@ -297,4 +300,31 @@ def READ(i):
 def GOTO(i):
     data.out.append('jmp ' + data.block[i].out)
 
-OP_MAP = {'+': ADD, '-': SUB, '*': MUL, '=' : ASSIGN,'/' : DIV, '%' : MOD, '^' : XOR, '&' : AND, '|' : OR, 'ret' : RETURN, 'call' : CALL, 'print' : PRINT, 'read' : READ, 'goto' : GOTO}
+def DEC(i):
+    pass
+
+def LOAD_ARRAY(i):
+    (x, y, z) = (data.block[i].out, data.block[i].in1, data.block[i].in2)
+    k = register_allocator.empty_reg(i)
+    data.out.append("movl $" + z + ", %" + k)
+    data.L = k
+    data.out.append("movl " + y + "(, %" + k + ", 4), %" + k)
+    register_allocator.update(x)
+
+def STORE_ARRAY(i):
+    (x, y, z) = (data.block[i].out, data.block[i].in1, data.block[i].in2)
+    data.out.append("movl $" + z + ", %edi")
+    try :
+        int(x)
+        data.out.append("movl $" + x + ", " + y + "(, %edi, 4)")
+        return
+    except :
+        pass
+    register_allocator.getreg(x, y, i)
+    data.out.append("movl %" + data.L + ", " + y + "(, %edi, 4)")
+    data.adesc[x] = data.L
+    data.rdesc[data.L] = x
+
+
+
+OP_MAP = {'+': ADD, '-': SUB, '*': MUL, '=' : ASSIGN,'/' : DIV, '%' : MOD, '^' : XOR, '&' : AND, '|' : OR, 'ret' : RETURN, 'call' : CALL, 'print' : PRINT, 'read' : READ, 'goto' : GOTO, '<-' : LOAD_ARRAY, '->' : STORE_ARRAY, 'array' : DEC}

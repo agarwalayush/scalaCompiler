@@ -30,7 +30,7 @@ def initblock():
     i = data.numins - 1
     while(i > 0):
         (x, y, z) = (data.block[i].out, data.block[i].in1, data.block[i].in2)
-        if data.block[i].type == 'print':
+        if data.block[i].type in ['print', '->']:
             (x,y) = (y,x)
         for k in data.vset :
             if k == y or k == z :
@@ -74,7 +74,7 @@ def getz(var):
         else:
             data.zprime = var
 
-def empty_reg(exclude, ino) :
+def empty_reg(ino,exclude = None) :
     nxtuse = -1
     m = None
     for k in data.rset :
