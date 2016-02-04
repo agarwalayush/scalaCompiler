@@ -12,7 +12,9 @@ def boilerplate() :
         print("{}:".format(v))
         print("\t.zero {}".format(4*int(data.arrayset[v])))
     print("\n.section .text\n")
-    print('\nprintFormat:  .asciz "%d\\n"')
+    for k,v in data.stringMap.items() :
+        print('\n'+k+':  .asciz ' +v)
+    print('\nprintFormat:  .asciz "%d"')
     print('\nscanFormat:  .asciz "%d"\n')
     print('.global main\n')
     print('main:')
@@ -74,7 +76,7 @@ def assembly_generator() :
             else:
                 data.block = data.raw[breakpoints[i]:breakpoints[i+1]]
         block_assembly_generator()
-    # programEnd()
+    #programEnd()
 
 
 ###  OP_CODE SRC, DEST
@@ -325,6 +327,11 @@ def STORE_ARRAY(i):
     data.adesc[x] = data.L
     data.rdesc[data.L] = x
 
+def PRINT_STR(i):
+    inno = data.block[i].no
+    data.out.append('pushl $'  + 'str'+ str(inno))
+    register_allocator.save_to_memory()
+    data.out.append('call printf')
+    data.out.append('addl $4, %esp')
 
-
-OP_MAP = {'+': ADD, '-': SUB, '*': MUL, '=' : ASSIGN,'/' : DIV, '%' : MOD, '^' : XOR, '&' : AND, '|' : OR, 'ret' : RETURN, 'call' : CALL, 'print' : PRINT, 'read' : READ, 'goto' : GOTO, '<-' : LOAD_ARRAY, '->' : STORE_ARRAY, 'array' : DEC}
+OP_MAP = {'+': ADD, '-': SUB, '*': MUL, '=' : ASSIGN,'/' : DIV, '%' : MOD, '^' : XOR, '&' : AND, '|' : OR, 'ret' : RETURN, 'call' : CALL, 'print' : PRINT, 'read' : READ, 'goto' : GOTO, '<-' : LOAD_ARRAY, '->' : STORE_ARRAY, 'array' : DEC, 'printstr': PRINT_STR}

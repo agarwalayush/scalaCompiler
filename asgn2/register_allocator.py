@@ -74,7 +74,7 @@ def getz(var):
         else:
             data.zprime = var
 
-def empty_reg(ino,exclude = None) :
+def empty_reg(ino,exclude = []) :
     nxtuse = -1
     m = None
     for k in data.rset :

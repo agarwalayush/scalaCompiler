@@ -11,7 +11,7 @@ def check_variable(var_bar) :
         return True
 
 def check_branching(type) :
-    return type in ['jump', 'call', 'goto', 'label']
+    return type in ['jump', 'call', 'goto', 'label','printstr']
 
 def check_array(type) :
     return type in ['array', '<-', '->']
@@ -29,5 +29,7 @@ def parse_il(file_object) :
                         data.vset.add(list_i[i])
             if list_i[1] == 'array':
                 data.arrayset[list_i[2]] = list_i[3]
+            if list_i[1] == 'printstr' :
+                data.stringMap['str'+list_i[0]] = list_i[2]
             debug(list_i[0])
             data.raw.append(data.instruction3ac(int(list_i[0]),list_i[1],list_i[3],list_i[4],list_i[2]))
