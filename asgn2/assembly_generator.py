@@ -25,12 +25,14 @@ def assembly_generator() :
     def block_assembly_generator() :
         '''Generates assembly code for current block. '''
         data.numins = len(data.block)
+        debug(numins = data.numins)
         register_allocator.initblock()
         data.print_symbol_table()
         for i in range(0, len(data.block) - 1):
             register_allocator.ini()
             OP_MAP[data.block[i].type](i)
         i = len(data.block) - 1
+        if i == -1: return
         if data.block[i].type in {'call', 'ret', 'goto'}:
             register_allocator.save_to_memory()
             register_allocator.ini()
@@ -64,7 +66,10 @@ def assembly_generator() :
         if i==0:
            data.block = data.raw[breakpoints[i]:breakpoints[i+1]]
         else:
-           data.block = data.raw[breakpoints[i] + 1:breakpoints[i+1]]
+            if data.raw[breakpoints[i]].type == 'label':
+                data.block = data.raw[breakpoints[i] + 1:breakpoints[i+1]]
+            else:
+                data.block = data.raw[breakpoints[i]:breakpoints[i+1]]
         block_assembly_generator()
     # programEnd()
 
