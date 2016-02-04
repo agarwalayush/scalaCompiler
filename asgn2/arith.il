@@ -1,6 +1,6 @@
 1,%,t1,a,3
 2,+,t2,a,b
-3,print,t2
+3,print,a
 4,-,t3,t2,t2
 5,+,t4,21,t3
 6,%,t5,b,b
@@ -16,3 +16,4 @@
 9,label,bar
 10,read,t1
 14,ret
+

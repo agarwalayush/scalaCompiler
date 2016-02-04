@@ -30,6 +30,8 @@ def initblock():
     i = data.numins - 1
     while(i > 0):
         (x, y, z) = (data.block[i].out, data.block[i].in1, data.block[i].in2)
+        if data.block[i].type == 'print':
+            (x,y) = (y,x)
         for k in data.vset :
             if k == y or k == z :
                 data.symtable[i - 1][k] = i
@@ -134,12 +136,14 @@ def freereg(var, ino):
     if var in data.vset :
         if data.symtable[ino][var] == math.inf and data.adesc[var] != None:
             data.rdesc[data.adesc[var]] = None
+            debug('reset', var = var, )
             data.adesc[var] = None
 
 #This function updates the address descriptor corresdonding to the out variable
 def update(x):
     if data.L in data.rset:
         data.adesc[x] = data.L
+        debug(x = x, L = data.L)
         data.rdesc[data.L] = x
     else:
         data.adesc[x] = None
