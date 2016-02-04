@@ -6,7 +6,13 @@
 6,%,t5,b,b
 7,+,t6,t4,t5
 8,=,t4,6
-9,read,t1
-10,print,t4
-11,%,t1,7,t1
-12,print,t1
+8,goto,bar
+8,ret
+9,label,foo
+10,read,t1
+11,print,t4
+12,%,t1,7,t1
+13,print,t1
+9,label,bar
+10,read,t1
+14,ret

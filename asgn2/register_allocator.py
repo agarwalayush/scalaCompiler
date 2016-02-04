@@ -12,7 +12,7 @@ def initblock():
     for x in data.vset :
         data.adesc[x] = None
 
-    data.out.clear()
+    # data.out.clear()
 
 
     #symtable = [{}]*numins
