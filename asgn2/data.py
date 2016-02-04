@@ -51,10 +51,11 @@ def print_symbol_table() :
         lens = [max(map(len, col)) for col in zip(*s)]
         fmt = '  '.join('{{:{}}}'.format(x) for x in lens)
         table = [fmt.format(*row) for row in s]
-        print('-'*(sum(lens)+len(lens)*2)+'|')
-        print(fmt.format(*adesc),'|')
-        print('-'*(sum(lens)+len(lens)*2)+'|')
-        print('  |\n'.join(table),' |')
+        print('-'*(sum(lens)+len(lens)*2)+'|',file = sys.stderr)
+        print(fmt.format(*adesc),'|',file = sys.stderr)
+        print('-'*(sum(lens)+len(lens)*2)+'|',file = sys.stderr)
+        print('  |\n'.join(table),' |',file = sys.stderr)
+
 
 
 

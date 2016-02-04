@@ -25,12 +25,14 @@ def assembly_generator() :
     def block_assembly_generator() :
         '''Generates assembly code for current block. '''
         data.numins = len(data.block)
+        debug(numins = data.numins)
         register_allocator.initblock()
         data.print_symbol_table()
         for i in range(0, len(data.block) - 1):
             register_allocator.ini()
             OP_MAP[data.block[i].type](i)
         i = len(data.block) - 1
+        if i == -1: return
         if data.block[i].type in {'call', 'ret', 'goto'}:
             register_allocator.save_to_memory()
             register_allocator.ini()
@@ -50,7 +52,7 @@ def assembly_generator() :
             breakpoints.add(i)
         if data.raw[i].type == 'goto' :
             breakpoints.add(i+1)
-            breakpoints.add(int(data.raw[i].out)-1)
+            # breakpoints.add(int(data.raw[i].out)-1)
         if data.raw[i].type == 'call' :
             breakpoints.add(i+1)
         if data.raw[i].type == 'ret' :
@@ -58,11 +60,18 @@ def assembly_generator() :
     breakpoints.add(len(data.raw))
     breakpoints = sorted(breakpoints)
     for i in range(0,len(breakpoints)-1) :
-        if i == 0 : data.out.append("_start :")
-        elif data.raw[i].type == 'label' : data.out.append("{}:\n".format(data.raw[i].out))
-        data.block = data.raw[breakpoints[i]:breakpoints[i+1]]
+        data.out.clear()
+        if data.raw[breakpoints[i]].type == 'label' :
+            print("\n{}:".format(data.raw[breakpoints[i]].out))
+        if i==0:
+           data.block = data.raw[breakpoints[i]:breakpoints[i+1]]
+        else:
+            if data.raw[breakpoints[i]].type == 'label':
+                data.block = data.raw[breakpoints[i] + 1:breakpoints[i+1]]
+            else:
+                data.block = data.raw[breakpoints[i]:breakpoints[i+1]]
         block_assembly_generator()
-    programEnd()
+    # programEnd()
 
 
 ###  OP_CODE SRC, DEST
@@ -285,5 +294,7 @@ def READ(i):
     data.out.append('call scanf')
     data.out.append('addl $8, %esp')
 
+def GOTO(i):
+    data.out.append('jmp ' + data.block[i].out)
 
-OP_MAP = {'+': ADD, '-': SUB, '*': MUL, '=' : ASSIGN,'/' : DIV, '%' : MOD, '^' : XOR, '&' : AND, '|' : OR, 'ret' : RETURN, 'call' : CALL, 'print' : PRINT, 'read' : READ}
+OP_MAP = {'+': ADD, '-': SUB, '*': MUL, '=' : ASSIGN,'/' : DIV, '%' : MOD, '^' : XOR, '&' : AND, '|' : OR, 'ret' : RETURN, 'call' : CALL, 'print' : PRINT, 'read' : READ, 'goto' : GOTO}
