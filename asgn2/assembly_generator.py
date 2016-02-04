@@ -26,6 +26,7 @@ def assembly_generator() :
         '''Generates assembly code for current block. '''
         data.numins = len(data.block)
         register_allocator.initblock()
+        data.print_symbol_table()
         for i in range(0, len(data.block) - 1):
             register_allocator.ini()
             OP_MAP[data.block[i].type](i)
@@ -264,10 +265,12 @@ def CALL(i) :
 
 def PRINT(i):
     x = data.block[i].out
+    debug(x = x)
     try :
+        debug(adesc = data.adesc[x])
         data.adesc[x]
         data.out.append('pushl %' + data.adesc[x])
-    except:
+    except :
         data.out.append('pushl ' + x)
     data.out.append('pushl $printFormat')
     register_allocator.save_to_memory()

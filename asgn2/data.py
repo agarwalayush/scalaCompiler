@@ -44,18 +44,19 @@ zprime = None
 yprime = None
 L = None
 
-
-def print_symbol_table() :
-    s = [[str(e) for e in row.values()] for row in symtable]
-    lens = [max(map(len, col)) for col in zip(*s)]
-    fmt = '  '.join('{{:{}}}'.format(x) for x in lens)
-    table = [fmt.format(*row) for row in s]
-    print('-'*(sum(lens)+len(lens)*2)+'|')
-    print(fmt.format(*adesc),'|')
-    print('-'*(sum(lens)+len(lens)*2)+'|')
-    print('  |\n'.join(table),' |')
-
 debug_flag = 0
+def print_symbol_table() :
+    if debug_flag :
+        s = [[str(e) for e in row.values()] for row in symtable]
+        lens = [max(map(len, col)) for col in zip(*s)]
+        fmt = '  '.join('{{:{}}}'.format(x) for x in lens)
+        table = [fmt.format(*row) for row in s]
+        print('-'*(sum(lens)+len(lens)*2)+'|')
+        print(fmt.format(*adesc),'|')
+        print('-'*(sum(lens)+len(lens)*2)+'|')
+        print('  |\n'.join(table),' |')
+
+
 
 def debug(*arg,**kwarg) :
     if debug_flag :
