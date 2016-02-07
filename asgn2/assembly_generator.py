@@ -38,7 +38,7 @@ def assembly_generator() :
             OP_MAP[data.block[i].type](i)
         i = len(data.block) - 1
         if i == -1: return
-        if data.block[i].type in {'call', 'ret', 'goto'}:
+        if data.block[i].type in {'call', 'ret', 'goto', 'jg', 'je', 'jle', 'jge', 'je'}:
             register_allocator.save_to_memory()
             register_allocator.ini()
             OP_MAP[data.block[i].type](i)
@@ -55,17 +55,14 @@ def assembly_generator() :
     for i in range(0,len(data.raw)) :
         if data.raw[i].type == 'label' :
             breakpoints.add(i)
-        if data.raw[i].type == 'goto' :
+        if data.raw[i].type in ['call', 'ret', 'goto', 'jg', 'je', 'jle', 'jge', 'je']:
             breakpoints.add(i+1)
-            # breakpoints.add(int(data.raw[i].out)-1)
-        if data.raw[i].type == 'call' :
-            breakpoints.add(i+1)
-        if data.raw[i].type == 'ret' :
-            breakpoints.add(i + 1)
     breakpoints.add(len(data.raw))
     breakpoints = sorted(breakpoints)
     for i in range(0,len(breakpoints)-1) :
         data.out.clear()
+        if data.raw[breakpoints[i]].type == 'cmp' :
+            debug(data.raw[breakpoints[i]])
         if data.raw[breakpoints[i]].type == 'label' :
             print("\n{}:".format(data.raw[breakpoints[i]].out))
         if i==0:
@@ -186,7 +183,7 @@ def MOD(i):
     try :
         int(z)
         data.zprime = z
-        reg = register_allocator.empty_reg(['eax', 'edx'], i)
+        reg = register_allocator.empty_reg(i,['eax', 'edx'])
         data.out.append('mov $' + z + ", %" + reg)
         data.zprime = reg
 
@@ -334,4 +331,46 @@ def PRINT_STR(i):
     data.out.append('call printf')
     data.out.append('addl $4, %esp')
 
-OP_MAP = {'+': ADD, '-': SUB, '*': MUL, '=' : ASSIGN,'/' : DIV, '%' : MOD, '^' : XOR, '&' : AND, '|' : OR, 'ret' : RETURN, 'call' : CALL, 'print' : PRINT, 'read' : READ, 'goto' : GOTO, '<-' : LOAD_ARRAY, '->' : STORE_ARRAY, 'array' : DEC, 'printstr': PRINT_STR}
+def COMPARE(i):
+    (y,z) = (data.block[i].in1, data.block[i].in2)
+    try:
+            int(z)
+            data.zprime = z
+    except:
+        register_allocator.getz(z)
+
+    try:
+        int(y)
+        data.L = y
+    except:
+        # print("------------" + data.adesc[y])
+        if data.zprime in data.vset and data.adesc[y] == None:
+            temp = register_allocator.empty_reg(i,[])
+            data.out.append("movl " + y + ", " + register_allocator.transform(temp))
+            data.adesc[y] = temp
+            data.rdesc[temp] = y
+            data.L = temp
+        elif data.adesc[y] != None:
+            data.L = data.adesc[y]
+        else:
+            data.L = y
+    data.out.append("cmp " + register_allocator.transform(data.zprime) + ", " + register_allocator.transform(data.L))
+    register_allocator.freereg(z, i)
+    register_allocator.freereg(y, i)
+
+def JE(i):
+    data.out.append("je " + data.block[i].out)
+
+def JLE(i):
+    data.out.append("jle " + data.block[i].out)
+
+def JGE(i):
+    data.out.append("jge " + data.block[i].out)
+
+def JG(i):
+    data.out.append("jg " + data.block[i].out)
+
+def JL(i):
+    data.out.append("jl " + data.block[i].out)
+
+OP_MAP = {'+': ADD, '-': SUB, '*': MUL, '=' : ASSIGN,'/' : DIV, '%' : MOD, '^' : XOR, '&' : AND, '|' : OR, 'ret' : RETURN, 'call' : CALL, 'print' : PRINT, 'read' : READ, 'goto' : GOTO, '<-' : LOAD_ARRAY, '->' : STORE_ARRAY, 'array' : DEC, 'printstr': PRINT_STR, 'cmp': COMPARE, 'jl': JL, 'je': JE, 'jg':JG, 'jle':JLE, 'jge':JGE}

@@ -99,8 +99,11 @@ def getreg(x, y, ino,special = None):
         data.L = special
     elif y in data.vset and data.adesc[y] != None and data.symtable[ino][y] == math.inf:
         data.L = data.adesc[y]
+        return
     elif data.adesc[x] != None:
         data.L = data.adesc[x]
+        return
+
     if data.L == None:
         for k in data.rset:
             if data.rdesc[k] == None:

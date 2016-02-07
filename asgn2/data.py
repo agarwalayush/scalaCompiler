@@ -2,6 +2,7 @@ import sys
 #class for the parsed instructions, add type, target for extra fuinctionality
 class instruction3ac :
     def __init__(self, no, type, in1, in2, out) :
+        if type == 'cmp': debug(in1=in1,in2=in2,out=out)
         self.no, self.type, self.in1, self.in2, self.out = no, type, in1, in2, out
     def __str__(self) :
         return "Instruction No :{},Instruction Type :{}".format(self.no,self.type)

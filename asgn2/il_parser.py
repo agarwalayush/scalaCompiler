@@ -11,7 +11,7 @@ def check_variable(var_bar) :
         return True
 
 def check_branching(type) :
-    return type in ['jump', 'call', 'goto', 'label','printstr']
+    return type in ['jump', 'call', 'goto', 'label','printstr', 'jle', 'jg', 'je', 'jge', 'jl']
 
 def check_array(type) :
     return type in ['array', '<-', '->']
