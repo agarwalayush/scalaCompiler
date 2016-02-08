@@ -327,13 +327,18 @@ def STORE_ARRAY(i):
     if data.zprime == None:
         data.zprime = z
     data.out.append("movl " + register_allocator.transform(data.zprime) + ", %edi")
+
     try :
         int(x)
         data.out.append("movl $" + x + ", " + y + "(, %edi, 4)")
         return
     except :
         pass
+   # debug(adesc = data.adesc[x])
     register_allocator.getreg(x, y, i)
+    debug(Lp = data.L)
+    if data.rdesc[data.L] == None:
+        data.out.append("movl " + x + ", " + register_allocator.transform(data.L))
     data.out.append("movl %" + data.L + ", " + y + "(, %edi, 4)")
     data.adesc[x] = data.L
     data.rdesc[data.L] = x
