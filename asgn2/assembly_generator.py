@@ -38,7 +38,7 @@ def assembly_generator() :
             OP_MAP[data.block[i].type](i)
         i = len(data.block) - 1
         if i == -1: return
-        if data.block[i].type in {'call', 'ret', 'goto', 'jg', 'je', 'jle', 'jge', 'je'}:
+        if data.block[i].type in {'call', 'ret', 'goto', 'jg', 'je', 'jle', 'jge', 'je', 'jne'}:
             register_allocator.save_to_memory()
             register_allocator.ini()
             OP_MAP[data.block[i].type](i)
@@ -55,7 +55,7 @@ def assembly_generator() :
     for i in range(0,len(data.raw)) :
         if data.raw[i].type == 'label' :
             breakpoints.add(i)
-        if data.raw[i].type in ['call', 'ret', 'goto', 'jg', 'je', 'jle', 'jge', 'je']:
+        if data.raw[i].type in ['call', 'ret', 'goto', 'jg', 'je', 'jle', 'jge', 'je', 'jne']:
             breakpoints.add(i+1)
     breakpoints.add(len(data.raw))
     breakpoints = sorted(breakpoints)
@@ -387,4 +387,7 @@ def JG(i):
 def JL(i):
     data.out.append("jl " + data.block[i].out)
 
-OP_MAP = {'+': ADD, '-': SUB, '*': MUL, '=' : ASSIGN,'/' : DIV, '%' : MOD, '^' : XOR, '&' : AND, '|' : OR, 'ret' : RETURN, 'call' : CALL, 'print' : PRINT, 'read' : READ, 'goto' : GOTO, '<-' : LOAD_ARRAY, '->' : STORE_ARRAY, 'array' : DEC, 'printstr': PRINT_STR, 'cmp': COMPARE, 'jl': JL, 'je': JE, 'jg':JG, 'jle':JLE, 'jge':JGE}
+def JNE(i):
+    data.out.append("jne " + data.block[i].out)
+
+OP_MAP = {'+': ADD, '-': SUB, '*': MUL, '=' : ASSIGN,'/' : DIV, '%' : MOD, '^' : XOR, '&' : AND, '|' : OR, 'ret' : RETURN, 'call' : CALL, 'print' : PRINT, 'read' : READ, 'goto' : GOTO, '<-' : LOAD_ARRAY, '->' : STORE_ARRAY, 'array' : DEC, 'printstr': PRINT_STR, 'cmp': COMPARE, 'jl': JL, 'je': JE, 'jg':JG, 'jle':JLE, 'jge':JGE, 'jne':JNE}

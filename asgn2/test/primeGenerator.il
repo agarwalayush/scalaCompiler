@@ -1,0 +1,32 @@
+1,printstr,"Prime Generator: Enter two numbers"
+2,read,a
+3,read,b
+4,call,foo
+5,ret
+6,label,foo
+7,cmp,$,a,b
+8,je,exit
+9,+,a,a,1
+10,call,checkPrime
+11,goto,foo
+12,ret
+13,label,checkPrime
+14,=,c,2
+15,call,loop
+16,ret
+17,label,loop
+18,cmp,$,a,c
+19,jle,prime
+21,%,k,a,c
+22,cmp,$,k,0
+23,je,exit
+24,+,c,c,1
+25,goto,loop
+26,ret
+27,label,prime
+28,printstr,"\nprime number:"
+28,print,a
+29,printstr,"\n"
+30,ret
+31,label,exit
+32,ret

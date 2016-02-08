@@ -1,0 +1,14 @@
+1,printstr,"Factorial: Enter the number "
+1,read,a
+2,=,b,1
+3,call,fact
+4,print,b
+4,ret
+5,label,fact
+6,*,b,b,a
+7,-,a,a,1
+8,cmp,$,a,0
+9,je,ex
+10,call,fact
+11,label,ex
+12,ret
