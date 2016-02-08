@@ -305,14 +305,28 @@ def DEC(i):
 def LOAD_ARRAY(i):
     (x, y, z) = (data.block[i].out, data.block[i].in1, data.block[i].in2)
     k = register_allocator.empty_reg(i)
-    data.out.append("movl $" + z + ", %" + k)
+    try :
+        int(z)
+        pass
+    except :
+        register_allocator.getz(z)
+    if data.zprime == None:
+        data.zprime = z
+    data.out.append("movl " + register_allocator.transform(data.zprime) + ", %" + k)
     data.L = k
     data.out.append("movl " + y + "(, %" + k + ", 4), %" + k)
     register_allocator.update(x)
 
 def STORE_ARRAY(i):
     (x, y, z) = (data.block[i].out, data.block[i].in1, data.block[i].in2)
-    data.out.append("movl $" + z + ", %edi")
+    try :
+        int(z)
+        pass
+    except :
+        register_allocator.getz(z)
+    if data.zprime == None:
+        data.zprime = z
+    data.out.append("movl " + register_allocator.transform(data.zprime) + ", %edi")
     try :
         int(x)
         data.out.append("movl $" + x + ", " + y + "(, %edi, 4)")
