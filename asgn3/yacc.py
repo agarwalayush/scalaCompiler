@@ -162,7 +162,7 @@ def p_statement(p):
                         | if_then_statement
                         | if_then_else_statement
                         | while_statement
-                        | for_statement'''
+                        | for_loop'''
 
 def p_statement_without_trailing_substatement(p):
     '''  statement_without_trailing_substatement : block
@@ -251,9 +251,6 @@ def p_for_untilTo(p):
     '''  for_untilTo : K_UNTIL
         | K_TO'''
 
-def p_statement_expression_list(p):
-    '''  statement_expression_list : statement_expression
-             | statement_expression_list COMMA statement_expression'''
 
 def p_return_statement(p):
     '''return_statement : K_RETURN expression semi
