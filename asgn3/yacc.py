@@ -5,6 +5,19 @@ import ply.yacc as yacc
 # Get the token map from the lexer.  This is required.
 from lexer import tokens
 
+class Node:
+    def __init__(self,label,children=None, type = 'Unit'):
+        self.type = type
+        if children:
+            self.children = children
+        else:
+            self.children = [ ]
+        self.label= label
+    def mkleaf(name, value, type='Unit'):
+        child = Node(value,[],type)
+        parent = Node(name, [child],type)
+        return parent
+
 
 
 
@@ -103,17 +116,29 @@ def p_method_body(p):
 def p_block(p):
     '''block : BLOCK_BEGIN block_statements BLOCK_END
                 | BLOCK_BEGIN BLOCK_END'''
+    child1 = mkleaf("BLOCK_BEGIN" , '{')
+    child2 = mkleaf("BLOCK_BEGIN" , '}')
+    if(len(p) == 2):
+        p[0] = Node("Block" , [child1,child2])
+    else:
+        p[0] = Node("Block" , [child1,p[2],child2])
 
 def p_block_statements(p):
     '''  block_statements : block_statement
  			 | block_statements block_statement'''
+    if len(p) == 2:
+        p[0] = Node("block_statements", [p[1]])
+    else:
+        p[0] = Node("block_statements", [p[1], p[2]])
 
 def p_block_statement(p):
     '''  block_statement : local_variable_declaration_statement
  			 | statement'''
+    p[0] = Node("block statement" , [p[1]]) 
 
 def p_local_variable_declaration_statement(p):
     'local_variable_declaration_statement : variable_declarators semi'
+    p[0] = Node("local_variable_declaration_statement " , [p[1], p[2]]) 
 
 def p_statement(p):
     '''  statement : statement_without_trailing_substatement
@@ -121,6 +146,7 @@ def p_statement(p):
                         | if_then_else_statement
                         | while_statement
                         | for_statement'''
+    p[0] = Node("statement " , [p[1]]) 
 
 def p_statement_without_trailing_substatement(p):
     '''  statement_without_trailing_substatement : block
@@ -129,75 +155,136 @@ def p_statement_without_trailing_substatement(p):
                                      | switch_statement 
                                      | continue_statement 
                                      | return_statement'''
+    p[0] = Node("statement_without_trailing_substatement " , [p[1]]) 
 
 def p_statement_no_short_if(p):
     '''  statement_no_short_if : statement_without_trailing_substatement
  			 | if_then_else_statement_no_short_if'''
+    p[0] = Node("statement_no_short_if " , [p[1]])
 
 def p_empty_statement(p):
     'empty_statement : semi'
+    p[0] = Node("empty_statement " , [p[1]])
 
 def p_empty(p):
     'empty : '
+    child = mkleaf("empty", '')
+    p[0] =  Node("empty" , [child])
 
 def p_expression_statement(p):
     'expression_statement : statement_expression semi'
+    p[0] = Node("expression_statement " , [p[1], p[2]])
 
 def p_statement_expression(p):
     '''  statement_expression : assignment
  			| method_invocation 
                                     | class_instance_creation_expression'''
+    p[0] = Node("statement_expression " , [p[1]])
 
 def p_if_then_statement(p):
     'if_then_statement : K_IF LPAREN expression RPAREN statement'
+    child1 = mkleaf("K_IF", p[1])
+    child2 = mkleaf("LPAREN", p[2])
+    child4 = mkleaf("RPAREN", p[4])
+    p[0] = Node("if_then_statement" , [child1, child2, p[3], child4, p[5]])
 
 def p_if_then_else_statement(p):
     'if_then_else_statement : K_IF LPAREN expression RPAREN statement_no_short_if K_ELSE statement'
+    child1 = mkleaf("K_IF", p[1])
+    child2 = mkleaf("LPAREN", p[2])
+    child4 = mkleaf("RPAREN", p[4])
+    child6 = mkleaf("K_ELSE", p[6])
+    p[0] = Node("if_then_else_statement" , [child1, child2, p[3], child4, p[5],child6, p[7]])
 
 def p_if_then_else_statement_no_short_if(p):
     'if_then_else_statement_no_short_if : K_IF LPAREN expression RPAREN statement_no_short_if K_ELSE statement_no_short_if'
+    child1 = mkleaf("K_IF", p[1])
+    child2 = mkleaf("LPAREN", p[2])
+    child4 = mkleaf("RPAREN", p[4])
+    child6 = mkleaf("K_ELSE", p[6])
+    p[0] = Node("if_then_else_statement_no_short_if " , [child1, child2, p[3], child4, p[5],child6, p[7]])
 
 def p_switch_statement(p):
     'statement_no_short_if : expression  K_MATCH switch_block'
+    child1 = mkleaf("K_MATCH", p[2])
+    p[0] = Node("statement_no_short_if " , [p[1], child1, p[3]])
 
 def p_switch_block(p):
     'switch_block : BLOCK_BEGIN switch_block_statement_groups_optional switch_labels_optional BLOCK_END'
+    child1 = mkleaf("BLOCK_BEGIN ", p[1])
+    child4 = mkleaf("BLOCK_END", p[4])
+    p[0] = Node("switch_block " , [child1, p[2], p[3], child4])
 
 def p_switch_block_statement_groups_optional(p):
     '''  switch_block_statement_groups_optional : switch_block_statement_groups
  			 | empty'''
+    p[0] = Node("switch_block_statement_groups_optional " , [p[1]])
 
 def p_switch_labels_optional(p):
     '''  switch_labels_optional : switch_labels
  			 | empty'''
+    p[0] = Node("switch_labels_optional" , [p[1]])
 
 def p_switch_block_statement_groups(p):
     '''  switch_block_statement_groups : switch_block_statement_group
  			 | switch_block_statement_groups switch_block_statement_group'''
+    if len(p) == 2:
+        p[0] = Node("switch_block_statement_groups ", [p[1]])
+    else:
+        p[0] = Node("switch_block_statement_groups ", [p[1], p[2]])
 
 def p_switch_block_statement_group(p):
     'switch_block_statement_group : switch_labels block_statements'
+    p[0] = Node("switch_block_statement_group " , [p[1], p[2]])
 
 def p_switch_labels(p):
     '''  switch_labels : switch_label
  			 | switch_labels switch_label'''
+    if len(p) == 2:
+        p[0] = Node("switch_labels ", [p[1]])
+    else:
+        p[0] = Node("switch_labels ", [p[1], p[2]])
 
 def p_switch_label(p):
     '''switch_label : K_CASE expression COLON
                         | K_DEFAULT COLON'''
+    if len(p) == 3:
+        child1 = mkleaf("K_DEFAULT", p[1])
+        child2 = mkleaf("COLON", p[2])
+        p[0] = Node("switch_label ", [child1, child2])
+    else:
+        child1 = mkleaf("K_CASE", p[1])
+        child2 = mkleaf("COLON", p[2])
+        p[0] = Node("switch_label ", [child1,p[2], child2])
 
 def p_while_statement(p):
     'while_statement : K_WHILE LPAREN expression RPAREN statement'
+    child1 = mkleaf("K_WHILE ", p[1])
+    child2 = mkleaf("LPAREN", p[2])
+    child4 = mkleaf("RPAREN", p[4])
+    p[0] = Node("while_statement " , [child1, child2, p[3], child4, p[5]])
 
 def p_for_loop(p):
     'for_loop : K_FOR BLOCK_BEGIN for_exprs for_if_condition BLOCK_END statement'
+    child1 = mkleaf("K_FOR ", p[1])
+    child2 = mkleaf("BLOCK_BEGIN ", p[2])
+    child5 = mkleaf("BLOCK_END", p[4])
+    p[0] = Node("for_loop" , [child1, child2, p[3], p[4], child5, p[6]])
+
 
 def p_for_if_condition(p):
     '''for_if_condition : SEMI_COLON if_variables  for_if_condition
                             | if_variables'''
+    child1 = mkleaf("SEMI_COLON ", p[1])
+    if(len(p) == 2):
+        p[0] = Node("for_if_condition" , [p[1]])
+    else:
+        p[0] = Node("for_if_condition" , [child1, p[2], p[3]])
 
 def p_if_variables(p):
     'if_variables : K_IF expression '
+    child1= mkleaf("K_IF", p[1])
+    p[0]= Node("if_variables ", [child1, p[2]])
 
 def p_for_exprs(p):
     '''for_exprs :  for_variables SEMI_COLON for_exprs
