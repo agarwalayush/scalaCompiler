@@ -1,0 +1,18 @@
+* partition the code into the basic blocks by by demarkators 
+* fill out the symbol table and the registor descriptor and the address discriptor
+* whether to make a class for each variable and register ?
+* How to fill the symbol table
+* Account for the commutativity of the operators
+* Taking care of the copy statements
+* At the end of the basic block dump the values of all the registers H
+* Register allocation
+** call the function getreg to obtain the registers R_x, R_y, R_z and load x and y if not in there, update the tables 
+
+
+
+
+
+
+
+
+
