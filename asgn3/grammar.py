@@ -21,7 +21,7 @@ def p_import_declarations(p):
                                       | import_declarations import_declaration'''
 
 def p_import_declaration(p):
-    '''import_declaration :  K_IMPORT name'''
+    '''import_declaration :  K_IMPORT expression_name'''
 
 
 def p_classes_objects(p):
@@ -73,7 +73,11 @@ def p_class_body_declaration(p):
                                           | method_declaration'''
 
 def p_field_declaration(p):
-    'field_declaration :   declaration_keyword variable_declaration_body SEMI_COLON'
+    'field_declaration :   declaration_keyword variable_declaration_body  semi'
+
+def p_semi(p):
+    '''semi : SEMI_COLON
+                | NEWLINE'''
 
 # def p_val_var_opts(p):
 #     ''' val_var_opts : val
@@ -147,27 +151,20 @@ def p_method_return_type_opt(p):
                                           | empty'''
 
 def p_method_return_type(p):
-        '''method_return_type : type'''
-
-def p_method_return_type1(p):
-        '''method_return_type : K_UNIT'''
-
-# def p_method_header_name(p):
-#         '''method_header_name : modifier_opts K_DEF IDENTIFIER''' # class_header_name1 type_parameters
-#                              # | class_header_name1
+        '''method_return_type : type
+                                        | K_UNIT'''
 
 def p_method_body(p):
         '''method_body : block '''
 
-def p_modifier(p):
-      '''modifier : K_PROTECTED
-                  | K_PRIVATE'''
+# def p_modifier(p):
+#       '''modifier : K_PROTECTED
+#                   | K_PRIVATE'''
 
 
 def p_type(p):
         '''type : primitive_type
                 | reference_type '''
-        # p[0] = p[1]
 
 def p_primitive_type(p):
     '''primitive_type : K_INT
@@ -182,18 +179,18 @@ def p_reference_type(p):
                         | array_data_type'''
 
 def p_class_data_type(p):
-      '''class_data_type : name'''
+      '''class_data_type : IDENTIFIER'''
 
 def p_array_data_type(p):
       '''array_data_type : K_ARRAY SQUARE_BEGIN type SQUARE_END'''
 
 def p_array_initializer(p):
   ''' array_initializer : K_NEW K_ARRAY SQUARE_BEGIN type SQUARE_END LPAREN INT RPAREN
-                        | K_ARRAY LPAREN argument_list_opt RPAREN '''
+                            | K_ARRAY LPAREN argument_list_opt RPAREN '''
 
 
-def p_class_initializer(p):
-  ''' class_initializer : K_NEW name LPAREN argument_list_opt RPAREN '''
+def p_class_instance_creation_expression(p):
+  ''' class_instance_creation_expression : K_NEW class_data_type LPAREN argument_list_opt RPAREN '''
 
 
 # expression
@@ -212,7 +209,7 @@ def p_assignment_expression(p):
 # assignment
 
 def p_assignment(p):
-    '''assignment : valid_variable assignment_operator assignment_expression'''
+    '''assignment : left_hand_side assignment_operator assignment_expression'''
 
 
 def p_assignment_operator(p):
@@ -236,12 +233,9 @@ def p_conditional_and_expression(p):
 #                                    | inclusive_or_expression OR_BITWISE exclusive_or_expression'''
 
 def p_exclusive_or_expression(p):
-    '''exclusive_or_expression : and_expression
-                                   | exclusive_or_expression XOR and_expression'''
+    '''exclusive_or_expression : equality_expression
+                                   | exclusive_or_expression XOR equality_expression'''
 
-def p_and_expression(p):
-    '''and_expression : equality_expression
-                          | and_expression AND_BITWISE equality_expression'''
 
 def p_equality_expression(p):
     '''equality_expression : relational_expression
@@ -250,17 +244,11 @@ def p_equality_expression(p):
 
 
 def p_relational_expression(p):
-    '''relational_expression : shift_expression
-                                 | relational_expression GREATER_THAN shift_expression
-                                 | relational_expression LESS_THAN shift_expression
-                                 | relational_expression GREATER_THAN_EQUAL shift_expression
-                                 | relational_expression LESS_THAN_EQUAL shift_expression'''
-
-
-def p_shift_expression(p):
-        '''shift_expression : additive_expression
-                            | shift_expression LSHIFT additive_expression
-                            | shift_expression RSHIFT additive_expression'''
+    '''relational_expression : additive_expression
+                                 | relational_expression GREATER_THAN additive_expression
+                                 | relational_expression LESS_THAN additive_expression
+                                 | relational_expression GREATER_THAN_EQUAL additive_expression
+                                 | relational_expression LESS_THAN_EQUAL additive_expression'''
 
 
 def p_additive_expression(p):
@@ -281,88 +269,73 @@ def p_unary_expression(p):
                             | unary_expression_not_plus_minus'''
 
 def p_unary_expression_not_plus_minus(p):
-    '''unary_expression_not_plus_minus : base_variable_set
-                                           | NOT unary_expression
-                                           | cast_expression'''
+    '''unary_expression_not_plus_minus : postfix_expression
+                                           | NOT unary_expression'''
                                            # | TILDA unary_expression
-    
 
-def p_base_variable_set(p):
-  '''base_variable_set : variable_literal
-                        | LPAREN expression RPAREN'''
+def p_postfix_expression(p):
+    '''  postfix_expression : primary_no_new_array
+                                    | expression_name'''
 
-def p_cast_expression(p):
-        '''cast_expression : LPAREN primitive_type RPAREN unary_expression'''
-
-def p_primary(p):
-    '''primary : literal
-                | method_invocation'''
-
-def p_literal_1(p):
-  '''literal : int_float'''
-
-def p_literal_2(p):
-  '''literal : CHAR'''
-
-def p_literal_3(p):
-  '''literal : STRING'''
-
-def p_literal_4(p):
-  '''literal : K_FALSE
-              | K_TRUE'''
+def p_primary_no_new_array(p):
+    '''  primary_no_new_array : literal
+                                        | LPAREN expression RPAREN
+                                        | method_invocation
+                                        | array_access'''
 
 
-def p_literal_5(p):
-  '''literal : K_NULL'''
+# def p_base_variable_set(p):
+#   '''base_variable_set : variable_literal
+#                         | LPAREN expression RPAREN'''
 
+# def p_cast_expression(p):
+#         '''cast_expression : LPAREN primitive_type RPAREN unary_expression'''
 
-def p_int_float_1(p):
-    '''int_float : FLOAT'''
+# def p_primary(p):
+#     '''primary : literal
+#                 | method_invocation'''
 
-def p_int_float_2(p):
-    '''int_float : INT'''
-
+def p_literal(p):
+  '''literal : STRING
+              | CHAR
+              | K_FALSE
+              | K_TRUE
+              | K_NULL
+              | FLOAT
+              | INT'''
 
 def p_method_invocation(p):
-    '''method_invocation : name LPAREN argument_list_opt RPAREN '''
+    '''method_invocation : expression_name LPAREN argument_list_opt RPAREN '''
 
 def p_array_access(p):
-    '''array_access : name SQUARE_BEGIN expression SQUARE_END '''
+    '''array_access : expression_name SQUARE_BEGIN expression SQUARE_END '''
 
 
 def p_argument_list_opt(p):
-    '''argument_list_opt : argument_list'''
-
-
-def p_argument_list_opt2(p):
-    '''argument_list_opt : empty'''
+    '''argument_list_opt : argument_list
+                                    | empty'''
 
 
 def p_argument_list(p):
     '''argument_list : expression
                     | argument_list COMMA expression'''
-# object identifier and identifier names for left hand assignment
 
-def p_name(p):
-    '''name : simple_name
-            | qualified_name'''
+def p_expression_name(p):
+    '''expression_name : IDENTIFIER
+                        | ambiguous_name DOT IDENTIFIER'''
 
+def p_ambiguous_name(p):
+    '''ambiguous_name : IDENTIFIER
+                        | ambiguous_name DOT IDENTIFIER'''
 
-def p_simple_name(p):
-    '''simple_name : IDENTIFIER'''
-
-def p_qualified_name(p):
-    '''qualified_name : name DOT simple_name'''
-
-
-def p_valid_variable(p):
-    '''valid_variable : name
+def p_left_hand_side(p):
+    '''left_hand_side : expression_name
                       | array_access'''
 
 
-def p_variableliteral(p):
-    '''variable_literal : valid_variable
-                        | primary'''
+# def p_variableliteral(p):
+#     '''variable_literal : left_hand_side
+#                         | primary'''
 
 # BLOCK STATEMENTS
 
@@ -372,23 +345,19 @@ def p_block(p):
 
 
 def p_block_statements_opt(p):
-      '''block_statements_opt : block_statements'''
-
-
-def p_block_statements_opt2(p):
-    '''block_statements_opt : empty'''
-
+      '''block_statements_opt : block_statements
+                                          | empty'''
 
 def p_block_statements(p):
       '''block_statements : block_statement
-                            | block_statements block_statement'''
+                                    | block_statements block_statement'''
 
 def p_block_statement(p):
       '''block_statement : local_variable_declaration_statement
                            | statement
-                           | class_declaration
-                           | object_declaration
                            | method_declaration'''
+                           # | class_declaration
+                           # | object_declaration
 
 # var (a:Int)=(h);
 # var (a:Int,b:Int,c:Int)=(1,2,3);
@@ -396,37 +365,37 @@ def p_block_statement(p):
 # var (a:Int,b:Int,c:Int)=(1,2,3)
 # supported
 
-def p_modifier_opts(p):
-  '''modifier_opts : modifier
-                    | empty '''
+# def p_modifier_opts(p):
+#   '''modifier_opts : modifier
+#                     | empty '''
 
 def p_declaration_keyword(p):
   '''declaration_keyword : K_VAR
-                    | K_VAL '''
+                         | K_VAL '''
 
 
 def p_local_variable_declaration_statement(p):
-      '''local_variable_declaration_statement : local_variable_declaration SEMI_COLON '''
+      '''local_variable_declaration_statement : local_variable_declaration  semi '''
 
 #
 def p_local_variable_declaration(p):
-      '''local_variable_declaration : modifier_opts declaration_keyword variable_declaration_body'''
+      '''local_variable_declaration : declaration_keyword variable_declaration_body'''  #removed modifier opts
 
 
 def p_variable_declaration_initializer(p):
   '''variable_declaration_initializer : expression
                                       | array_initializer
-                                      | class_initializer'''
+                                      | class_instance_creation_expression'''
 
-def p_variable_arguement_list(p):
-  ''' variable_arguement_list : variable_declaration_initializer
-                    | variable_arguement_list COMMA variable_declaration_initializer'''
+# def p_variable_arguement_list(p):
+#   ''' variable_arguement_list : variable_declaration_initializer
+#                     | variable_arguement_list COMMA variable_declaration_initializer'''
 
-def p_variable_declaration_body_1(p):
+def p_variable_declaration_body(p):
       '''variable_declaration_body : variable_declarator  ASSIGN  variable_declaration_initializer '''
 
-def p_variable_declaration_body_2(p):
-      '''variable_declaration_body : LPAREN variable_declarators RPAREN ASSIGN LPAREN variable_arguement_list RPAREN'''
+# def p_variable_declaration_body_2(p):
+#       '''variable_declaration_body : LPAREN variable_declarators RPAREN ASSIGN LPAREN variable_arguement_list RPAREN'''
 
 #left
 def p_variable_declaration_body_3(p):
@@ -435,7 +404,7 @@ def p_variable_declaration_body_3(p):
 def p_variable_declarators(p):
       '''variable_declarators : variable_declarator
                                 | variable_declarators COMMA variable_declarator'''
-      
+
 def p_variable_declarator(p):
       '''variable_declarator : IDENTIFIER COLON type'''
         # '''variable_declarator : IDENTIFIER  '''
@@ -462,7 +431,7 @@ def p_normal_statement(p):
                              | switch_statement'''
 
 def p_expression_statement(p):
-        '''expression_statement : statement_expression SEMI_COLON'''
+        '''expression_statement : statement_expression  semi'''
 
 
 def p_statement_expression(p):
@@ -481,26 +450,26 @@ def p_if_then_else_statement_precedence(p):
 
 def p_if_then_else_intermediate(p):
         '''if_then_else_intermediate : normal_statement
-                                              | if_then_else_statement_precedence'''
+                                     | if_then_else_statement_precedence'''
 
 
 def p_while_statement(p):
         '''while_statement : K_WHILE LPAREN expression RPAREN statement'''
 
 def p_do_while_statement(p):
-        '''do_while_statement : K_DO statement K_WHILE LPAREN expression RPAREN SEMI_COLON '''
+        '''do_while_statement : K_DO statement K_WHILE LPAREN expression RPAREN  semi '''
 
 def p_for_statement(p):
   '''for_statement : K_FOR LPAREN for_logic RPAREN statement'''
 
 def p_for_logic(p):
-    ''' for_logic : for_loop   
-                  | for_loop SEMI_COLON for_logic '''
-    
+    ''' for_logic : for_loop
+                  | for_loop  semi for_logic '''
+
     #changed here
 
 # def p_for_update(p):
-#   ''' for_update : for_loop  '''  #changed here 
+#   ''' for_update : for_loop  '''  #changed here
 
 def p_for_loop(p):
   ''' for_loop : IDENTIFIER IN expression for_untilTo expression '''
@@ -527,7 +496,7 @@ def p_switch_block2(p):
 
 def p_switch_block3(p):
         '''switch_block : BLOCK_BEGIN switch_labels BLOCK_END '''
-        
+
 
 def p_switch_block4(p):
         '''switch_block : BLOCK_BEGIN switch_block_statements switch_labels BLOCK_END '''
@@ -535,7 +504,7 @@ def p_switch_block4(p):
 def p_switch_block_statements(p):
         '''switch_block_statements : switch_block_statement
                                    | switch_block_statements switch_block_statement'''
-        
+
 def p_switch_block_statement(p):
         '''switch_block_statement : switch_labels block_statements'''
 
@@ -550,13 +519,10 @@ def p_switch_label(p):
 
 
 def p_empty_statement(p):
-        '''empty_statement : SEMI_COLON '''
+        '''empty_statement :  semi '''
 
 def p_return_statement(p):
-        '''return_statement : K_RETURN expression_optional SEMI_COLON '''
-
-
-
+        '''return_statement : K_RETURN expression_optional  semi '''
 
 
 def p_empty(p):

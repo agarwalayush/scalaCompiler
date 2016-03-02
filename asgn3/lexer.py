@@ -58,7 +58,6 @@ reserved = {'abstract' : 'K_ABSTRACT',
 	    'Nothing' : 'K_NOTHING',
 	    'Any' : 'K_ANY',
 	    'AnyRef' : 'K_ANYREF',
-	    'List' : 'K_LIST',
 	    'Option' : 'K_OPTION',
 	    'Iterator' : 'K_ITERATOR',
 	    'Some' : 'K_SOME',
@@ -108,14 +107,28 @@ tokens = list(reserved.values()) + [
     'ASSIGN',
     'PLUS',
     'COMMA',
-    'IN'
+    'IN',
+    'XOR',
+    'AND_BITWISE',
+    'LSHIFT',
+    'RSHIFT',
+    'FUNTYPE',
+    'NEWLINE'
 ]
+def t_NEWLINE(t):
+    r'\n'
+    t.lexer.lineno += len(t.value)
+
 
 def t_FLOAT(t):
     r'((\d+)(\.\d+)([eE](\+|-)?(\d+))? | (\d+)[eE](\+|-)?(\d+))([lL]|[fF])?'
     t.value = float(t.value)
     return t
 
+t_LSHIFT = r'>>'
+t_RSHIFT = r'<<'
+t_XOR = r'\^'
+t_AND_BITWISE = r'&'
 t_PLUS = r'\+'
 t_MINUS = r'-'
 t_MULT = r'\*'
@@ -128,7 +141,7 @@ t_LESS_THAN = r'<'
 t_GREATER_THAN = r'>'
 t_LESS_THAN_EQUAL = r'<='
 t_GREATER_THAN_EQUAL = r'>='
-t_BIT_OP = r'\b(&|\||\^|~|<<|>>)\b'
+t_BIT_OP = r'\b(\||~)\b'
 t_NOT = r'!'
 t_LPAREN  = r'\('
 t_RPAREN  = r'\)'
@@ -136,7 +149,7 @@ t_BLOCK_BEGIN  = r'\{'
 t_SQUARE_BEGIN  = r'\['
 t_BLOCK_END  = r'\}'
 t_SQUARE_END  = r'\]'
-t_SYMBOL  = r'(_|=>|<:|<%|>:|\#|@|,)'
+t_SYMBOL  = r'(_|<:|<%|>:|\#|@|,)'
 t_ASSIGN = r'='
 t_EQUAL = r'=='
 t_NEQUAL = r'!='
@@ -145,6 +158,9 @@ t_SEMI_COLON = r';'
 t_COMMA = r','
 t_DOT = r'\.'
 t_IN = r'<-'
+t_FUNTYPE = r'=>'
+
+
 
 def t_INT(t):
     r'[-+]?\d+'
@@ -172,9 +188,6 @@ def t_IDENTIFIER(t):
     t.type = reserved.get(t.value, 'IDENTIFIER')
     return t
 
-def t_newline(t):
-    r'\n+'
-    t.lexer.lineno += len(t.value)
 
 t_ignore  = ' \t'
 
