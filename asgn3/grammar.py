@@ -9,22 +9,192 @@ import logging
 #from lexer import tokens
 from lexer import tokens
 
-def p_program_structure(p):
-    '''ProgramStructure : ProgramStructure  class_and_objects
+def p_compilation_unit(p):
+    'compilation_unit :  import_declarations_opts classes_objects'
+
+def p_import_declarations_opts(p):
+  '''import_declarations_opts : import_declarations
+                                          | empty'''
+
+def p_import_declarations(p):
+    '''import_declarations :  import_declaration
+                                      | import_declarations import_declaration'''
+
+def p_import_declaration(p):
+    '''import_declaration :  K_IMPORT name'''
+
+
+def p_classes_objects(p):
+    '''classes_objects : classes_objects  class_and_objects
                       | class_and_objects '''
 
 def p_class_and_objects(p):
-  '''class_and_objects : SingletonObject
+  '''class_and_objects : object_declaration
                        | class_declaration'''
 
-def p_SingletonObject(p):
-    'SingletonObject : ObjectDeclare block'
+def p_object_declaration(p):
+    'object_declaration : ObjectDeclare block'
 
 
 # object declaration
 def p_object_declare(p):
-    '''ObjectDeclare : K_OBJECT IDENTIFIER
-                | K_OBJECT IDENTIFIER K_EXTENDS IDENTIFIER'''
+    '''ObjectDeclare : K_OBJECT IDENTIFIER super '''
+
+def p_class_type(p):
+  '''class_type : IDENTIFIER
+                    | K_WITH class_type'''
+
+def p_super(p):
+  '''super : K_EXTENDS class_type
+              | empty'''
+
+
+def p_class_declaration(p):
+        '''class_declaration : class_header class_body'''
+
+def p_class_header(p):
+        '''class_header : K_CLASS IDENTIFIER LPAREN constructor_arguement_list_opt RPAREN super'''
+
+def p_class_body(p):
+        '''class_body : BLOCK_BEGIN class_body_declarations_opts BLOCK_END '''
+
+                                    ####---testing---###
+
+def p_class_body_declarations_opts(p):
+      '''class_body_declarations_opts : class_body_declarations
+                                                    | empty'''
+
+def p_class_body_declarations(p):
+    '''class_body_declarations : class_body_declaration
+                                          | class_body_declarations class_body_declaration'''
+
+def p_class_body_declaration(p):
+    '''class_body_declaration : field_declaration
+                                          | method_declaration'''
+
+def p_field_declaration(p):
+    'field_declaration :   declaration_keyword variable_declaration_body SEMI_COLON'
+
+# def p_val_var_opts(p):
+#     ''' val_var_opts : val
+#                         | empty'''
+
+# def p_val(p):
+#     '''  val : K_VAL
+#        | K_VAR'''
+
+# def p_variable_declarators(p):
+#       '''variable_declarators : variable_declarator
+#                                 | variable_declarators COMMA variable_declarator'''
+
+# def p_variable_declarator(p):
+#     '''variable_declarator :  IDENTIFIER
+#                                 |  IDENTIFIER COLON type
+#                                 | IDENTIFIER variable_declarator_extra  '''
+
+# def p_variable_declarator_extra(p):
+#     '''variable_declarator_extra :  ASSIGN variable_initializer
+#                                         | COLON type ASSIGN variable_initializer'''
+
+# def p_variable_initializer(p):
+#     '''variable_initializer :  expression
+#                             | array_initializer'''
+
+# def p_method_declaration(p):
+#     'method_declaration :  method_header method_body'
+
+# def p_method_header(p):         #####
+#     '''method_header :  K_DEF method_declarator COLON type ASSIGN
+#                         | K_DEF method_declarator ASSIGN
+#                         | K_DEF method_declarator'''
+
+# def p_method_declarator(p):
+#     'method_declarator :  IDENTIFIER LPAREN formal_parameter_list RPAREN'
+
+# def p_method_body(p):
+#     '''method_body :  block
+#                     | semi'''
+
+                                      ####---testing---###
+
+def p_constructor_arguement_list_opt(p):
+  '''constructor_arguement_list_opt : constructor_arguement_list
+                            | empty '''
+
+
+def p_constructor_arguement_list(p):
+  '''constructor_arguement_list : constructor_arguement_list_declarator
+                         | constructor_arguement_list COMMA constructor_arguement_list_declarator'''
+
+def p_constructor_arguement_list_declarator(p):
+    '''constructor_arguement_list_declarator : IDENTIFIER COLON type'''  #removed declaration_keyword
+
+def p_func_arguement_list_opt(p):
+  '''func_arguement_list_opt : variable_declarators
+                            | empty '''
+
+
+def p_method_declaration(p):
+        '''method_declaration : method_header method_body'''
+
+
+def p_method_header(p):
+        '''method_header : K_DEF IDENTIFIER LPAREN func_arguement_list_opt RPAREN method_return_type_opt '''
+
+def p_method_return_type_opt(p):
+  '''method_return_type_opt : COLON method_return_type ASSIGN
+                                          | ASSIGN
+                                          | empty'''
+
+def p_method_return_type(p):
+        '''method_return_type : type'''
+
+def p_method_return_type1(p):
+        '''method_return_type : K_UNIT'''
+
+# def p_method_header_name(p):
+#         '''method_header_name : modifier_opts K_DEF IDENTIFIER''' # class_header_name1 type_parameters
+#                              # | class_header_name1
+
+def p_method_body(p):
+        '''method_body : block '''
+
+def p_modifier(p):
+      '''modifier : K_PROTECTED
+                  | K_PRIVATE'''
+
+
+def p_type(p):
+        '''type : primitive_type
+                | reference_type '''
+        # p[0] = p[1]
+
+def p_primitive_type(p):
+    '''primitive_type : K_INT
+                      | K_FLOAT
+                      | K_CHAR
+                      | K_STRING
+                      | K_BOOLEAN'''
+
+
+def p_reference_type(p):
+      '''reference_type : class_data_type
+                        | array_data_type'''
+
+def p_class_data_type(p):
+      '''class_data_type : name'''
+
+def p_array_data_type(p):
+      '''array_data_type : K_ARRAY SQUARE_BEGIN type SQUARE_END'''
+
+def p_array_initializer(p):
+  ''' array_initializer : K_NEW K_ARRAY SQUARE_BEGIN type SQUARE_END LPAREN INT RPAREN
+                        | K_ARRAY LPAREN argument_list_opt RPAREN '''
+
+
+def p_class_initializer(p):
+  ''' class_initializer : K_NEW name LPAREN argument_list_opt RPAREN '''
+
 
 # expression
 def p_expression(p):
@@ -217,7 +387,7 @@ def p_block_statement(p):
       '''block_statement : local_variable_declaration_statement
                            | statement
                            | class_declaration
-                           | SingletonObject
+                           | object_declaration
                            | method_declaration'''
 
 # var (a:Int)=(h);
@@ -253,7 +423,7 @@ def p_variable_arguement_list(p):
                     | variable_arguement_list COMMA variable_declaration_initializer'''
 
 def p_variable_declaration_body_1(p):
-      '''variable_declaration_body : variable_declarator ASSIGN  variable_declaration_initializer '''
+      '''variable_declaration_body : variable_declarator  ASSIGN  variable_declaration_initializer '''
 
 def p_variable_declaration_body_2(p):
       '''variable_declaration_body : LPAREN variable_declarators RPAREN ASSIGN LPAREN variable_arguement_list RPAREN'''
@@ -267,11 +437,13 @@ def p_variable_declarators(p):
                                 | variable_declarators COMMA variable_declarator'''
       
 def p_variable_declarator(p):
-      '''variable_declarator : variable_declarator_id'''
+      '''variable_declarator : IDENTIFIER COLON type'''
+        # '''variable_declarator : IDENTIFIER  '''
 
 
-def p_variable_declarator_id(p):
-      '''variable_declarator_id : IDENTIFIER COLON type'''
+
+# def p_variable_declarator_id(p):
+#       '''variable_declarator_id : IDENTIFIER COLON type'''
 
 def p_statement(p):
         '''statement : normal_statement
@@ -384,104 +556,8 @@ def p_return_statement(p):
         '''return_statement : K_RETURN expression_optional SEMI_COLON '''
 
 
-def p_constructor_arguement_list_opt(p):
-  '''constructor_arguement_list_opt : constructor_arguement_list
-                            | empty '''
 
 
-def p_constructor_arguement_list(p):
-  '''constructor_arguement_list : constructor_arguement_list_declarator
-                         | constructor_arguement_list COMMA constructor_arguement_list_declarator'''
-
-def p_constructor_arguement_list_declarator(p):
-    '''constructor_arguement_list_declarator : declaration_keyword IDENTIFIER COLON type'''
-
-def p_func_arguement_list_opt(p):
-  '''func_arguement_list_opt : variable_declarators
-                            | empty '''
-
-def p_class_declaration(p):
-        '''class_declaration : class_header class_body'''
-
-def p_class_header(p):
-        '''class_header : class_header_name class_header_extends_opt'''
-
-
-def p_class_header_name(p):
-        '''class_header_name : class_header_name1 LPAREN constructor_arguement_list_opt RPAREN''' # class_header_name1 type_parameters
-                             # | class_header_name1
-
-def p_class_header_name1(p):
-        '''class_header_name1 : modifier_opts K_CLASS name'''
-
-
-def p_class_header_extends_opt(p):
-        '''class_header_extends_opt : class_header_extends
-                                    | empty'''
-
-
-def p_class_header_extends(p):
-        '''class_header_extends : K_EXTENDS name LPAREN func_arguement_list_opt RPAREN'''
-
-def p_class_body(p):
-        '''class_body : block '''
-
-
-def p_method_declaration(p):
-        '''method_declaration : method_header method_body'''
-
-
-def p_method_header(p):
-        '''method_header : method_header_name LPAREN func_arguement_list_opt RPAREN COLON method_return_type ASSIGN'''
-
-def p_method_return_type(p):
-        '''method_return_type : type'''
-
-def p_method_return_type1(p):
-        '''method_return_type : K_UNIT'''
-
-def p_method_header_name(p):
-        '''method_header_name : modifier_opts K_DEF IDENTIFIER''' # class_header_name1 type_parameters
-                             # | class_header_name1
-
-def p_method_body(p):
-        '''method_body : block '''
-
-def p_modifier(p):
-      '''modifier : K_PROTECTED
-                  | K_PRIVATE'''
-
-
-def p_type(p):
-        '''type : primitive_type
-                | reference_type '''
-        # p[0] = p[1]
-
-def p_primitive_type(p):
-    '''primitive_type : K_INT
-                      | K_FLOAT
-                      | K_CHAR
-                      | K_STRING
-                      | K_BOOLEAN'''
-
-
-def p_reference_type(p):
-      '''reference_type : class_data_type
-                        | array_data_type'''
-
-def p_class_data_type(p):
-      '''class_data_type : name'''
-
-def p_array_data_type(p):
-      '''array_data_type : K_ARRAY SQUARE_BEGIN type SQUARE_END'''
-
-def p_array_initializer(p):
-  ''' array_initializer : K_NEW K_ARRAY SQUARE_BEGIN type SQUARE_END LPAREN INT RPAREN
-                        | K_ARRAY LPAREN argument_list_opt RPAREN '''
-
-
-def p_class_initializer(p):
-  ''' class_initializer : K_NEW name LPAREN argument_list_opt RPAREN '''
 
 def p_empty(p):
     'empty :'
