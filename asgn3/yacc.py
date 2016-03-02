@@ -147,7 +147,9 @@ def p_reference_type(p):
 def p_array_type(p):
     '''array_type : type SQUARE_BEGIN SQUARE_END'''
 
-
+def p_array_initializer(p):
+  ''' array_initializer : K_NEW K_ARRAY SQUARE_BEGIN type SQUARE_END LPAREN INT RPAREN
+                        | K_ARRAY LPAREN argument_list_optional RPAREN '''
 
 
 #BLOCKS AND COMMANDS
@@ -193,7 +195,6 @@ def p_statement_without_trailing_substatement(p):
              | empty_statement 
                                      | expression_statement 
                                      | switch_statement 
-                                     | continue_statement 
                                      | return_statement'''
     p[0] = Node("statement_without_trailing_substatement " , [p[1]]) 
 
@@ -245,9 +246,9 @@ def p_if_then_else_statement_no_short_if(p):
     p[0] = Node("if_then_else_statement_no_short_if " , [child1, child2, p[3], child4, p[5],child6, p[7]])
 
 def p_switch_statement(p):
-    'statement_no_short_if : expression  K_MATCH switch_block'
+    'switch_statement : expression  K_MATCH switch_block'
     child1 = mkleaf("K_MATCH", p[2])
-    p[0] = Node("statement_no_short_if " , [p[1], child1, p[3]])
+    p[0] = Node("switch_statement " , [p[1], child1, p[3]])
 
 def p_switch_block(p):
     'switch_block : BLOCK_BEGIN switch_block_statement_groups_optional switch_labels_optional BLOCK_END'
@@ -286,16 +287,10 @@ def p_switch_labels(p):
         p[0] = Node("switch_labels ", [p[1], p[2]])
 
 def p_switch_label(p):
-    '''switch_label : K_CASE expression COLON
-                        | K_DEFAULT COLON'''
-    if len(p) == 3:
-        child1 = mkleaf("K_DEFAULT", p[1])
-        child2 = mkleaf("COLON", p[2])
-        p[0] = Node("switch_label ", [child1, child2])
-    else:
-        child1 = mkleaf("K_CASE", p[1])
-        child2 = mkleaf("COLON", p[2])
-        p[0] = Node("switch_label ", [child1,p[2], child2])
+    'switch_label : K_CASE expression COLON'
+    child1 = mkleaf("K_CASE", p[1])
+    child2 = mkleaf("COLON", p[2])
+    p[0] = Node("switch_label ", [child1,p[2], child2])
 
 def p_while_statement(p):
     'while_statement : K_WHILE LPAREN expression RPAREN statement'
@@ -329,49 +324,76 @@ def p_if_variables(p):
 def p_for_exprs(p):
     '''for_exprs :  for_variables SEMI_COLON for_exprs
                     | for_variables'''
+    if(len(p)==2):
+        p[0]= Node("for_exprs", [p[1]])
+    else:
+        child = mkleaf("SEMI_COLON", p[2])
+        p[0]= Node("for_exprs ", [p[1],child, p[3]])
 
 def p_for_variables(p):
     'for_variables : IDENTIFIER IN expression for_untilTo expression '
 
+    child1 = mkleaf("IDENTIFIER", p[1])
+    child2 = mkleaf("IN", p[2])
+    p[0] = Node("for_variables", [child1,child2, p[3],p[4],p[5]])
+
 def p_for_untilTo(p):
     '''  for_untilTo : K_UNTIL
         | K_TO'''
-
-def p_statement_expression_list(p):
-    '''  statement_expression_list : statement_expression
-             | statement_expression_list COMMA statement_expression'''
+    child = mkleaf("UNTIL/TO", p[1])
+    p[0] = Node("for_untilTo", [child])
 
 def p_return_statement(p):
     '''return_statement : K_RETURN expression semi
                                 | K_RETURN semi'''
-
-
-
+    child = mkleaf("K_RETURN", p[1])
+    if(len(p) == 3):
+        p[0]= Node("return_statement",[child , p[2]])
+    else:
+        p[0]= Node("return_statement",[child , p[2],p[3]])        
 
 
 #EXPRESSIONS!
 #---------------------------------------
 def p_expression(p):
     'expression : assignment_expression'
+    p[0] = Node("expression" , [p[1]] , p[1].type)
 
 def p_assignment_expression(p):
     '''  assignment_expression : conditional_expression
              | assignment'''
+    p[0] = Node("assignment_expression" , [p[1]], p[1].type)
 
 def p_assignment(p):
     'assignment : left_hand_side assignment_operator assignment_expression'
+    if(p[1].type != p[3].type):
+        raise TypeError
+    p[0] = Node("assignment" , [p[1] , p[2], p[3]], p[1].type)
 
 def p_left_hand_side(p):
     '''  left_hand_side : expression_name
              | array_access'''
+    p[0] = Node("left_hand_side", [p[1]], p[1].type)
+
+
 
 def p_assignment_operator(p):
     'assignment_operator : ASSIGN'
+    child = mkleaf("ASSIGN" , p[1])
+    p[0] = Node("assignment_operator", [child])
 
-def p_conditional_expression_1(p):
+def p_conditional_expression_1(p):          #what's this ?????
     '''  conditional_expression : conditional_or_expression
-            |  conditional_or_expression  expression COMMA conditional_expression
+            |  conditional_or_expression  expression COLON conditional_expression
                                     | expression COLON conditional_expression'''
+    if(len(p) == 2):
+        p[0] = Node("conditional_expression", [p[1]] , p[1].type) 
+    elif(len(p) == 4):
+        child = mkleaf("COLON" , p[2])
+        p[0] = Node("conditional_expression", [p[1] , child , p[3]] , p[1].type) 
+    else:
+        child = mkleaf("COLON" , p[3])
+        p[0] = Node("conditional_expression", [p[1] , p[2], child , p[4]] , p[1].type) 
 
 # def p_conditional_expression_2(p):
 #       conditional_expression : conditional_or_expression
@@ -475,6 +497,12 @@ def p_method_name(p):
 def p_ambiguous_name(p):
     '''ambiguous_name : IDENTIFIER 
                         | ambiguous_name DOT IDENTIFIER'''
+def p_literal(p):
+    '''literal : INT
+                | FLOAT
+                | CHAR
+                | LONG
+                | K_NULL'''
 
 # Build the parser
 parser = yacc.yacc()
