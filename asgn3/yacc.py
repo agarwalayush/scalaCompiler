@@ -1,10 +1,11 @@
 # Yacc example
 
 import ply.yacc as yacc
+import sys
 
 # Get the token map from the lexer.  This is required.
+#from lexer import tokens
 from lexer import tokens
-
 
 
 class Node:
@@ -15,10 +16,12 @@ class Node:
         else:
             self.children = [ ]
         self.label= label
-    def mkleaf(name, value, type='Unit'):
-        child = Node(value,[],type)
-        parent = Node(name, [child],type)
-        return parent
+
+
+def mkleaf(name, value, type='Unit'):
+    child = Node(value,[],type)
+    parent = Node(name, [child],type)
+    return parent
 
 
 def p_compilation_unit(p):
@@ -29,7 +32,8 @@ def p_import_declarations(p):
                                             | import_declarations import_declaration'''
 
 def p_import_declaration(p):
-    'import_declaration :  K_IMPORT type'
+    '''import_declaration :  K_IMPORT type
+                            | empty '''
 
 def p_classes_objects(p):
     '''classes_objects :  class_object
@@ -37,15 +41,14 @@ def p_classes_objects(p):
 
 def p_class_object(p):
     '''class_object :  class_declaration
-                                | object_declaration
-                                | semi'''
+                                | object_declaration'''
 
 def p_semi(p):
         ''' semi : SEMI_COLON
                     | empty'''
 
 def p_object_declaration(p):
-    'object_declaration :  K_OBJECT IDENTIFIER super BLOCK_BEGIN method_body BLOCK_END'
+    'object_declaration :  K_OBJECT IDENTIFIER super method_body '
 
 def p_class_declaration(p):
     'class_declaration :  K_CLASS IDENTIFIER class_header super BLOCK_BEGIN class_body_declarations BLOCK_END'
@@ -78,8 +81,8 @@ def p_formal_parameter(p):
     'formal_parameter : variable_declarator_id COLON type'
 
 def p_class_type(p):
-    '''class_type : IDENTIFIER
-                        | K_WITH identifierclass_type'''
+    'class_type : IDENTIFIER '
+#                        | K_WITH identifierclass_type'''
 
 def p_field_declaration(p):
     'field_declaration :   val variable_declarator SEMI_COLON'
@@ -134,12 +137,12 @@ def p_numeric_type(p):
                     | floating_point_type'''
 
 def p_integral_type(p):
-    '''integral_type : INT
-                    | LONG
-                    | CHAR'''
+    '''integral_type : K_INT
+                    | K_LONG
+                    | K_CHAR'''
 
 def p_floating_point_type(p):
-    '''floating_point_type : FLOAT'''
+    '''floating_point_type : K_FLOAT'''
 
 def p_reference_type(p):
     '''reference_type : class_type
@@ -208,9 +211,10 @@ def p_empty_statement(p):
     p[0] = Node("empty_statement " , [p[1]])
 
 def p_empty(p):
-    'empty : '
-    child = mkleaf("empty", '')
-    p[0] =  Node("empty" , [child])
+    'empty :'
+    child1 = mkleaf("Empty", "NOP")
+    p[0] = Node("empty", [child1])
+    pass
 
 def p_expression_statement(p):
     'expression_statement : statement_expression semi'
@@ -502,16 +506,38 @@ def p_literal(p):
                 | FLOAT
                 | CHAR
                 | LONG
+                | bool
                 | K_NULL'''
 
-# Build the parser
-parser = yacc.yacc()
+def p_bool(p):
+    '''bool : K_TRUE
+            | K_FALSE '''
 
-while True :
-   try :
-       s = raw_input('calc > ')
-   except EOFError :
-       break
-   if not s : continue
-   result = parser.parse(s)
-   print(result)
+
+if __name__ == "__main__" :
+    filep = open(sys.argv[1])
+    data = filep.read()
+    # lexer.input(data)
+    # tk = defaultdict(list)
+    # num_tk = {}
+    # while True:
+    #     tok = lexer.token()
+    #     if not tok:
+    #         break
+    #     if(tok.type not in tk):
+    #         num_tk[tok.type] = 0
+    #     if(tok.value not in tk[tok.type]):
+    #         tk[tok.type].append(tok.value)
+    #     num_tk[tok.type] += 1
+    # print ("Token         ", "Occurences", "      Lexemes    ")
+    # for x in tk.keys():
+    #     print ('{:16s} {:3d}            {}'.format(x, num_tk[x], tk[x]))
+
+        
+    # Build the parser
+    parser = yacc.yacc()
+
+    while True :
+       
+       result = parser.parse(data)
+       print(result)

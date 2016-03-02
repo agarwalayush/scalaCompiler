@@ -63,7 +63,7 @@ reserved = {'abstract' : 'K_ABSTRACT',
 	    'Iterator' : 'K_ITERATOR',
 	    'Some' : 'K_SOME',
 	    'None' : 'K_NONE',
-	    'Array' : 'K_ARRAY'}
+	    'Array' : 'K_ARRAY'	}
 
 # List of token names.   This is always required
 
@@ -73,6 +73,7 @@ tokens = list(reserved.values()) + [
     'FLOAT',
     'CHAR',
     'STRING',
+    'BOOL',
     'ARITH_OP',
     'REL_OP',
     'LOGIC_OP',
@@ -165,6 +166,7 @@ def t_STRING(t):
     r'\"(\\.|[^\\"])*\"'
     t.value = t.value[1:-1]
     return t
+
 
 def t_IDENTIFIER(t):
     r'[a-zA-Z_][a-zA-Z_0-9]*'
