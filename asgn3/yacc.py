@@ -2,6 +2,7 @@
 
 import ply.yacc as yacc
 import sys
+import logging
 
 # Get the token map from the lexer.  This is required.
 #from lexer import tokens
@@ -80,7 +81,7 @@ def p_formal_parameter(p):
 
 def p_class_type(p):
     '''class_type : IDENTIFIER
-                | K_WITH identifierclass_type'''
+                | K_WITH class_type'''
 
 def p_field_declaration(p):
     'field_declaration :   val variable_declarator SEMI_COLON'
@@ -133,6 +134,7 @@ def p_type(p):
 
 def p_primitive_type(p):
     '''primitive_type : numeric_type
+                    | K_STRING
                     | K_BOOLEAN'''
 
 def p_numeric_type(p):
@@ -164,30 +166,31 @@ def p_array_initializer(p):   #####
 def p_block(p):
     '''block : BLOCK_BEGIN block_statements BLOCK_END
                 | BLOCK_BEGIN BLOCK_END'''
-    child1 = mkleaf("BLOCK_BEGIN" , '{')
-    child2 = mkleaf("BLOCK_BEGIN" , '}')
-    if(len(p) == 2):
-        p[0] = Node("Block" , [child1,child2])
-    else:
-        p[0] = Node("Block" , [child1,p[2],child2])
+    # child1 = mkleaf("BLOCK_BEGIN" , '{')
+    # child2 = mkleaf("BLOCK_BEGIN" , '}')
+    # if(len(p) == 2):
+    #     p[0] = Node("Block" , [child1,child2])
+    # else:
+    #     p[0] = Node("Block" , [child1,p[2],child2])
 
 def p_block_statements(p):
     '''  block_statements : block_statement
              | block_statements block_statement'''
-    if len(p) == 2:
-        p[0] = Node("block_statements", [p[1]])
-    else:
-        p[0] = Node("block_statements", [p[1], p[2]])
+    # if len(p) == 2:
+    #     p[0] = Node("block_statements", [p[1]])
+    # else:
+    #     p[0] = Node("block_statements", [p[1], p[2]])
 
 def p_block_statement(p):
     '''  block_statement : local_variable_declaration_statement
             | method_declaration
              | statement'''
-    p[0] = Node("block statement" , [p[1]])
+    # p[0] = Node("block statement" , [p[1]])
 
 def p_local_variable_declaration_statement(p):
-    'local_variable_declaration_statement : variable_declarators semi'
-    p[0] = Node("local_variable_declaration_statement " , [p[1], p[2]])
+    '''local_variable_declaration_statement : variable_declarators semi
+                                        | field_declaration'''
+    # p[0] = Node("local_variable_declaration_statement " , [p[1], p[2]])
 
 def p_statement(p):
     '''  statement : statement_without_trailing_substatement
@@ -195,7 +198,7 @@ def p_statement(p):
                         | if_then_else_statement
                         | while_statement
                         | for_loop'''
-    p[0] = Node("statement " , [p[1]])
+    # p[0] = Node("statement " , [p[1]])
 
 def p_statement_without_trailing_substatement(p):
     '''  statement_without_trailing_substatement : block
@@ -203,12 +206,12 @@ def p_statement_without_trailing_substatement(p):
                                     | expression_statement
                                     | switch_statement
                                     | return_statement'''
-    p[0] = Node("statement_without_trailing_substatement " , [p[1]])
+    # p[0] = Node("statement_without_trailing_substatement " , [p[1]])
 
 def p_statement_no_short_if(p):
     '''  statement_no_short_if : statement_without_trailing_substatement
              | if_then_else_statement_no_short_if'''
-    p[0] = Node("statement_no_short_if " , [p[1]])
+    # p[0] = Node("statement_no_short_if " , [p[1]])
 
 def p_empty_statement(p):
     'empty_statement : semi'
@@ -217,178 +220,178 @@ def p_empty_statement(p):
 def p_empty(p):
     'empty :'
     child1 = mkleaf("Empty" , "empty")
-    p[0] = Node("empty", [child1])
+    # p[0] = Node("empty", [child1])
 #    pass
 
 def p_expression_statement(p):
     'expression_statement : statement_expression semi'
-    p[0] = Node("expression_statement " , [p[1], p[2]])
+    # p[0] = Node("expression_statement " , [p[1], p[2]])
 
 def p_statement_expression(p):
     '''  statement_expression : assignment
             | method_invocation
                                     | class_instance_creation_expression'''
-    p[0] = Node("statement_expression " , [p[1]])
+    # p[0] = Node("statement_expression " , [p[1]])
 
 def p_if_then_statement(p):
     'if_then_statement : K_IF LPAREN expression RPAREN statement'
-    child1 = mkleaf("K_IF", p[1])
-    child2 = mkleaf("LPAREN", p[2])
-    child4 = mkleaf("RPAREN", p[4])
-    p[0] = Node("if_then_statement" , [child1, child2, p[3], child4, p[5]])
+    # child1 = mkleaf("K_IF", p[1])
+    # child2 = mkleaf("LPAREN", p[2])
+    # child4 = mkleaf("RPAREN", p[4])
+    # p[0] = Node("if_then_statement" , [child1, child2, p[3], child4, p[5]])
 
 def p_if_then_else_statement(p):
     'if_then_else_statement : K_IF LPAREN expression RPAREN statement_no_short_if K_ELSE statement'
-    child1 = mkleaf("K_IF", p[1])
-    child2 = mkleaf("LPAREN", p[2])
-    child4 = mkleaf("RPAREN", p[4])
-    child6 = mkleaf("K_ELSE", p[6])
-    p[0] = Node("if_then_else_statement" , [child1, child2, p[3], child4, p[5],child6, p[7]])
+    # child1 = mkleaf("K_IF", p[1])
+    # child2 = mkleaf("LPAREN", p[2])
+    # child4 = mkleaf("RPAREN", p[4])
+    # child6 = mkleaf("K_ELSE", p[6])
+    # p[0] = Node("if_then_else_statement" , [child1, child2, p[3], child4, p[5],child6, p[7]])
 
 def p_if_then_else_statement_no_short_if(p):
     'if_then_else_statement_no_short_if : K_IF LPAREN expression RPAREN statement_no_short_if K_ELSE statement_no_short_if'
-    child1 = mkleaf("K_IF", p[1])
-    child2 = mkleaf("LPAREN", p[2])
-    child4 = mkleaf("RPAREN", p[4])
-    child6 = mkleaf("K_ELSE", p[6])
-    p[0] = Node("if_then_else_statement_no_short_if " , [child1, child2, p[3], child4, p[5],child6, p[7]])
+    # child1 = mkleaf("K_IF", p[1])
+    # child2 = mkleaf("LPAREN", p[2])
+    # child4 = mkleaf("RPAREN", p[4])
+    # child6 = mkleaf("K_ELSE", p[6])
+    # p[0] = Node("if_then_else_statement_no_short_if " , [child1, child2, p[3], child4, p[5],child6, p[7]])
 
 def p_switch_statement(p):
     'switch_statement : expression  K_MATCH switch_block'
-    child1 = mkleaf("K_MATCH", p[2])
-    p[0] = Node("switch_statement " , [p[1], child1, p[3]])
+    # child1 = mkleaf("K_MATCH", p[2])
+    # p[0] = Node("switch_statement " , [p[1], child1, p[3]])
 
 def p_switch_block(p):
     'switch_block : BLOCK_BEGIN switch_block_statement_groups_optional switch_labels_optional BLOCK_END'
-    child1 = mkleaf("BLOCK_BEGIN ", p[1])
-    child4 = mkleaf("BLOCK_END", p[4])
-    p[0] = Node("switch_block " , [child1, p[2], p[3], child4])
+    # child1 = mkleaf("BLOCK_BEGIN ", p[1])
+    # child4 = mkleaf("BLOCK_END", p[4])
+    # p[0] = Node("switch_block " , [child1, p[2], p[3], child4])
 
 def p_switch_block_statement_groups_optional(p):
     '''  switch_block_statement_groups_optional : switch_block_statement_groups
              | empty'''
-    p[0] = Node("switch_block_statement_groups_optional " , [p[1]])
+    # p[0] = Node("switch_block_statement_groups_optional " , [p[1]])
 
 def p_switch_labels_optional(p):
     '''  switch_labels_optional : switch_labels
              | empty'''
-    p[0] = Node("switch_labels_optional" , [p[1]])
+    # p[0] = Node("switch_labels_optional" , [p[1]])
 
 def p_switch_block_statement_groups(p):
     '''  switch_block_statement_groups : switch_block_statement_group
              | switch_block_statement_groups switch_block_statement_group'''
-    if len(p) == 2:
-        p[0] = Node("switch_block_statement_groups ", [p[1]])
-    else:
-        p[0] = Node("switch_block_statement_groups ", [p[1], p[2]])
+    # if len(p) == 2:
+    #     p[0] = Node("switch_block_statement_groups ", [p[1]])
+    # else:
+    #     p[0] = Node("switch_block_statement_groups ", [p[1], p[2]])
 
 def p_switch_block_statement_group(p):
     'switch_block_statement_group : switch_labels block_statements'
-    p[0] = Node("switch_block_statement_group " , [p[1], p[2]])
+    # p[0] = Node("switch_block_statement_group " , [p[1], p[2]])
 
 def p_switch_labels(p):
     '''  switch_labels : switch_label
              | switch_labels switch_label'''
-    if len(p) == 2:
-        p[0] = Node("switch_labels ", [p[1]])
-    else:
-        p[0] = Node("switch_labels ", [p[1], p[2]])
+    # if len(p) == 2:
+    #     p[0] = Node("switch_labels ", [p[1]])
+    # else:
+    #     p[0] = Node("switch_labels ", [p[1], p[2]])
 
 def p_switch_label(p):
     'switch_label : K_CASE expression COLON'
-    child1 = mkleaf("K_CASE", p[1])
-    child2 = mkleaf("COLON", p[2])
-    p[0] = Node("switch_label ", [child1,p[2], child2])
+    # child1 = mkleaf("K_CASE", p[1])
+    # child2 = mkleaf("COLON", p[2])
+    # p[0] = Node("switch_label ", [child1,p[2], child2])
 
 def p_while_statement(p):
     'while_statement : K_WHILE LPAREN expression RPAREN statement'
-    child1 = mkleaf("K_WHILE ", p[1])
-    child2 = mkleaf("LPAREN", p[2])
-    child4 = mkleaf("RPAREN", p[4])
-    p[0] = Node("while_statement " , [child1, child2, p[3], child4, p[5]])
+    # child1 = mkleaf("K_WHILE ", p[1])
+    # child2 = mkleaf("LPAREN", p[2])
+    # child4 = mkleaf("RPAREN", p[4])
+    # p[0] = Node("while_statement " , [child1, child2, p[3], child4, p[5]])
 
 def p_for_loop(p):
     'for_loop : K_FOR LPAREN for_exprs for_if_condition RPAREN statement'
-    child1 = mkleaf("K_FOR ", p[1])
-    child2 = mkleaf("BLOCK_BEGIN ", p[2])
-    child5 = mkleaf("BLOCK_END", p[4])
-    p[0] = Node("for_loop" , [child1, child2, p[3], p[4], child5, p[6]])
+    # child1 = mkleaf("K_FOR ", p[1])
+    # child2 = mkleaf("BLOCK_BEGIN ", p[2])
+    # child5 = mkleaf("BLOCK_END", p[4])
+    # p[0] = Node("for_loop" , [child1, child2, p[3], p[4], child5, p[6]])
 
 
 def p_for_if_condition(p):
     '''for_if_condition : SEMI_COLON if_variables  for_if_condition
                             | if_variables'''
-    child1 = mkleaf("SEMI_COLON ", p[1])
-    if(len(p) == 2):
-        p[0] = Node("for_if_condition" , [p[1]])
-    else:
-        p[0] = Node("for_if_condition" , [child1, p[2], p[3]])
+    # child1 = mkleaf("SEMI_COLON ", p[1])
+    # if(len(p) == 2):
+    #     p[0] = Node("for_if_condition" , [p[1]])
+    # else:
+    #     p[0] = Node("for_if_condition" , [child1, p[2], p[3]])
 
 def p_if_variables(p):
     'if_variables : K_IF expression '
-    child1= mkleaf("K_IF", p[1])
-    p[0]= Node("if_variables ", [child1, p[2]])
+    # child1= mkleaf("K_IF", p[1])
+    # p[0]= Node("if_variables ", [child1, p[2]])
 
 def p_for_exprs(p):
     '''for_exprs :  for_variables SEMI_COLON for_exprs
                     | for_variables'''
-    if(len(p)==2):
-        p[0]= Node("for_exprs", [p[1]])
-    else:
-        child = mkleaf("SEMI_COLON", p[2])
-        p[0]= Node("for_exprs ", [p[1],child, p[3]])
+    # if(len(p)==2):
+    #     p[0]= Node("for_exprs", [p[1]])
+    # else:
+    #     child = mkleaf("SEMI_COLON", p[2])
+    #     p[0]= Node("for_exprs ", [p[1],child, p[3]])
 
 def p_for_variables(p):
     'for_variables : val_var_opts IDENTIFIER IN expression for_untilTo expression '
 
-    child1 = mkleaf("IDENTIFIER", p[1])
-    child2 = mkleaf("IN", p[2])
-    p[0] = Node("for_variables", [child1,child2, p[3],p[4],p[5]])
+    # child1 = mkleaf("IDENTIFIER", p[1])
+    # child2 = mkleaf("IN", p[2])
+    # p[0] = Node("for_variables", [child1,child2, p[3],p[4],p[5]])
 
 def p_for_untilTo(p):
     '''  for_untilTo : K_UNTIL
         | K_TO'''
-    child = mkleaf("UNTIL/TO", p[1])
-    p[0] = Node("for_untilTo", [child])
+    # child = mkleaf("UNTIL/TO", p[1])
+    # p[0] = Node("for_untilTo", [child])
 
 def p_return_statement(p):
     '''return_statement : K_RETURN expression semi
                                 | K_RETURN semi'''
-    child = mkleaf("K_RETURN", p[1])
-    if(len(p) == 3):
-        p[0]= Node("return_statement",[child , p[2]])
-    else:
-        p[0]= Node("return_statement",[child , p[2],p[3]])
+    # child = mkleaf("K_RETURN", p[1])
+    # if(len(p) == 3):
+    #     p[0]= Node("return_statement",[child , p[2]])
+    # else:
+    #     p[0]= Node("return_statement",[child , p[2],p[3]])
 
 
 #EXPRESSIONS!
 #---------------------------------------
 def p_expression(p):
     'expression : assignment_expression'
-    p[0] = Node("expression" , [p[1]] , p[1].type)
+    # p[0] = Node("expression" , [p[1]] , p[1].type)
 
 def p_assignment_expression(p):
     '''  assignment_expression : assignment
                                 | conditional_expression '''
-    p[0] = Node("assignment_expression" , [p[1]], p[1].type)
+    # p[0] = Node("assignment_expression" , [p[1]], p[1].type)
 
 def p_assignment(p):
     'assignment : left_hand_side assignment_operator assignment_expression'
     if(p[1].type != p[3].type):
         raise TypeError
-    p[0] = Node("assignment" , [p[1] , p[2], p[3]], p[1].type)
+    # p[0] = Node("assignment" , [p[1] , p[2], p[3]], p[1].type)
 
 def p_left_hand_side(p):
     '''  left_hand_side : expression_name
              | array_access'''
-    p[0] = Node("left_hand_side", [p[1]], p[1].type)
+    # p[0] = Node("left_hand_side", [p[1]], p[1].type)
 
 
 
 def p_assignment_operator(p):
     'assignment_operator : ASSIGN'
     child = mkleaf("ASSIGN" , p[1])
-    p[0] = Node("assignment_operator", [child])
+    # p[0] = Node("assignment_operator", [child])
 
 def p_conditional_expression_1(p):          #what's this ?????
     '''  conditional_expression : conditional_or_expression
@@ -468,7 +471,7 @@ def p_postfix_expression(p):
              | expression_name'''
 
 def p_method_invocation(p):
-    '''method_invocation : method_name LPAREN argument_list_optional RPAREN
+    '''method_invocation : expression_name LPAREN argument_list_optional RPAREN
                                     | primary_no_new_array DOT IDENTIFIER LPAREN argument_list_optional RPAREN'''
 
 def p_argument_list_optional(p):
@@ -498,16 +501,13 @@ def p_expression_name(p):
     '''expression_name : IDENTIFIER
                         | ambiguous_name DOT IDENTIFIER'''
 
-def p_method_name(p):       ### second one, really??
-    '''method_name : IDENTIFIER
-                    | ambiguous_name DOT IDENTIFIER'''
-
 def p_ambiguous_name(p):
     '''ambiguous_name : IDENTIFIER
                         | ambiguous_name DOT IDENTIFIER'''
 def p_literal(p):
     '''literal : INT
                 | FLOAT
+                | STRING
                 | CHAR
                 | LONG
                 | bool
@@ -517,27 +517,125 @@ def p_bool(p):
     '''bool : K_TRUE
             | K_FALSE '''
 
+logging.basicConfig(
+    level = logging.DEBUG,
+    filename = "parselog.txt",
+    filemode = "w"
+)
+
+log = logging.getLogger()
+parser = yacc.yacc()
+
 
 if __name__ == "__main__" :
-    lexer.input(data)
-    tk = defaultdict(list)
-    num_tk = {}
-    while True:
-        tok = lexer.token()
-        if not tok:
-            break
-        if(tok.type not in tk):
-            num_tk[tok.type] = 0
-        if(tok.value not in tk[tok.type]):
-            tk[tok.type].append(tok.value)
-        num_tk[tok.type] += 1
-    print ("Token         ", "Occurences", "      Lexemes    ")
-    for x in tk.keys():
-        print ('{:16s} {:3d}            {}'.format(x, num_tk[x], tk[x]))
+
+    s = open(sys.argv[1],'r')
+    data = s.read()
+    data+= "\n"
+    s.close()
+    result = parser.parse(data,debug=log)
 
 
-    # Build the parser
-    parser = yacc.yacc()
+    import re
+    from collections import defaultdict
 
-    nodes = parser.parse(data)#  print(nodes.child)
+    #obtain the lines with the productions used
+    outfile = open("actions.txt",'w')
+    with open("parselog.txt") as f:
+        for line in f:
+            if re.match("INFO:root:Action(.*)", line):
+                outfile.write(line)
+
+
+    #clean the productions to give the required information
+    infile = "actions.txt"
+    outfile = "treefile.txt"
+
+    delete_list2 = ["rule [","] with"]
+
+    fin = open(infile)
+    fout = open(outfile, "w+")
+    for line in fin:
+       matches = re.findall('rule \[(.*)\] with', line)
+       #for word in delete_list2:
+       #    matches[0] = matches[0].replace(word, "")
+       fout.write(matches[0])
+       #line = line[1:len(line)-2]
+       #fout.write(line)
+       fout.write("\n")
+    fin.close()
+    fout.close()
+
+
+
+    #use the clean productions and build the dot file
+    nodes = defaultdict(list)
+    #nodes = dict()
+    nodeNum = 1
+
+    # infile = sys.argv[1]
+    # outfile = infile[0:len(infile)-3]
+    outfile="out.dot"
+    # outfile = outfile.split("/")[-1]
+
+    fout = open(outfile,"w")
+
+    fout.write("""digraph G {
+    graph [ordering="out"];
+    """)
+    fout.write("\n")
+
+    for line in open("treefile.txt"):
+        columns = line.split(" ")
+        fout.write("node%d [ label = \"%s\" ]; " % (nodeNum,columns[0]))
+        fout.write("\n")
+        lhsNum = nodeNum
+        nodeNum += 1
+        edges = []
+        for i in range(1,len(columns)-1):
+            i = len(columns)  - i
+        columns[i] = columns[i].rstrip()
+        edge = ""
+        if columns[i] in nodes:
+            edge += "node" + str(lhsNum) + " -> node" + str(nodes[columns[i]].pop(len(nodes[columns[i]])-1)) + ";"
+            if len(nodes[columns[i]]) == 0:
+               del nodes[columns[i]]
+        else:
+            fout.write("node%d [ label = \"Token \n %s\" ]; " % (nodeNum,columns[i]))
+            fout.write("\n")
+            edge += "node" + str(lhsNum) + " -> node" + str(nodeNum) + ";"
+            #print "node%d -> node%d;" %(lhsNum,nodeNum)
+            nodeNum += 1
+        edges.append(edge)
+        nodes[columns[0]].append(lhsNum)
+        while edges:
+           fout.write(edges.pop(len(edges)-1))
+           fout.write("\n")
+
+    fout.write( "}" )
+    fout.write("\n")
+    fout.close()
+
+# if __name__ == "__main__" :
+#     lexer.input(data)
+#     tk = defaultdict(list)
+#     num_tk = {}
+#     while True:
+#         tok = lexer.token()
+#         if not tok:
+#             break
+#         if(tok.type not in tk):
+#             num_tk[tok.type] = 0
+#         if(tok.value not in tk[tok.type]):
+#             tk[tok.type].append(tok.value)
+#         num_tk[tok.type] += 1
+#     print ("Token         ", "Occurences", "      Lexemes    ")
+#     for x in tk.keys():
+#         print ('{:16s} {:3d}            {}'.format(x, num_tk[x], tk[x]))
+
+
+#     # Build the parser
+#     parser = yacc.yacc()
+
+#     nodes = parser.parse(data)#  print(nodes.child)
     #  print(result)
