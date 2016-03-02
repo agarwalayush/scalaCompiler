@@ -73,7 +73,6 @@ tokens = list(reserved.values()) + [
     'FLOAT',
     'CHAR',
     'STRING',
-    'BOOL',
     'ARITH_OP',
     'REL_OP',
     'LOGIC_OP',
@@ -189,21 +188,21 @@ def t_error(t):
 
 lexer = lex.lex()
 
-# if __name__ == "__main__" :
-#     filep = open(sys.argv[1])
-#     data = filep.read()
-#     lexer.input(data)
-#     tk = defaultdict(list)
-#     num_tk = {}
-#     while True:
-#         tok = lexer.token()
-#         if not tok:
-#             break
-#         if(tok.type not in tk):
-#             num_tk[tok.type] = 0
-#         if(tok.value not in tk[tok.type]):
-#             tk[tok.type].append(tok.value)
-#         num_tk[tok.type] += 1
-#     print ("Token         ", "Occurences", "      Lexemes    ")
-#     for x in tk.keys():
-#         print ('{:16s} {:3d}            {}'.format(x, num_tk[x], tk[x]))
+if __name__ == "__main__" :
+    filep = open(sys.argv[1])
+    data = filep.read()
+    lexer.input(data)
+    tk = defaultdict(list)
+    num_tk = {}
+    while True:
+        tok = lexer.token()
+        if not tok:
+            break
+        if(tok.type not in tk):
+            num_tk[tok.type] = 0
+        if(tok.value not in tk[tok.type]):
+            tk[tok.type].append(tok.value)
+        num_tk[tok.type] += 1
+    print ("Token         ", "Occurences", "      Lexemes    ")
+    for x in tk.keys():
+        print ('{:16s} {:3d}            {}'.format(x, num_tk[x], tk[x]))

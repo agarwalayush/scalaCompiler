@@ -74,11 +74,9 @@ def p_formal_parameter_list(p):
                                                 | formal_parameter_list COMMA formal_parameter
                                                 | empty'''
 
-def p_variable_declarator_id(p):
-      '''variable_declarator_id : IDENTIFIER COLON type'''
 
 def p_formal_parameter(p):
-    'formal_parameter : variable_declarator_id COLON type'
+    'formal_parameter : IDENTIFIER COLON type'
 
 def p_class_type(p):
     'class_type : IDENTIFIER '
@@ -113,7 +111,8 @@ def p_method_declaration(p):
 
 def p_method_header(p):
     '''method_header :  K_DEF method_declarator COLON type ASSIGN
-                            | K_DEF method_declarator ASSIGN '''
+                        | K_DEF method_declarator ASSIGN
+                        | K_DEF method_declarator'''
 
 def p_method_declarator(p):
     'method_declarator :  IDENTIFIER LPAREN formal_parameter_list RPAREN'
@@ -144,13 +143,13 @@ def p_integral_type(p):
 def p_floating_point_type(p):
     '''floating_point_type : K_FLOAT'''
 
-def p_reference_type(p):
+def p_reference_type(p):        #### why ??? 
     '''reference_type : class_type
                         | array_type'''
 def p_array_type(p):
     '''array_type : type SQUARE_BEGIN SQUARE_END'''
 
-def p_array_initializer(p):
+def p_array_initializer(p):   #####
   ''' array_initializer : K_NEW K_ARRAY SQUARE_BEGIN type SQUARE_END LPAREN INT RPAREN
                         | K_ARRAY LPAREN argument_list_optional RPAREN '''
 
@@ -178,6 +177,7 @@ def p_block_statements(p):
 
 def p_block_statement(p):
     '''  block_statement : local_variable_declaration_statement
+            | method_declaration
              | statement'''
     p[0] = Node("block statement" , [p[1]]) 
 
@@ -195,10 +195,10 @@ def p_statement(p):
 
 def p_statement_without_trailing_substatement(p):
     '''  statement_without_trailing_substatement : block
-             | empty_statement 
-                                     | expression_statement 
-                                     | switch_statement 
-                                     | return_statement'''
+                                    | empty_statement 
+                                    | expression_statement 
+                                    | switch_statement 
+                                    | return_statement'''
     p[0] = Node("statement_without_trailing_substatement " , [p[1]]) 
 
 def p_statement_no_short_if(p):
@@ -212,9 +212,9 @@ def p_empty_statement(p):
 
 def p_empty(p):
     'empty :'
-    child1 = mkleaf("Empty", "NOP")
+    child1 = mkleaf("Empty" , "empty")
     p[0] = Node("empty", [child1])
-    pass
+#    pass
 
 def p_expression_statement(p):
     'expression_statement : statement_expression semi'
@@ -364,8 +364,8 @@ def p_expression(p):
     p[0] = Node("expression" , [p[1]] , p[1].type)
 
 def p_assignment_expression(p):
-    '''  assignment_expression : conditional_expression
-             | assignment'''
+    '''  assignment_expression : assignment
+                                | conditional_expression '''
     p[0] = Node("assignment_expression" , [p[1]], p[1].type)
 
 def p_assignment(p):
@@ -390,14 +390,14 @@ def p_conditional_expression_1(p):          #what's this ?????
     '''  conditional_expression : conditional_or_expression
             |  conditional_or_expression  expression COLON conditional_expression
                                     | expression COLON conditional_expression'''
-    if(len(p) == 2):
-        p[0] = Node("conditional_expression", [p[1]] , p[1].type) 
-    elif(len(p) == 4):
-        child = mkleaf("COLON" , p[2])
-        p[0] = Node("conditional_expression", [p[1] , child , p[3]] , p[1].type) 
-    else:
-        child = mkleaf("COLON" , p[3])
-        p[0] = Node("conditional_expression", [p[1] , p[2], child , p[4]] , p[1].type) 
+    # if(len(p) == 2):
+    #     p[0] = Node("conditional_expression", [p[1]] , p[1].type) 
+    # elif(len(p) == 4):
+    #     child = mkleaf("COLON" , p[2])
+    #     p[0] = Node("conditional_expression", [p[1] , child , p[3]] , p[1].type) 
+    # else:
+    #     child = mkleaf("COLON" , p[3])
+    #     p[0] = Node("conditional_expression", [p[1] , p[2], child , p[4]] , p[1].type) 
 
 # def p_conditional_expression_2(p):
 #       conditional_expression : conditional_or_expression
@@ -537,7 +537,5 @@ if __name__ == "__main__" :
     # Build the parser
     parser = yacc.yacc()
 
-    while True :
-       
-       result = parser.parse(data)
-       print(result)
+    nodes = parser.parse(data)#  print(nodes.child)
+    #  print(result)
