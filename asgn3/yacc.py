@@ -85,6 +85,10 @@ def p_class_type(p):
 def p_field_declaration(p):
     'field_declaration :   val variable_declarator SEMI_COLON'
 
+def p_val_var_opts(p):
+    ''' val_var_opts : val
+                        | empty'''
+
 def p_val(p):
     '''  val : K_VAL
        | K_VAR'''
@@ -109,7 +113,7 @@ def p_variable_initializer(p):
 def p_method_declaration(p):
     'method_declaration :  method_header method_body'
 
-def p_method_header(p):
+def p_method_header(p):         #####
     '''method_header :  K_DEF method_declarator COLON type ASSIGN
                         | K_DEF method_declarator ASSIGN
                         | K_DEF method_declarator'''
@@ -304,7 +308,7 @@ def p_while_statement(p):
     p[0] = Node("while_statement " , [child1, child2, p[3], child4, p[5]])
 
 def p_for_loop(p):
-    'for_loop : K_FOR BLOCK_BEGIN for_exprs for_if_condition BLOCK_END statement'
+    'for_loop : K_FOR LPAREN for_exprs for_if_condition RPAREN statement'
     child1 = mkleaf("K_FOR ", p[1])
     child2 = mkleaf("BLOCK_BEGIN ", p[2])
     child5 = mkleaf("BLOCK_END", p[4])
@@ -335,7 +339,7 @@ def p_for_exprs(p):
         p[0]= Node("for_exprs ", [p[1],child, p[3]])
 
 def p_for_variables(p):
-    'for_variables : IDENTIFIER IN expression for_untilTo expression '
+    'for_variables : val_var_opts IDENTIFIER IN expression for_untilTo expression '
 
     child1 = mkleaf("IDENTIFIER", p[1])
     child2 = mkleaf("IN", p[2])
@@ -494,7 +498,7 @@ def p_expression_name(p):
     '''expression_name : IDENTIFIER
                         | ambiguous_name DOT IDENTIFIER'''
 
-def p_method_name(p):
+def p_method_name(p):       ### second one, really?? 
     '''method_name : IDENTIFIER 
                     | ambiguous_name DOT IDENTIFIER'''
 
