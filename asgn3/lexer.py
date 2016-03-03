@@ -62,7 +62,8 @@ reserved = {'abstract' : 'K_ABSTRACT',
 	    'Iterator' : 'K_ITERATOR',
 	    'Some' : 'K_SOME',
 	    'None' : 'K_NONE',
-	    'Array' : 'K_ARRAY'	}
+	    'Array' : 'K_ARRAY',
+                'List'	: 'K_LIST'}
 
 # List of token names.   This is always required
 
@@ -112,12 +113,9 @@ tokens = list(reserved.values()) + [
     'AND_BITWISE',
     'LSHIFT',
     'RSHIFT',
-    'FUNTYPE',
+    'IMPLIES',
     'NEWLINE'
 ]
-def t_NEWLINE(t):
-    r'\n'
-    t.lexer.lineno += len(t.value)
 
 
 def t_FLOAT(t):
@@ -149,7 +147,7 @@ t_BLOCK_BEGIN  = r'\{'
 t_SQUARE_BEGIN  = r'\['
 t_BLOCK_END  = r'\}'
 t_SQUARE_END  = r'\]'
-t_SYMBOL  = r'(_|<:|<%|>:|\#|@|,)'
+t_SYMBOL  = r'(_|<:|<%|>:|\#|@)'
 t_ASSIGN = r'='
 t_EQUAL = r'=='
 t_NEQUAL = r'!='
@@ -158,7 +156,7 @@ t_SEMI_COLON = r';'
 t_COMMA = r','
 t_DOT = r'\.'
 t_IN = r'<-'
-t_FUNTYPE = r'=>'
+t_IMPLIES = r'=>'
 
 
 
@@ -174,7 +172,7 @@ def t_LONG(t):
 
 def t_CHAR(t):
     r'\'.\''
-    t.value = t[1:-1]
+    t.value = t.value[1:-1]
     return t
 
 def t_STRING(t):
@@ -194,6 +192,13 @@ t_ignore  = ' \t'
 def t_ccode_comment(t):
     r'(/\*(.|\n)*?\*/)|(//.*)'
     pass
+
+def t_NEWLINE(t):
+    r'\n+'
+    t.lexer.lineno += len(t.value)
+    t.value = '\n'
+    # return t
+
 
 def t_error(t):
     print("Illegal character '%s'" % t.value[0])
