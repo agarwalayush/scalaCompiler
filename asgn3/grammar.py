@@ -64,7 +64,7 @@ def p_class_body_declaration(p):
                                           | method_declaration'''
 
 def p_field_declaration(p):
-    'field_declaration :   declaration_keyword variable_declaration_body  semi'
+    'field_declaration :   variable_header variable_body  semi'
 
 def p_semi(p):
     '''semi : SEMI_COLON
@@ -79,8 +79,9 @@ def p_class_arguement_list(p):
                                     | IDENTIFIER COLON type COMMA class_arguement_list'''
 
 def p_func_arguement_list_extras(p):
-  '''func_arguement_list_extras : variable_declarators
-                                        | empty '''
+  '''func_arguement_list_extras : type_of_variable
+                                                | type_of_variable COMMA func_arguement_list_extras
+                                                | empty '''
 
 def p_method_declaration(p):
         '''method_declaration : K_DEF IDENTIFIER LPAREN func_arguement_list_extras RPAREN method_return_type_extras '''
@@ -91,37 +92,10 @@ def p_method_return_type_extras(p):
                                           | empty method_body'''
 
 def p_method_return_type(p):
-        '''method_return_type : type
-                                | K_UNIT'''
+        '''method_return_type : type'''
 
 def p_method_body(p):
         '''method_body : block'''
-
-def p_type(p):
-        '''type : basic_type
-                 | other_type '''
-
-def p_basic_type(p):
-    '''basic_type : K_CHAR
-                             | K_FLOAT
-                             | K_STRING
-                             | K_BOOLEAN
-                             | K_INT'''
-
-
-def p_other_type(p):
-      '''other_type : nonarray_datatype
-                        | array_datatype'''
-
-def p_array_datatype(p):
-      '''array_datatype : K_ARRAY square_block
-                                | K_LIST square_block'''
-
-def p_square_block(p):
-    ''' square_block : SQUARE_BEGIN type SQUARE_END'''
-
-def p_nonarray_datatype(p):
-      '''nonarray_datatype : IDENTIFIER'''
 
 
 def p_expression(p):
@@ -173,11 +147,11 @@ def p_mult_expression(p):
 
 def p_unary_expression(p):
     '''unary_expression : PLUS unary_expression
-                                | MINUS unary_expression
-                                | unary_expression_not_plus_minus'''
+                                 | MINUS unary_expression
+                                 | postfix_not_expression'''
 
-def p_unary_expression_not_plus_minus(p):
-    '''unary_expression_not_plus_minus : postfix_expression
+def p_postfix_not_expression(p):
+    '''postfix_not_expression : postfix_expression
                                                        | NOT unary_expression'''
 
 def p_postfix_expression(p):
@@ -231,35 +205,32 @@ def p_block(p):
 
 
 def p_block_body(p):
-      '''block_body : block_statements
+      '''block_body : block_statement_list
                         | empty'''
 
-def p_block_statements(p):
-      '''block_statements : block_statement
-                                    | block_statements block_statement'''
+def p_block_statement_list(p):
+      '''block_statement_list : block_statement
+                                    | block_statement_list block_statement'''
 
 def p_block_statement(p):
-      '''block_statement : local_variable_declaration_statement
-                                    | statement
-                                    | method_declaration'''
-                           
-
-def p_declaration_keyword(p):
-  '''declaration_keyword : K_VAR
-                                    | K_VAL '''
+      '''block_statement : local_variable
+                                    | method_declaration
+                                    | statement'''
 
 
-def p_local_variable_declaration_statement(p):
-      '''local_variable_declaration_statement : local_variable_declaration  semi '''
-
-def p_local_variable_declaration(p):
-      '''local_variable_declaration : declaration_keyword variable_declaration_body''' 
+def p_variable_header(p):
+  '''variable_header : K_VAL
+                            | K_VAR '''
 
 
-def p_variable_declaration_initializer(p):
-  '''variable_declaration_initializer : expression
-                                                  | array_initializer
-                                                  | class_instance_creation_expression'''
+def p_local_variable(p):
+      '''local_variable : variable_header variable_body  semi '''
+
+
+def p_variable_rhs(p):
+  '''variable_rhs : expression
+                        | array_initializer
+                        | class_instance_creation_expression'''
 
 def p_array_initializer(p):
   ''' array_initializer : K_NEW K_ARRAY SQUARE_BEGIN type SQUARE_END LPAREN INT RPAREN
@@ -271,20 +242,17 @@ def p_class_instance_creation_expression(p):
   ''' class_instance_creation_expression : K_NEW nonarray_datatype LPAREN argument_list_extras RPAREN '''
 
 
-def p_variable_declaration_body(p):
-      '''variable_declaration_body : variable_declarator_extra_rule  ASSIGN  variable_declaration_initializer '''
-
-def p_variable_declarators(p):
-      '''variable_declarators : variable_declarator
-                                        | variable_declarator COMMA variable_declarators'''
-
-def p_variable_declarator(p):
-      '''variable_declarator : IDENTIFIER COLON type'''
+def p_variable_body(p):
+      '''variable_body : local_variable_and_type  ASSIGN  variable_rhs '''
 
 
-def p_variable_declarator_extra_rule(p):
-      '''variable_declarator_extra_rule : IDENTIFIER COLON type
-                                                    | IDENTIFIER'''
+def p_type_of_variable(p):
+      '''type_of_variable : IDENTIFIER COLON type'''
+
+
+def p_local_variable_and_type(p):
+      '''local_variable_and_type : type_of_variable
+                                            | IDENTIFIER'''
 
 
 def p_statement(p):
@@ -349,7 +317,7 @@ def p_single_inner_switch_statement(p):
 
 def p_single_switch_statement_body(p):
     '''single_switch_statement_body : expression
-                                                    | block_statements'''
+                                                    | block_statement_list'''
 
 
 def p_single_switch_statement_header(p):
@@ -370,7 +338,7 @@ def p_for_variables(p):
     'for_variables : declaration_keyword_extras IDENTIFIER IN expression for_untilTo expression '
 
 def p_declaration_keyword_extras(p):
-    '''declaration_keyword_extras : declaration_keyword 
+    '''declaration_keyword_extras : variable_header
                                     | empty'''
 def p_for_untilTo(p):
     '''  for_untilTo : K_UNTIL
@@ -379,6 +347,34 @@ def p_for_untilTo(p):
 def p_return_statement(p):
     '''return_statement : K_RETURN expression semi
                                     | K_RETURN semi'''
+
+#types
+def p_type(p):
+        '''type : basic_type
+                 | other_type '''
+
+def p_basic_type(p):
+    '''basic_type : K_CHAR
+                             | K_UNIT
+                             | K_FLOAT
+                             | K_STRING
+                             | K_BOOLEAN
+                             | K_INT'''
+
+
+def p_other_type(p):
+      '''other_type : nonarray_datatype
+                        | array_datatype'''
+
+def p_array_datatype(p):
+      '''array_datatype : K_ARRAY square_block
+                                | K_LIST square_block'''
+
+def p_square_block(p):
+    ''' square_block : SQUARE_BEGIN type SQUARE_END'''
+
+def p_nonarray_datatype(p):
+      '''nonarray_datatype : IDENTIFIER'''
 
 
 logging.basicConfig(
@@ -401,7 +397,7 @@ if __name__ == "__main__" :
 
 
     import re
-    
+
     #obtain the lines with the productions used
     outfile = open("rules_used.txt",'w')
     with open("parselog.txt") as f:
@@ -426,4 +422,4 @@ if __name__ == "__main__" :
     fout.close()
     os.remove("rules_used.txt")
 
-    
+
