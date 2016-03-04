@@ -3,7 +3,7 @@ import sys
 import logging
 from lexer import tokens
 import os
-
+import re
 def p_compilation_unit(p):
     'compilation_unit :  import_declarations_extras classes_objects_list'
 
@@ -385,38 +385,29 @@ logging.basicConfig(
 
 log = logging.getLogger()
 parser = yacc.yacc()
-
-
 if __name__ == "__main__" :
 
-    s = open(sys.argv[1],'r')
-    data = s.read()
-    data+= "\n"
-    s.close()
-    result = parser.parse(data,debug=log)
+    file = (open(sys.argv[1],'r')).read()
+    file+= "\n"
 
+    result = parser.parse(file,debug=log)
 
-    import re
-
-    #obtain the lines with the productions used
-    outfile = open("rules_used.txt",'w')
-    with open("parselog.txt") as f:
-        for line in f:
-            if re.match("INFO:root:Action(.*)", line):
-                outfile.write(line)
-
-
-    #clean the productions to give the required information
-    infile = "rules_used.txt"
-    outfile = "reverse_actions.txt"
-
-    delete_list2 = ["rule [","] with"]
-
-    fin = open(infile)
-    fout = open(outfile, "w+")
+    #Obtain rules from logfile
+    rules_raw = open("rules_used.txt",'w')
+    f = open("parselog.txt")
+    for line in f:
+        if re.match("INFO:root:Action(.*)", line):
+            rules_raw.write(line)
+    f.close()
+    rules_raw.close();
+    #Clean the garbage words
+    rules_raw = "rules_used.txt"
+    rules_clean = "reverse_actions.txt"
+    fin = open(rules_raw)
+    fout = open(rules_clean, "w+")
     for line in fin:
-       matches = re.findall('rule \[(.*)\] with', line)
-       fout.write(matches[0])
+       matched_line = re.findall('rule \[(.*)\] with', line)
+       fout.write(matched_line[0])
        fout.write("\n")
     fin.close()
     fout.close()
