@@ -4,6 +4,30 @@ import logging
 from lexer import tokens
 import os
 import re
+from symtable import *
+
+CURR = Scope()
+class Node(object):
+    id = 1
+    def __init__(self, name, child_list, type, size = None, val = None, code = [], place = None):
+        self.name = name
+        self.child_list = child_list
+        self.id = id
+        id += 1
+        self.type = type
+        self.val = val
+        self.code = code
+        self.place = place
+        self.size = size
+
+
+    def create_leaf(name1,name2,dataType="Unit"):
+        leaf1 = Node(name2,[],dataType)
+        leaf2 = Node(name1,[leaf1],dataType)
+        return leaf2
+
+
+
 def p_compilation_unit(p):
     'compilation_unit :  import_declarations_extras classes_objects_list'
 
