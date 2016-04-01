@@ -7,6 +7,20 @@ import re
 from symtable import *
 
 CURR = Scope()
+temp_count = 0
+label_count = 0
+def newtmp(dataType= 'Unit'):
+    symbolname= "temp" + str(temp_count)
+    temp_count += 1
+    attr= {'Type' : dataType}
+    CURR.add_symb(symbolname, attr)
+    return symbolname
+
+def newlabel():
+    labelname= "label" + str(label_count)
+    label_count += 1
+    return labelname
+
 class Node(object):
     id = 1
     def __init__(self, name, child_list, type, size = None, val = None, code = [], place = None):
