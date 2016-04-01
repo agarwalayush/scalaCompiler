@@ -1,0 +1,9 @@
+#!/bin/bash
+python parser.py $1
+file=$1
+filename="${file##*/}"
+tac reverse_actions.txt | python html_output.py  > ${filename%\.*}.html
+rm parsetab.py
+rm parser.out
+rm parselog.txt
+rm reverse_actions.txt
