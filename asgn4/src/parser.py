@@ -7,6 +7,7 @@ import re
 from symtable import *
 
 CURR = Scope()
+ROOT = CURR
 temp_count = 0
 label_count = 0
 def newtmp(dataType= 'Unit'):
@@ -23,7 +24,7 @@ def newlabel():
 
 class Node(object):
     id = 1
-    def __init__(self, name, child_list, type, size = None, val = None, code = [], place = None):
+    def __init__(self, name, child_list, type = "Unit", size = None, val = None, code = [], place = None):
         self.name = name
         self.child_list = child_list
         self.id = id
@@ -35,56 +36,95 @@ class Node(object):
         self.size = size
 
 
-    def create_leaf(name1,name2,dataType="Unit"):
-        leaf1 = Node(name2,[],dataType)
-        leaf2 = Node(name1,[leaf1],dataType)
-        return leaf2
+
+def create_leaf(name1,name2,dataType="Unit"):
+    leaf1 = Node(name2,[],dataType)
+    leaf2 = Node(name1,[leaf1],dataType)
+    return leaf2
 
 
 
 def p_compilation_unit(p):
     'compilation_unit :  import_declarations_extras classes_objects_list'
+    p[0] = Node("compilation_unit",[p[1],p[2]])
+
 
 def p_import_declarations_extras(p):
-  '''import_declarations_extras : import_declarations
+    '''import_declarations_extras : import_declarations
                                           | empty'''
+    p[0] = Node("import_declarations_extras", [p[1]])
 
 def p_import_declarations(p):
     '''import_declarations :  import_declaration
                                     | import_declarations import_declaration'''
+    if len(p) == 2 :
+        p[0] = Node("import_declarations",[p[1]])
+    else :
+        p[0] = Node("import_declarations",[p[1],p[2]])
+
 
 def p_import_declaration(p):
     '''import_declaration :  K_IMPORT ambiguous_name'''
-
+    child = create_leaf("K_IMPORT", p[1])
+    p[0] = Node("import_declaration",[chlid, p[2]])
 
 def p_classes_objects_list(p):
     '''classes_objects_list : classes_objects_list  class_and_objects_declaration
                               | class_and_objects_declaration '''
+    if len(p) == 3 :
+        p[0] = Node("classes_objects_list",[p[1],p[2]])
+    else :
+        p[0] = Node("classes_objects_list",[p[1]])
+
 
 def p_class_and_objects_declaration(p):
-  '''class_and_objects_declaration : object_declaration
+    '''class_and_objects_declaration : object_declaration
                                                 | class_declaration'''
+    p[0] = Node("class_and_objects_declaration",[p[1]])
+
 
 def p_object_declaration(p):
     'object_declaration : ObjectDeclare block'
-
+    p[0] = Node("class_object_declaration",[p[1]])
 
 def p_object_declare(p):
     '''ObjectDeclare : K_OBJECT IDENTIFIER super '''
+    child1 = create_leaf("K_OBJECT", p[1])
+    child1 = create_leaf("IDENTIFIER", p[2])
+    p[0] = Node("ObjectDeclare",[child1, child2, p[1]])
 
 def p_class_type(p):
-  '''class_type : IDENTIFIER
+    '''class_type : IDENTIFIER
                     | K_WITH class_type'''
+    if len(p) == 2 :
+        child1 = create_leaf("IDENTIFIER", p[1])
+        p[0] = Node("class_type",[p[1]])
+    else :
+        child1 = create_leaf("K_WITH", p[1])
+        p[0] = Node("class_type",[p[1],p[2]])
+
 
 def p_super(p):
-  '''super : K_EXTENDS class_type
+    '''super : K_EXTENDS class_type
               | empty'''
+    if len(p) == 2 :
+        p[0] = Node("class_type",[p[1]])
+    else :
+        child1 = create_leaf("K_EXTENDS", p[1])
+        p[0] = Node("class_type",[p[1],p[2]])
+
+
 
 def p_class_declaration(p):
-        '''class_declaration : class_header class_body'''
+    '''class_declaration : class_header class_body'''
+    p[0] = Node("class_type",[p[1],p[2]])
+
 
 def p_class_header(p):
-        '''class_header : K_CLASS IDENTIFIER LPAREN class_arguement_header RPAREN super'''
+    '''class_header : K_CLASS IDENTIFIER LPAREN class_arguement_header RPAREN super'''
+    child1 = create_leaf("K_EXTENDS", p[1])
+    p[0] = Node("class_type",[p[1],p[2]])
+
 
 def p_class_body(p):
         '''class_body : BLOCK_BEGIN class_body_declarations_extras BLOCK_END '''
@@ -450,5 +490,3 @@ if __name__ == "__main__" :
     fin.close()
     fout.close()
     os.remove("rules_used.txt")
-
-
