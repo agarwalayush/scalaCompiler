@@ -35,7 +35,9 @@ class Node(object):
         self.place = place
         self.size = size
 
-
+def transform(k):
+    list = k.split(".")
+    return list.join("_")
 
 def create_leaf(name1,name2,dataType="Unit"):
     leaf1 = Node(name2,[],dataType)
@@ -350,61 +352,92 @@ def p_literal(p):
             | K_NULL
             | FLOAT
             | INT'''
+  temp = newtmp()
+  l1 = ["=, " + temp + ", " + p[1]]
+  child = create_leaf("LITERAL", p[1])
+  p[0] = Node("literal", [child], None, None, None, l1, temp)
 
 def p_method_invocation(p):
     '''method_invocation : ambiguous_name LPAREN argument_list_extras RPAREN '''
+    # check whether the function name is valid.
+    # generating the label
+    # implementing push in 3 address code
+    child1 = create_leaf("LPAREN", p[2])
+    child2 = create_leaf("RPAREN", p[4])
+    code = []
+    for k in p[3].place:
+        code.append("push, " + k)
+    code.append("call," + transform(p[1].val))
+    p[0] = Node("method_invocation", [p[1], child1, p[3], child2], None, None, None, p[1].code + p[3].code + code)
+
 
 def p_argument_list_extras(p):
     '''argument_list_extras : argument_list
                                 | empty'''
-
+    p[0] = Node("argument_list_extras", [p[1]], None, None, None, p[1].code, [p[1].place])
 
 def p_argument_list(p):
     '''argument_list : expression
                             | argument_list COMMA expression'''
+    if(len(p) == 2):
+        p[0] = Node("argumentList", [p[1]], None, None, None, p[1].code, [p[1].place])
+    else:
+        child = create_leaf("COMMA", p[2]);
+        p[0] = Node("argumentList", [p[1], child, p[3]], None, None, None, p[1].code + p[3].code, p[1].place + [p[3].place])
 
 def p_ambiguous_name(p):
     '''ambiguous_name : IDENTIFIER
                                 | ambiguous_name DOT IDENTIFIER'''
+#TODO : Complete when scope is implemented
 
 def p_left_hand_side(p):
     '''left_hand_side : ambiguous_name
                             | array_invocation'''
+    p[0] = Node("left_hand_side", [p[1]], None, None, None, p[1].code, p[1].place)
 
 # BLOCK STATEMENTS
 
 
 def p_block(p):
       '''block : BLOCK_BEGIN block_body BLOCK_END '''
-
+#TODO after scope
 
 def p_block_body(p):
       '''block_body : block_statement_list
                         | empty'''
+      p[0] = Node("block_body", [p[1]], None, None, None, p[1].code)
 
 def p_block_statement_list(p):
       '''block_statement_list : block_statement
                                     | block_statement_list block_statement'''
+      if(len(p) == 2):
+          p[0] = Node("block_statement_list", [p[1]], None, None, None, p[1].code)
+      else:
+          p[0] = Node("block_statement_list", [p[1], p[2]], None, None, None, p[1].code + p[2].code)
+
 
 def p_block_statement(p):
       '''block_statement : local_variable
                                     | method_declaration
                                     | statement'''
-
+    #TODO after finishing scope
 
 def p_variable_header(p):
   '''variable_header : K_VAL
                             | K_VAR '''
-
+  child = create_leaf("K_VAL", p[1])
+  p[0] = Node("variable_header", p[1])
 
 def p_local_variable(p):
       '''local_variable : variable_header variable_body  semi '''
+      #TODO add entry in the symbolTable
 
 
 def p_variable_rhs(p):
   '''variable_rhs : expression
                         | array_initializer
                         | class_instance_creation_expression'''
+      
 
 def p_array_initializer(p):
   ''' array_initializer : K_NEW K_ARRAY SQUARE_BEGIN type SQUARE_END LPAREN INT RPAREN
@@ -437,14 +470,36 @@ def p_statement(p):
                             | for_loop'''
 
 def p_if_then_statement(p):
+    #TODO creating new scope in all the following
     'if_then_statement : K_IF LPAREN expression RPAREN statement'
+    child1 = create_leaf("K_IF", p[1])
+    child2 = create_leaf("LPAREN", p[2])
+    child3 = create_leaf("RPAREN", p[4])
+    selse = newtmp()
+    l1 = ["cmp, 0, " + p[3].place]
+    l2 = ["je, " + selse]
+    l3 = ["label," + selse]
+    p[0] = Node("if_then_statement", [child1, child2, p[3], child3, p[5]], None, None, None, p[3].code + l1 + l2 + p[5].code + l3)
 
 def p_if_then_else_statement(p):
     'if_then_else_statement : K_IF LPAREN expression RPAREN statement_no_short_if K_ELSE statement'
+    'if_then_statement : K_IF LPAREN expression RPAREN statement'
+    child1 = create_leaf("K_IF", p[1])
+    child2 = create_leaf("LPAREN", p[2])
+    child3 = create_leaf("RPAREN", p[4])
+    child4 = create_leaf("K_ELSE", p[6])
+    selse = newtmp()
+    safter = newtmp()
+    l1 = ["cmp, 0, " + p[3].place]
+    l2 = ["je, " + selse]
+    l3 = ["goto," + safter]
+    l4 = ["label," + selse]
+    l5 = ["label," + safter]
+    p[0] = Node("if_then_statement", [child1, child2, p[3], child3, p[5], child4, p[7]], None, None, None, p[3].code + l1 + l2 + p[5].code + l3 + l4 + p[7].code + l5)
 
 def p_if_then_else_statement_no_short_if(p):
     'if_then_else_statement_no_short_if : K_IF LPAREN expression RPAREN statement_no_short_if K_ELSE statement_no_short_if'
-
+    
 def p_statement_no_short_if(p):
     '''  statement_no_short_if : statement_without_trailing_substatement
                                             | if_then_else_statement_no_short_if'''
