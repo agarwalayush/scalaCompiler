@@ -14,6 +14,7 @@ OBJECT_SCOPE = []
 temp_count = 0
 label_count = 0
 def newtmp(dataType= 'Unit'):
+    global temp_count
     symbolname= "temp" + str(temp_count)
     temp_count += 1
     attr= {'Type' : dataType}
@@ -209,8 +210,8 @@ def p_arguement_list(p):
     else:
         child = create_leaf("COMMA", p[2])
         p[0] = Node("argument_list", [p[1], child, p[3]], p[3].type.append(p[1].type), p[3].size + p[1].size, p[1].val + 1)
-  
-
+        
+#checking the identifiers !!
 def p_argument(p):
     '''argument : IDENTIFIER COLON type'''
     child1 = create_leaf("IDENTIFIER", p[1])
@@ -218,7 +219,7 @@ def p_argument(p):
     attr = {}
     attr['Type']=p[3].type
     attr['Size']=p[3].size
-    CURR.add_symbol(p[1],attr)
+    CURR.add_symb(p[1],attr)
     p[0] = Node("argument", [child1, child2, p[3]],p[3].type,p[3].size)
 
 
@@ -244,27 +245,28 @@ def p_method_header(p):
     child2 = create_leaf('IDENTIFIER',p[2])
     child3 = create_leaf('RPAREN', p[5])
     attr = {}
-    func_label = CURR.parent.name + "_" + p[2]
+    func_label = str(CURR.parent.id) + "_" + p[2]
     l1 = ["label," + func_label]
     attr['Type'] = p[4].type
     attr['num_arg'] = p[3].val
-    if(len(p)==5):
+    if(len(p)==6):
         attr['ReturnType'] = 'Unit'
         p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5]], None, None, None, l1)
-    elif(len(p)==6):
+    elif(len(p)==7):
         attr['ReturnType'] = 'Unit'
         child4= create_leaf('ASSIGN',p[6])            
         p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4], None, None, None, l1)
     else:
+        print(len(p))
         attr['ReturnType'] = p[7].type
         child4 = create_leaf('COLON',p[6])
         child5= create_leaf('ASSIGN',p[8])            
         p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4,p[7],child5], None, None, None, l1)
-    CURR.parent.function_list[p[2]] = attr
-# def p_method_return_type_extras(p):
-#     '''method_return_type_extras : COLON method_return_type ASSIGN method_body
-#                                           | ASSIGN method_body
-#                                           | empty method_body'''
+        CURR.parent.function_list[p[2]] = attr
+        # def p_method_return_type_extras(p):
+        #     '''method_return_type_extras : COLON method_return_type ASSIGN method_body
+        #                                           | ASSIGN method_body
+        #                                           | empty method_body'''
 
 def p_method_return_type(p):
     '''method_return_type : type'''
@@ -289,6 +291,9 @@ def p_method_body(p):
 
 ################################################
 
+#checking whether the identifiers are referenced by their correct names in expressions and checking whether they
+#are present in any of their parent scopes
+# locals and globals having the same name
 def p_expression(p):
     '''expression : or_expression'''
     p[0] = Node("expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
@@ -364,17 +369,17 @@ def p_relational_expression(p):
         rel = jl
     elif p[2] == "<=":
         rel = jle
-    temp = newtmp()
-    etrue = newlabel()
-    efalse = newlabel()
-    l1 = ["cmp, " + p[1].place + ", " + p[3].place]
-    l2 = [rel + "," + etrue]
-    l3 = ["=," + temp + ", 0"]
-    l4 = ["goto, " + efalse]
-    l5 = ["label, " + etrue]
-    l6 = ["=," + temp + ", 1"]
-    l7 = ["label, " + efalse]
-    p[0] = Node("relational_expression", [p[1], child, p[3]], 'Bool', None, None, p[1].code + p[3].code + l1 + l2 + l3, l4 + l5 + l6 + l7, temp)
+        temp = newtmp()
+        etrue = newlabel()
+        efalse = newlabel()
+        l1 = ["cmp, " + p[1].place + ", " + p[3].place]
+        l2 = [rel + "," + etrue]
+        l3 = ["=," + temp + ", 0"]
+        l4 = ["goto, " + efalse]
+        l5 = ["label, " + etrue]
+        l6 = ["=," + temp + ", 1"]
+        l7 = ["label, " + efalse]
+        p[0] = Node("relational_expression", [p[1], child, p[3]], 'Bool', None, None, p[1].code + p[3].code + l1 + l2 + l3, l4 + l5 + l6 + l7, temp)
 
 def p_add_expression(p):
     '''add_expression : mult_expression
@@ -432,14 +437,18 @@ def p_postfix_expression1(p):
     p[0] = Node("postfix_expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
 
 def p_postfix_expression2(p):
-	'''  postfix_expression : ambiguous_name'''
+    #classes and objects not done
+    '''  postfix_expression : ambiguous_name'''
 
 	#LOOKUP(ambiguous_name) in symbol_list
-	if(!check_for_variable_declaration(p[1])):
+    (x, y) = CURR.check_for_variable_declaration(p[1])
+    if(x == 0):
 		print('Undeclared variable')
 		assert(false)
+    else:
+        holding_variable = str(y.id) + "_" + p[1]
+	p[0] = Node("postfix_expression", [p[1]], p[1].type, None, None, p[1].code, holding_variable)
 
-	p[0] = Node("postfix_expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
 
 def p_primary_no_new_array(p):
     '''  primary_no_new_array : literal
@@ -466,17 +475,17 @@ def p_literal(p):
     child = create_leaf("LITERAL", p[1])
     type = 'None'
     size = 0
-    if (p[1] == STRING):
+    if (p[1] == 'STRING'):
         type = 'String'
-    elif(p[1] == K_FALSE or p[1] == K_TRUE):
+    elif(p[1] == 'FALSE' or p[1] == 'TRUE'):
         type = 'Bool'
-    elif (p[1] == CHAR):
+    elif (p[1] == 'CHAR'):
         type = 'Char'
         size =1
-    elif (p[1] == INT):
+    elif (p[1] == 'INT'):
         type = 'Int'
         size = 2
-    elif (p[1] == FLOAT):
+    elif (p[1] == 'FLOAT'):
         type = 'Float'
         size = 4
 
@@ -488,44 +497,43 @@ def p_array_invocation(p):
     l1 = ["<-" + temp + ", " + p[1].val + "," + p[3].place]
     type = CURR.symbol_list[p[1].value]['Type']
     #LOOKUP(ambiguous_name) in symbol_list
-    if(!check_for_variable_declaration(p[1])):
-	print('Undeclared variable')
-	assert(false)
+    if(~CURR.check_for_variable_declaration(p[1])):
+	    print('Undeclared variable')
+	    assert(false)
     child1 = create_leaf("SQUARE_BEGIN", p[2])
     child2 = create_leaf("SQUARE_END", p[4])
     p[0] = Node("array_invocation", [p[1], child1,p[3], child2], type, None, None, p[3].code + l1, temp)
 
 def p_method_invocation(p):
+    #TODO: classes and objects
     '''method_invocation : ambiguous_name LPAREN argument_list_extras RPAREN '''
+
     # check whether the function name is valid.
-    # generating the label
+    (x, y) = CURR.check_for_function_declaration(p[1])
+    if(x == 0):
+        print("correct your semantics")
+        assert(False)
+    elif(p[3].val != y.function_list[p[1]]["num_arg"]):
+        print("wrong number of arguments!")
+        assert(False)
+    else:
+        func_name = str(y.id) + "_" + p[1]
     # implementing push in 3 address code
     child1 = create_leaf("LPAREN", p[2])
     child2 = create_leaf("RPAREN", p[4])
     code = []
     for k in p[3].place:
-        code.append("push, " + k)
-    code.append("call," + transform(p[1].val))
-
-    #LOOKUP(ambiguous_name) in function_list
-    if(!check_for_function_declaration(p[1])):
-	print('Undefined function')
-	assert(false)
-
-    #semantic check = is type of function p[1] == type of p[3]
-    type = CURR.function_list[p[1].value]['Type']
-    returntype = CURR.function_list[p[1].value]['ReturnType']
-
-    if ((type != p[3].type)):
-        assert(false)
-
+        code.append("pusharg, " + k)
+    code.append("call," + func_name)
     p[0] = Node("method_invocation", [p[1], child1, p[3], child2], returntype, None, None, p[1].code + p[3].code + code)
 
 
 def p_argument_list_extras(p):
     '''argument_list_extras : argument_list
                                 | empty'''
-    p[0] = Node("argument_list_extras", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
+    if(p[1].val is None):
+        p[1].val = 0
+    p[0] = Node("argument_list_extras", [p[1]], p[1].type, None, p[1].val, p[1].code, p[1].place)
 
 def p_argument_list(p):
     '''argument_list : expression
@@ -541,11 +549,12 @@ def p_ambiguous_name(p):
                         | ambiguous_name DOT IDENTIFIER'''
     if(len(p)==2):
         child = create_leaf('IDENTIFIER', p[1])
-        p[0] = Node('ambiguous_name', [child],None,None,p[1],None,None)
+        p[0] = Node('ambiguous_name', [child],None,None,p[1],[],None)
     else:
+        #not implemented till now
         child = create_leaf('IDENTIFIER', p[3])
         child2 = create_leaf('.', p[2])
-        p[0] = Node('ambiguous_name', [p[1],child2,child],None,None,p[1].value + '.' + p[3],None,None)
+        p[0] = Node('ambiguous_name', [p[1],child2,child],None,None,p[1].value + '.' + p[3],[],None)
 
 
 
@@ -553,8 +562,8 @@ def p_ambiguous_name(p):
 
 
 def p_block(p):
-      '''block : block_begin block_body block_end '''
-      p[0] = Node("block", [p[1], p[2], p[3]])
+    '''block : block_begin block_body block_end '''
+    p[0] = Node("block", [p[1], p[2], p[3]])
 
 def p_block_begin(p):
     '''block_begin : BLOCK_BEGIN'''
@@ -568,16 +577,16 @@ def p_block_begin(p):
 
 
 def p_block_body(p):
-      '''block_body : block_statement_list
+    '''block_body : block_statement_list
                         | empty'''
-      p[0] = Node("block_body", [p[1]], None, None, None, p[1].code)
+    p[0] = Node("block_body", [p[1]], None, None, None, p[1].code)
 
 def p_block_statement_list(p):
-      '''block_statement_list : block_statement
+    '''block_statement_list : block_statement
                                     | block_statement_list block_statement'''
-      if(len(p) == 2):
+    if(len(p) == 2):
           p[0] = Node("block_statement_list", [p[1]], None, None, None, p[1].code)
-      else:
+    else:
           p[0] = Node("block_statement_list", [p[1], p[2]], None, None, None, p[1].code + p[2].code)
 
 
@@ -603,69 +612,73 @@ def p_local_variable(p):
 
 
 def p_variable_body(p):
+    #TODO: allow for instantiation of class objects and arrays
     '''variable_body : local_variable_and_type  ASSIGN  variable_rhs '''
-    code = '=,' + p[1].place + ','+  p[3].place
+    #only valid if RHS is variable_rhs = an expression
+    code = ['=,' + p[1].place + ','+  p[3].place]
     child = create_leaf('ASSIGN', p[2])
     if( CURR.symbol_list[p[1].place]['Type'] == 'Undefined'):
     	CURR.symbol_list[p[1].place]['Type'] = p[3].type
 
-    p[0] = Node('variable_body', [p[1],child,p[2]], None,None,None, p[3].code +code,None )
+    p[0] = Node('variable_body', [p[1],child,p[2]], None,None,None, p[3].code +code,None)
 
 def p_type_of_variable(p):
-      '''type_of_variable : IDENTIFIER COLON type'''
-      if p[1] in CURR.symbol_list.keys():
+    '''type_of_variable : IDENTIFIER COLON type'''
+    if p[1] in CURR.symbol_list.keys():
           print("variable already defined")
           assert("False")
-      else:
+    else:
           attr = {}
           attr['Type'] = p[3].type
           attr['Size'] = p[3].size
           CURR.add_symb(p[1], attr)
+          holding_variable = str(CURR.id) + "_" + p[1]
           child1 = create_leaf("IDENTIFIER", p[1])
           child2 = create_leaf("COLON", p[2])
-          p[0] = Node("type_of_variable", [child1, child2, p[3]],p[3].type,None,None,p[1])
+          p[0] = Node("type_of_variable", [child1, child2, p[3]],p[3].type,None,None,[], holding_variable)
+
 
 def p_variable_rhs(p):
-  	'''variable_rhs : expression
-                        | array_initializer
-                        | class_instance_creation_expression'''
-            p[0] =Node('variable_rhs', [p[1]], p[1].type, None,None, p[1].code,p[1].place)
+    '''variable_rhs : expression
+                      | array_initializer
+                      | class_instance_creation_expression '''
+    p[0] = Node("variable_rhs", [p[1]], p[1].type, None,None, p[1].code, p[1].place)
 
 def p_local_variable_and_type1(p):
 	'''local_variable_and_type : type_of_variable'''
-	p[0] = Node("local_variable_and_type", [p[1]], p[1].type, None, None, None, p[1].place)
+	p[0] = Node("local_variable_and_type", [p[1]], p[1].type, None, None, [], p[1].place)
 
 def p_local_variable_and_type2(p):
 	'''local_variable_and_type : IDENTIFIER'''
 	if p[1] in CURR.symbol_list.keys():
-	  print("variable already defined")
-	  assert("False")
+	    print("variable already defined")
+	    assert("False")
 	else:
-	  attr = {}
-	  attr['Type'] = 'Undefined'
-	  CURR.add_symb(p[1], attr)
-	  child1 = create_leaf("IDENTIFIER", p[1])
-	  p[0] = Node("local_variable_and_type", [child1], 'Undefined',None,None,None,p[1])
+	    attr = {}
+	    attr['Type'] = 'Undefined'
+	    CURR.add_symb(p[1], attr)
+	    child1 = create_leaf("IDENTIFIER", p[1])
+	    p[0] = Node("local_variable_and_type", [child1], 'Undefined',None,None,None,p[1])
 
 def p_array_initializer(p):
 	''' array_initializer : K_NEW K_ARRAY SQUARE_BEGIN type SQUARE_END LPAREN INT RPAREN
                             | K_ARRAY LPAREN argument_list_extras RPAREN '''
-            #Sarthak will do this
+    #Sarthak will do this
 
 
 def p_class_instance_creation_expression(p):
 	''' class_instance_creation_expression : K_NEW nonarray_datatype LPAREN argument_list_extras RPAREN '''
-            #Sarthak will do this
+    #Sarthak will do this
 
 
 
 def p_statement(p):
-	'''  statement : statement_without_trailing_substatement
+    '''  statement : statement_without_trailing_substatement
 	                        | while_statement
 	                        | if_then_else_statement
 	                        | if_then_statement
                         | for_loop'''
-            p[0] = Node('statement' , [p[1]], None,None,None,p[1].code,None)
+    p[0] = Node('statement' , [p[1]], None,None,None,p[1].code,None)
 
 def p_if_then_statement(p):
     #TODO creating new scope in all the following
@@ -734,7 +747,8 @@ def p_expression_statement(p):
     p[0] = Node("expression_statement", [p[1], p[2]], None, None, None, p[1].code, p[1].place)
 
 
-def p_statement_expression(p):                  ######what will be the place of method_invocation ?? Should be assigned later as temp.place() whenever  temp = func()
+def p_statement_expression(p):
+######what will be the place of method_invocation ?? Should be assigned later as temp.place() whenever  temp = func()
     '''  statement_expression : assignment
                                             | method_invocation
                                             | class_instance_creation_expression'''
@@ -748,10 +762,17 @@ def p_assignment(p):
     p[0] = Node("assignment", [p[1], child1, p[3]], None, None, None, p[1].code + p[3].code + tas)
 
 def p_left_hand_side(p):
+    #class and objects not supported in ambiguous name till now. Migght work for arrays
     '''left_hand_side : ambiguous_name
                             | array_invocation'''
-    p[0] = Node("left_hand_side", [p[1]], None, None, None, p[1].code, p[1].place)
-
+    #array invocation not handled till now
+    (x, y) = CURR.check_for_variable_declaration(p[1])
+    if(x == 0):
+        print("Correct the semantics")
+        assert(false)
+    else:
+        holding_variable = str(y.id) + "_" + p[1]
+    p[0] = Node("left_hand_side", [p[1]], None, None, None, p[1].code, holding_variable)
 
 #I think the default statement is missing !!
 def p_switch(p):
@@ -764,8 +785,8 @@ def p_switch(p):
     for i in [1..l - 1]:
         code += ["cmp, " + p[2].place + ", " + exp]
         code += ["je," + p[2].val[i]]
-    code += ["label," + p[2].val[l]]
-    p[0] = Node("switch", [p[1], p[2]], None, None, None, p[1].code + p[2].code + code)
+        code += ["label," + p[2].val[l]]
+        p[0] = Node("switch", [p[1], p[2]], None, None, None, p[1].code + p[2].code + code)
 
 def p_switch_header(p):
     '''switch_header : expression K_MATCH'''
@@ -786,8 +807,8 @@ def p_switch_body(p):
     for i in [1..l]:
         vl.append(p[2].val[i])
         pl.append(p[2].place[i])
-    vl.append(next)
-    p[0] = Node("switch_body", [child1, p[2], child2], None, None, vl, p[2].code, pl)
+        vl.append(next)
+        p[0] = Node("switch_body", [child1, p[2], child2], None, None, vl, p[2].code, pl)
 
 def p_multiple_inner_switch_statement(p):
     '''  multiple_inner_switch_statement : single_inner_switch_statement
@@ -872,10 +893,11 @@ def p_for_loop(p):
         l6 = ["label," + s_after]
         p[0] = Node("for_loop", [child1 + child2 + p[3] + child3 + p[5]], None, None, None, [p[3].code + l1 + l2 + l3+ l4 + p[5].code + l7 + l5 + l6])
     else:
+        pass
+
 
 def p_for_variables(p):
-    '''for_variables : declaration_keyword_extras IDENTIFIER IN expression for_untilTo expression 
-                      | IDENTIFIER IN IDENTIFIER '''
+    ''' for_variables : declaration_keyword_extras IDENTIFIER IN expression for_untilTo expression '''
 
 def p_declaration_keyword_extras(p):
     '''declaration_keyword_extras : variable_header
@@ -890,8 +912,9 @@ def p_return_statement(p):
 
 #types
 def p_type(p):
-        '''type : basic_type
+    '''type : basic_type
                  | other_type '''
+    p[0] = Node("type", [p[1]])
 
 def p_basic_type(p):
     '''basic_type : K_CHAR
@@ -903,18 +926,18 @@ def p_basic_type(p):
 
 
 def p_other_type(p):
-      '''other_type : nonarray_datatype
+    '''other_type : nonarray_datatype
                         | array_datatype'''
 
 def p_array_datatype(p):
-      '''array_datatype : K_ARRAY square_block
+    '''array_datatype : K_ARRAY square_block
                                 | K_LIST square_block'''
 
 def p_square_block(p):
     ''' square_block : SQUARE_BEGIN type SQUARE_END'''
 
 def p_nonarray_datatype(p):
-      '''nonarray_datatype : IDENTIFIER'''
+    '''nonarray_datatype : IDENTIFIER'''
 
 
 logging.basicConfig(
@@ -938,17 +961,17 @@ if __name__ == "__main__" :
     for line in f:
         if re.match("INFO:root:Action(.*)", line):
             rules_raw.write(line)
-    f.close()
-    rules_raw.close();
-    #Clean the garbage words
+            f.close()
+            rules_raw.close();
+            #Clean the garbage words
     rules_raw = "rules_used.txt"
     rules_clean = "reverse_actions.txt"
     fin = open(rules_raw)
     fout = open(rules_clean, "w+")
     for line in fin:
-       matched_line = re.findall('rule \[(.*)\] with', line)
-       fout.write(matched_line[0])
-       fout.write("\n")
-    fin.close()
-    fout.close()
-    os.remove("rules_used.txt")
+        matched_line = re.findall('rule \[(.*)\] with', line)
+        fout.write(matched_line[0])
+        fout.write("\n")
+        fin.close()
+        fout.close()
+        os.remove("rules_used.txt")

@@ -25,7 +25,7 @@ class Scope:
     def add_func(self, funcname, attr_dict):
             self.function_list[funcname] = attr_dict
 
-    def check_for_the_variable_declaration(self, var):
+    def check_for_variable_declaration(self, var):
         flag = 0
         c_scope = self
         while(c_scope != None):
@@ -33,9 +33,10 @@ class Scope:
                 flag = 1
                 break
             c_scope = self.parent
-        return flag
+        return (flag, c_scope)
 
-    def check_for_the_function_declaration(self, var):
+
+    def check_for_function_declaration(self, var):
             flag = 0
             c_scope = self
             while(c_scope != None):
@@ -43,7 +44,7 @@ class Scope:
                     flag = 1
                     break
                 c_scope = self.parent
-            return flag
+            return (flag, c_scope)
 
 
 
