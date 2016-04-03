@@ -8,6 +8,9 @@ from symtable import *
 
 CURR = Scope()
 ROOT = CURR
+CLASS_SCOPE = []
+OBJECT_SCOPE = []
+
 temp_count = 0
 label_count = 0
 def newtmp(dataType= 'Unit'):
@@ -58,7 +61,7 @@ def create_leaf(name1,name2,dataType="Unit"):
 
 def p_compilation_unit(p):
     'compilation_unit :  import_declarations_extras classes_objects_list'
-    p[0] = Node("compilation_unit",[p[1],p[2]])
+    p[0] = Node("compilation_unit",[p[1],p[2]], None, None, None, p[2].code)
 
 
 def p_import_declarations_extras(p):
@@ -78,32 +81,33 @@ def p_import_declarations(p):
 def p_import_declaration(p):
     '''import_declaration :  K_IMPORT ambiguous_name'''
     child = create_leaf("K_IMPORT", p[1])
-    p[0] = Node("import_declaration",[chlid, p[2]])
+    p[0] = Node("import_declaration",[child, p[2]])
 
 def p_classes_objects_list(p):
     '''classes_objects_list : classes_objects_list  class_and_objects_declaration
                               | class_and_objects_declaration '''
     if len(p) == 3 :
-        p[0] = Node("classes_objects_list",[p[1],p[2]])
+        p[0] = Node("classes_objects_list",[p[1],p[2]], None, None, None, p[1].code + p[2].code )
     else :
-        p[0] = Node("classes_objects_list",[p[1]])
+        p[0] = Node("classes_objects_list",[p[1]], None, None, None, p[1].code)
 
 
 def p_class_and_objects_declaration(p):
     '''class_and_objects_declaration : object_declaration
                                                 | class_declaration'''
 
-    p[0] = Node("class_and_objects_declaration",[p[1]])
+    p[0] = Node("class_and_objects_declaration",[p[1]], None, None, None, p[1].code)
 
 
 def p_object_declaration(p):
     'object_declaration : ObjectDeclare block'
-    p[0] = Node("class_object_declaration",[p[1]])
+    p[0] = Node("class_object_declaration",[p[1], p[2]], None, None, None, p[2].code)
 
 def p_object_declare(p):
     '''ObjectDeclare : K_OBJECT IDENTIFIER super '''
     child1 = create_leaf("K_OBJECT", p[1])
     child2 = create_leaf("IDENTIFIER", p[2])
+    CURR.object_list.append(p[2])
     p[0] = Node("ObjectDeclare",[child1, child2, p[1]])
 
 def p_class_type(p):
@@ -130,26 +134,37 @@ def p_super(p):
 
 def p_class_declaration(p):
     '''class_declaration : class_header class_body'''
-    p[0] = Node("class_type",[p[1],p[2]])
+    p[0] = Node("class_type",[p[1],p[2]],None, None, None, p[2].code)
 
 
 def p_class_header(p):              # classes can't be defined inside objects
-    '''class_header : K_CLASS IDENTIFIER func_begin_bracket argument_header RPAREN super'''
+    '''class_header : K_CLASS IDENTIFIER class_begin_bracket argument_header RPAREN super'''
     child1 = create_leaf("K_CLASS", p[1])
     child2 = create_leaf('IDENTIFIER',p[2])
     child3 = create_leaf('RPAREN', p[4])
+    CURR.name = p[2]
     p[0] = Node("class_header",[child1,child2,p[3],p[4],child3,p[5]])
 
+
+def p_class_begin_bracket(p):
+    '''class_begin_bracket : LPAREN'''
+    global CURR
+    global CLASS_SCOPE
+    NEW_ENV = Scope(CURR)
+    CURR = NEW_ENV
+    CLASS_SCOPE.append(CURR)
+    child = Node('LPAREN',p[1])
+    p[0] = Node('class_begin_bracket',[child])
 
 def p_class_body(p):
     '''class_body : BLOCK_BEGIN class_body_declarations_extras block_end '''
     child = create_leaf('BLOCK_BEGIN',p[1])
-    p[0] = Node('class_body', [child,p[2],p[3]])
+    p[0] = Node('class_body', [child,p[2],p[3]], None, None, None, p[1].code)
 
 def p_block_end(p):
     '''block_end : BLOCK_END'''
     global CURR
-    PREV_ENV=CURR.parent
+    PREV_ENV = CURR.parent
     CURR=PREV_ENV
     child = create_leaf('BLOCK_END',p[1])
     p[0]= Node('block_end',[child])
@@ -158,37 +173,43 @@ def p_block_end(p):
 def p_class_body_declarations_extras(p):
     '''class_body_declarations_extras : class_body_declarations
                                                     | empty'''
-    p[0] = Node('class_body_declarations_extras' , [p[1]])
+    p[0] = Node('class_body_declarations_extras' , [p[1]], None, None, None, p[1].code)
 
 def p_class_body_declarations(p):
     '''class_body_declarations : class_body_declaration
                                           | class_body_declarations class_body_declaration'''
     if(len(p)==2):
-        p[0] = Node('class_body_declarations', [p[1]])
+        p[0] = Node('class_body_declarations', [p[1]], None, None, None, p[1].code)
     else:
-        p[0] = Node('class_body_declarations' , [p[1],p[2]])
+        p[0] = Node('class_body_declarations' , [p[1],p[2]], None, None, None, p[1].code + p[2].code)
+
 
 def p_class_body_declaration(p):
     '''class_body_declaration : local_variable
                                           | method_declaration'''
     p[0] = Node('class_body_declaration' , [p[1]])
+    p[0] = Node('class_body_declaration' , [p[1]], None, None, None, p[1].code)
 
+
+
+#p[1].val currently contains the number of arguments
 def p_argument_header(p):
     '''argument_header : argument_list
                         | empty '''
-    p[0]= Node("argument_header", [p[1]])
-
+    p[0]= Node("argument_header", [p[1]], None, None, p[1].val)
+    if(~(p[1].val is None)):
+        CURR.num_arg = p[1].val
 
 def p_arguement_list(p):
     '''argument_list : argument
                         | argument_list COMMA argument'''
 
     if (len(p) == 2):
-        p[0] = Node("argument_list", [p[1]],[p[1].type],[p[1].size])
+        p[0] = Node("argument_list", [p[1]],[p[1].type],[p[1].size], 1)
     else:
         child = create_leaf("COMMA", p[2])
-        p[0] = Node("argument_list", [p[1], child, p[3]], p[3].type.append(p[1].type), p[3].size + p[1].size)
-
+        p[0] = Node("argument_list", [p[1], child, p[3]], p[3].type.append(p[1].type), p[3].size + p[1].size, p[1].val + 1)
+  
 
 def p_argument(p):
     '''argument : IDENTIFIER COLON type'''
@@ -211,8 +232,9 @@ def p_semi(p):
 
 def p_method_declaration(p):
     '''method_declaration : method_header method_body '''
-    p[0]= Node('method_declaration',[p[1].p[2]])
+    p[0]= Node('method_declaration',[p[1].p[2]], None, None, None, p[1].code + p[2].code)
 
+#adding label of the function by refrecing the class/obejct calling it and adding the number of arguments in the scope of the enclosing class
 
 def p_method_header(p):
     '''method_header :  K_DEF IDENTIFIER func_begin_bracket argument_header RPAREN COLON method_return_type ASSIGN
@@ -222,21 +244,23 @@ def p_method_header(p):
     child2 = create_leaf('IDENTIFIER',p[2])
     child3 = create_leaf('RPAREN', p[5])
     attr = {}
+    func_label = CURR.parent.name + "_" + p[2]
+    l1 = ["label," + func_label]
     attr['Type'] = p[4].type
+    attr['num_arg'] = p[3].val
     if(len(p)==5):
         attr['ReturnType'] = 'Unit'
-        p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5]])
+        p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5]], None, None, None, l1)
     elif(len(p)==6):
         attr['ReturnType'] = 'Unit'
-        child4= create_leaf('ASSIGN',p[6])
-        p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4])
+        child4= create_leaf('ASSIGN',p[6])            
+        p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4], None, None, None, l1)
     else:
         attr['ReturnType'] = p[7].type
         child4 = create_leaf('COLON',p[6])
-        child5= create_leaf('ASSIGN',p[8])
-        p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4,p[7],child5])
-    CURR.parent.add_func(p[2],attr)
-
+        child5= create_leaf('ASSIGN',p[8])            
+        p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4,p[7],child5], None, None, None, l1)
+    CURR.parent.function_list[p[2]] = attr
 # def p_method_return_type_extras(p):
 #     '''method_return_type_extras : COLON method_return_type ASSIGN method_body
 #                                           | ASSIGN method_body
@@ -250,9 +274,8 @@ def p_method_return_type(p):
 def p_func_begin_bracket(p):
     '''func_begin_bracket : LPAREN'''
     global CURR
-    NEW_ENV= Scope(CURR)
+    NEW_ENV = Scope(CURR)
     CURR = NEW_ENV
-
     child = Node('LPAREN',p[1])
     p[0] = Node('func_begin_bracket',[child])
 
@@ -261,7 +284,7 @@ def p_func_begin_bracket(p):
 def p_method_body(p):
     '''method_body : BLOCK_BEGIN block_body block_end'''
     child=create_leaf('BLOCK_BEGIN', p[1])
-    p[0] = Node('method_body', [child,p[2],p[3]])
+    p[0] = Node('method_body', [child,p[2],p[3]], None, None, None, p[2].code)
 
 
 ################################################
@@ -536,8 +559,10 @@ def p_block(p):
 def p_block_begin(p):
     '''block_begin : BLOCK_BEGIN'''
     global CURR
-    NEW_ENV = Scope(CURR)
+    NEW_ENV = Scope(CURR, CURR.object_list[-1:][0])
     CURR = NEW_ENV
+    
+    OBJECT_SCOPE.append(CURR)
     child = create_leaf("BLOCK_BEGIN", p[1])
     p[0] = Node("block_begin", [child])
 
@@ -808,17 +833,49 @@ def p_single_switch_statement_header(p):
 
 def p_while_statement(p):
     'while_statement : K_WHILE LPAREN expression RPAREN statement'
+    s_begin = newlabel()
+    s_after = newlabel()
+    child1 = create_leaf("K_WHILE", p[1])
+    child2 = create_leaf("LPAREN", p[2])
+    child3 = create_leaf("RPAREN", p[4])
+    l1 = ["label," + s_begin]
+    l2 = ["cmp, 0, " + p[3].place]
+    l3 = ["je, " + s_after]
+    l4 = ["goto, " + s_begin]
+    l5 = ["label, " + s_after]
+    p[0] = Node("while_statement", [child1, child2, p[3], child3, p[5]], None, None, None, l1 + p[3].code + l2 + l3 + p[5].code + l4 + l5)
 
+#Leave the for loop for later
 def p_for_loop(p):
-    'for_loop : K_FOR LPAREN for_exprs  RPAREN statement'
-
-
-def p_for_exprs(p):
-    '''for_exprs :  for_variables SEMI_COLON for_exprs
-                        | for_variables'''
+    #TODO : create a new scope and push the iterator in the symbol table of the scope
+    'for_loop : K_FOR LPAREN for_variables  RPAREN statement'
+    child1 = create_leaf("K_FOR", p[1])
+    child2 = create_leaf("LPAREN", p[2])
+    child3 = create_leaf("RPAREN", p[3])
+    type = p[3].val[0]
+    to_until = p[3].val[1]
+    if(to_until == 0): sym = "jge"
+    else: sym = "jg"
+    s_begin = newlabel()
+    s_after = newlabel()
+    if(type == 0):
+        #two expressions in the for statement
+        iterator = newtmp()
+        exp1 = p[3].val[2]
+        exp2 = p[3].val[3]
+        l1 = ["=," + iterator + "," + exp1]
+        l2 = ["label," + s_begin]
+        l3 = ["cmp, " + exp2 + "," + iterator]
+        l4 = [sym + "," + s_after]
+        l7 = ["+," + counter + "," + counter]
+        l5 = ["goto," + s_begin]
+        l6 = ["label," + s_after]
+        p[0] = Node("for_loop", [child1 + child2 + p[3] + child3 + p[5]], None, None, None, [p[3].code + l1 + l2 + l3+ l4 + p[5].code + l7 + l5 + l6])
+    else:
 
 def p_for_variables(p):
-    'for_variables : declaration_keyword_extras IDENTIFIER IN expression for_untilTo expression '
+    '''for_variables : declaration_keyword_extras IDENTIFIER IN expression for_untilTo expression 
+                      | IDENTIFIER IN IDENTIFIER '''
 
 def p_declaration_keyword_extras(p):
     '''declaration_keyword_extras : variable_header
