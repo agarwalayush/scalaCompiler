@@ -233,7 +233,7 @@ def p_semi(p):
 
 def p_method_declaration(p):
     '''method_declaration : method_header method_body '''
-    p[0]= Node('method_declaration',[p[1].p[2]], None, None, None, p[1].code + p[2].code)
+    p[0]= Node('method_declaration',[p[1], p[2]], None, None, None, p[1].code + p[2].code)
 
 #adding label of the function by refrecing the class/obejct calling it and adding the number of arguments in the scope of the enclosing class
 
@@ -250,6 +250,7 @@ def p_method_header(p):
     attr['Type'] = p[4].type
     attr['num_arg'] = p[3].val
     if(len(p)==6):
+        print("Hola")
         attr['ReturnType'] = 'Unit'
         p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5]], None, None, None, l1)
     elif(len(p)==7):
@@ -440,14 +441,13 @@ def p_postfix_expression2(p):
     #classes and objects not done
     '''  postfix_expression : ambiguous_name'''
 
-	#LOOKUP(ambiguous_name) in symbol_list
     (x, y) = CURR.check_for_variable_declaration(p[1])
     if(x == 0):
-		print('Undeclared variable')
-		assert(false)
+        print('Undeclared variable')
+        assert(false)
     else:
         holding_variable = str(y.id) + "_" + p[1]
-	p[0] = Node("postfix_expression", [p[1]], p[1].type, None, None, p[1].code, holding_variable)
+        p[0] = Node("postfix_expression", [p[1]], p[1].type, None, None, p[1].code, holding_variable)
 
 
 def p_primary_no_new_array(p):
@@ -471,7 +471,7 @@ def p_literal(p):
             | FLOAT
             | INT'''
     temp = newtmp()
-    l1 = ["=, " + temp + ", " + p[1]]
+    l1 = ["=, " + temp + ", " + str(p[1])]
     child = create_leaf("LITERAL", p[1])
     type = 'None'
     size = 0
@@ -949,16 +949,13 @@ logging.basicConfig(
 log = logging.getLogger()
 parser = yacc.yacc()
 if __name__ == "__main__" :
-
+    
     file = (open(sys.argv[1],'r')).read()
     file+= "\n"
-
     result = parser.parse(file,debug=log)
-
-    #Obtain rules from logfile
     rules_raw = open("rules_used.txt",'w')
     f = open("parselog.txt")
-    for line in f:
+    for line in f.read():
         if re.match("INFO:root:Action(.*)", line):
             rules_raw.write(line)
             f.close()
@@ -972,6 +969,6 @@ if __name__ == "__main__" :
         matched_line = re.findall('rule \[(.*)\] with', line)
         fout.write(matched_line[0])
         fout.write("\n")
-        fin.close()
-        fout.close()
-        os.remove("rules_used.txt")
+    fin.close()
+    fout.close()
+    os.remove("rules_used.txt")
