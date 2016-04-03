@@ -570,19 +570,30 @@ def p_if_then_statement(p):
 def p_if_then_else_statement(p):
     'if_then_else_statement : K_IF LPAREN expression RPAREN statement_no_short_if K_ELSE statement'
     'if_then_statement : K_IF LPAREN expression RPAREN statement'
-    child1 = create_leaf("K_IF", p[1])
-    child2 = create_leaf("LPAREN", p[2])
-    child3 = create_leaf("RPAREN", p[4])
-    child4 = create_leaf("K_ELSE", p[6])
-    selse = newtmp()
-    safter = newtmp()
-    l1 = ["cmp, 0, " + p[3].place]
-    l2 = ["je, " + selse]
-    l3 = ["goto," + safter]
-    l4 = ["label," + selse]
-    l5 = ["label," + safter]
-    p[0] = Node("if_then_statement", [child1, child2, p[3], child3, p[5], child4, p[7]], None, None, None, p[3].code + l1 + l2 + p[5].code + l3 + l4 + p[7].code + l5)
+    if(len(p) == 8):
+        child1 = create_leaf("K_IF", p[1])
+        child2 = create_leaf("LPAREN", p[2])
+        child3 = create_leaf("RPAREN", p[4])
+        child4 = create_leaf("K_ELSE", p[6])
+        selse = newtmp()
+        safter = newtmp()
+        l1 = ["cmp, 0, " + p[3].place]
+        l2 = ["je, " + selse]
+        l3 = ["goto," + safter]
+        l4 = ["label," + selse]
+        l5 = ["label," + safter]
+        p[0] = Node("if_then_statement", [child1, child2, p[3], child3, p[5], child4, p[7]], None, None, None, p[3].code + l1 + l2 + p[5].code + l3 + l4 + p[7].code + l5)
+    else:
+        child1 = create_leaf("K_IF", p[1])
+        child2 = create_leaf("LPAREN", p[2])
+        child3 = create_leaf("RPAREN", p[4])
+        selse = newtmp()
+        l1 = ["cmp, 0, " + p[3].place]
+        l2 = ["je, " + selse]
+        l3 = ["label," + selse]
+        p[0] = Node("if_then_statement", [child1, child2, p[3], child3, p[5]], None, None, None, p[3].code + l1 + l2 + p[5].code + l3)
 
+# what are the following three rules ??
 def p_if_then_else_statement_no_short_if(p):
     'if_then_else_statement_no_short_if : K_IF LPAREN expression RPAREN statement_no_short_if K_ELSE statement_no_short_if'
     
@@ -600,43 +611,100 @@ def p_statement_without_trailing_substatement(p):
 
 def p_blank_statement(p):
     'blank_statement : semi'
+    p[0] = Node("blank_statement", [p[1]])
 
 def p_empty(p):
     'empty :'
+    p[0].code = {}
 
 def p_expression_statement(p):
     'expression_statement : statement_expression semi'
+    p[0] = Node("expression_statement", [p[1], p[2]], None, None, None, p[1].code, p[1].place)
+
 
 def p_statement_expression(p):
     '''  statement_expression : assignment
                                             | method_invocation
                                             | class_instance_creation_expression'''
+    p[0] = Node("statement_expression", [p[1]], None, None, None, p[1].code, p[1].place)
 
-
+#I think the default statement is missing !!
 def p_switch(p):
     'switch : switch_header switch_body'
+    exp = p[1].place
+    code = []
+    l = p[2].val.size()
+    #?
+    code += ["label," + p[2].val[0]]
+    for i in [1..l - 1]:
+        code += ["cmp, " + p[2].place + ", " + exp]
+        code += ["je," + p[2].val[i]]
+    code += ["label," + p[2].val[l]]
+    p[0] = Node("switch", [p[1], p[2]], None, None, None, p[1].code + p[2].code + code)
 
 def p_switch_header(p):
     '''switch_header : expression K_MATCH'''
+    child = create_leaf("K_MATCH", p[2])
+    p[0] = Node("switch_header", [p[1], child], None, None, None, p[1].code, p[1].place)
 
 def p_switch_body(p):
     'switch_body : BLOCK_BEGIN multiple_inner_switch_statement  BLOCK_END'
-
+    test = newlabel()
+    next = p[2].val[0]
+    vl = []
+    pl = []
+    vl.append(test)
+    pl.append("$")
+    child1 = create_leaf("BLOCK_BEGIN", p[1])
+    child2 = create_leaf("BLOCK_END", p[3])
+    l = p[2].place.size()
+    for i in [1..l]:
+        vl.append(p[2].val[i])
+        pl.append(p[2].place[i])
+    vl.append(next)
+    p[0] = Node("switch_body", [child1, p[2], child2], None, None, vl, p[2].code, pl)
 
 def p_multiple_inner_switch_statement(p):
     '''  multiple_inner_switch_statement : single_inner_switch_statement
                                                         | multiple_inner_switch_statement single_inner_switch_statement'''
+    if(len(p) == 2):
+        vl = []
+        pl = []
+        lab = newlabel()
+        next = newlabel()
+        vl.append(next)
+        pl.append("$")
+        vl.append(lab)
+        pl.append(p[1].place)
+        l1 = ["label," + lab]
+        l2 = ["goto," + next]
+        p[0] = Node("multiple_inner_switch", [p[1]], None, None, vl, l1 + p[1].code + l2, pl)
+
+    else:
+        vl = p[1].val
+        pl = p[1].place
+        lab = newlabel()
+        vl.append(lab)
+        pl.append(p[2].place)
+        l1 = ["label," + lab]
+        l2 = ["goto," + p[1].val[0]]
+        p[0] = Node("multiple_inner_switch", [p[1], p[2]], None, None, vl, l1 + p[2].code + l2, pl)
 
 def p_single_inner_switch_statement(p):
     '''single_inner_switch_statement : single_switch_statement_header single_switch_statement_body '''
+    p[0] = Node("single_inner_switch_statement", [p[1], p[2]], None, None, None, p[1].code + p[2].code, p[1].place)
 
 def p_single_switch_statement_body(p):
     '''single_switch_statement_body : expression
                                                     | block_statement_list'''
-
+    p[0] = Node("single_switch_statement", [p[1]], None, None, None, p[1].code)
 
 def p_single_switch_statement_header(p):
     'single_switch_statement_header : K_CASE expression IMPLIES'
+    child1 = create_leaf("K_CASE", p[1])
+    child2 = create_leaf("IMPLIES", p[3])
+    p[0] = Node("single_switch_statement_header", [child1, p[2], child2], None, None, None, p[2].code, p[2].place)
+
 
 def p_while_statement(p):
     'while_statement : K_WHILE LPAREN expression RPAREN statement'
