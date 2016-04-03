@@ -1,4 +1,4 @@
-#/usr/bin/env python
+#/usr/bin/env python3
 import data
 import il_parser
 import register_allocator
