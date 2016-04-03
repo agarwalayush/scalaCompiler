@@ -158,7 +158,7 @@ def p_block_end(p):
 def p_class_body_declarations_extras(p):
     '''class_body_declarations_extras : class_body_declarations
                                                     | empty'''
-    p[0] = Node('class_body_declarations_extras' , [p[1]])                                                    
+    p[0] = Node('class_body_declarations_extras' , [p[1]])
 
 def p_class_body_declarations(p):
     '''class_body_declarations : class_body_declaration
@@ -166,12 +166,12 @@ def p_class_body_declarations(p):
     if(len(p)==2):
         p[0] = Node('class_body_declarations', [p[1]])
     else:
-        p[0] = Node('class_body_declarations' , [p[1],p[2]])                   
+        p[0] = Node('class_body_declarations' , [p[1],p[2]])
 
 def p_class_body_declaration(p):
     '''class_body_declaration : local_variable
                                           | method_declaration'''
-    p[0] = Node('class_body_declaration' , [p[1]])                                              
+    p[0] = Node('class_body_declaration' , [p[1]])
 
 def p_argument_header(p):
     '''argument_header : argument_list
@@ -188,10 +188,10 @@ def p_arguement_list(p):
     else:
         child = create_leaf("COMMA", p[2])
         p[0] = Node("argument_list", [p[1], child, p[3]], p[3].type.append(p[1].type), p[3].size + p[1].size)
-  
+
 
 def p_argument(p):
-    '''argument : IDENTIFIER COLON type'''    
+    '''argument : IDENTIFIER COLON type'''
     child1 = create_leaf("IDENTIFIER", p[1])
     child2 = create_leaf("COLON", p[2])
     attr = {}
@@ -212,11 +212,11 @@ def p_semi(p):
 def p_method_declaration(p):
     '''method_declaration : method_header method_body '''
     p[0]= Node('method_declaration',[p[1].p[2]])
-    
+
 
 def p_method_header(p):
-    '''method_header :  K_DEF IDENTIFIER func_begin_bracket argument_header RPAREN COLON method_return_type ASSIGN 
-                        | K_DEF IDENTIFIER func_begin_bracket argument_header RPAREN ASSIGN 
+    '''method_header :  K_DEF IDENTIFIER func_begin_bracket argument_header RPAREN COLON method_return_type ASSIGN
+                        | K_DEF IDENTIFIER func_begin_bracket argument_header RPAREN ASSIGN
                         | K_DEF IDENTIFIER func_begin_bracket argument_header RPAREN'''
     child1= create_leaf('K_DEF',p[1])
     child2 = create_leaf('IDENTIFIER',p[2])
@@ -228,12 +228,12 @@ def p_method_header(p):
         p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5]])
     elif(len(p)==6):
         attr['ReturnType'] = 'Unit'
-        child4= create_leaf('ASSIGN',p[6])            
+        child4= create_leaf('ASSIGN',p[6])
         p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4])
     else:
-        attr['ReturnType'] = p[7].type            
+        attr['ReturnType'] = p[7].type
         child4 = create_leaf('COLON',p[6])
-        child5= create_leaf('ASSIGN',p[8])            
+        child5= create_leaf('ASSIGN',p[8])
         p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4,p[7],child5])
     CURR.parent.add_func(p[2],attr)
 
@@ -391,7 +391,7 @@ def p_unary_expression(p):
             p[0] = Node("unary_expression", [child, p[2]], p[2].type, None, None, p[2].code + l1, p[2].place)
         else:
             p[0] = Node("unary_expression", [child, p[2]], p[2].type, None, None, p[2].code, p[2].place)
-    else: 
+    else:
         p[0] = Node("unary_expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
 
 def p_postfix_not_expression(p):
@@ -409,11 +409,14 @@ def p_postfix_expression1(p):
     p[0] = Node("postfix_expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
 
 def p_postfix_expression2(p):
-    '''  postfix_expression : ambiguous_name'''
+	'''  postfix_expression : ambiguous_name'''
 
-    #LOOKUP(ambiguous_name) in symbol_list
-    p[0] = Node("postfix_expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
-1
+	#LOOKUP(ambiguous_name) in symbol_list
+	if(!check_for_variable_declaration(p[1])):
+		print('Undeclared variable')
+		assert(false)
+
+	p[0] = Node("postfix_expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
 
 def p_primary_no_new_array(p):
     '''  primary_no_new_array : literal
@@ -462,6 +465,9 @@ def p_array_invocation(p):
     l1 = ["<-" + temp + ", " + p[1].val + "," + p[3].place]
     type = CURR.symbol_list[p[1].value]['Type']
     #LOOKUP(ambiguous_name) in symbol_list
+    if(!check_for_variable_declaration(p[1])):
+	print('Undeclared variable')
+	assert(false)
     child1 = create_leaf("SQUARE_BEGIN", p[2])
     child2 = create_leaf("SQUARE_END", p[4])
     p[0] = Node("array_invocation", [p[1], child1,p[3], child2], type, None, None, p[3].code + l1, temp)
@@ -479,6 +485,9 @@ def p_method_invocation(p):
     code.append("call," + transform(p[1].val))
 
     #LOOKUP(ambiguous_name) in function_list
+    if(!check_for_function_declaration(p[1])):
+	print('Undefined function')
+	assert(false)
 
     #semantic check = is type of function p[1] == type of p[3]
     type = CURR.function_list[p[1].value]['Type']
@@ -551,7 +560,7 @@ def p_block_statement(p):
     '''block_statement : local_variable
                         | method_declaration
                         | statement'''
-    p[0] = Node('block_statement', [p[1]])                        
+    p[0] = Node('block_statement', [p[1]], None,None,None,p[1].code,None)
 
 def p_variable_header(p):
     '''variable_header : K_VAL
@@ -561,8 +570,8 @@ def p_variable_header(p):
 
 
 def p_local_variable(p):
-    'local_variable :   variable_header variable_body  semi'    
-    p[0] = Node("local_variable", [p[1], p[2],p[3]])
+    'local_variable :   variable_header variable_body  semi'
+    p[0] = Node("local_variable", [p[1], p[2],p[3]],None,None,None,p[2].code,None)
 
 
 #### Checked , typed and scoped till here ############
@@ -570,37 +579,68 @@ def p_local_variable(p):
 
 def p_variable_body(p):
     '''variable_body : local_variable_and_type  ASSIGN  variable_rhs '''
-    
+    code = '=,' + p[1].place + ','+  p[3].place
+    child = create_leaf('ASSIGN', p[2])
+    if( CURR.symbol_list[p[1].place]['Type'] == 'Undefined'):
+    	CURR.symbol_list[p[1].place]['Type'] = p[3].type
+
+    p[0] = Node('variable_body', [p[1],child,p[2]], None,None,None, p[3].code +code,None )
 
 def p_type_of_variable(p):
       '''type_of_variable : IDENTIFIER COLON type'''
+      if p[1] in CURR.symbol_list.keys():
+          print("variable already defined")
+          assert("False")
+      else:
+          attr = {}
+          attr['Type'] = p[3].type
+          attr['Size'] = p[3].size
+          CURR.add_symb(p[1], attr)
+          child1 = create_leaf("IDENTIFIER", p[1])
+          child2 = create_leaf("COLON", p[2])
+          p[0] = Node("type_of_variable", [child1, child2, p[3]],p[3].type,None,None,p[1])
 
 def p_variable_rhs(p):
-  '''variable_rhs : expression
+  	'''variable_rhs : expression
                         | array_initializer
                         | class_instance_creation_expression'''
+            p[0] =Node('variable_rhs', [p[1]], p[1].type, None,None, p[1].code,p[1].place)
 
-def p_local_variable_and_type(p):
-      '''local_variable_and_type : type_of_variable
-                                            | IDENTIFIER'''
+def p_local_variable_and_type1(p):
+	'''local_variable_and_type : type_of_variable'''
+	p[0] = Node("local_variable_and_type", [p[1]], p[1].type, None, None, None, p[1].place)
+
+def p_local_variable_and_type2(p):
+	'''local_variable_and_type : IDENTIFIER'''
+	if p[1] in CURR.symbol_list.keys():
+	  print("variable already defined")
+	  assert("False")
+	else:
+	  attr = {}
+	  attr['Type'] = 'Undefined'
+	  CURR.add_symb(p[1], attr)
+	  child1 = create_leaf("IDENTIFIER", p[1])
+	  p[0] = Node("local_variable_and_type", [child1], 'Undefined',None,None,None,p[1])
 
 def p_array_initializer(p):
-  ''' array_initializer : K_NEW K_ARRAY SQUARE_BEGIN type SQUARE_END LPAREN INT RPAREN
+	''' array_initializer : K_NEW K_ARRAY SQUARE_BEGIN type SQUARE_END LPAREN INT RPAREN
                             | K_ARRAY LPAREN argument_list_extras RPAREN '''
-
+            #Sarthak will do this
 
 
 def p_class_instance_creation_expression(p):
-  ''' class_instance_creation_expression : K_NEW nonarray_datatype LPAREN argument_list_extras RPAREN '''
+	''' class_instance_creation_expression : K_NEW nonarray_datatype LPAREN argument_list_extras RPAREN '''
+            #Sarthak will do this
 
 
 
 def p_statement(p):
-    '''  statement : statement_without_trailing_substatement
-                            | while_statement
-                            | if_then_else_statement
-                            | if_then_statement
-                            | for_loop'''
+	'''  statement : statement_without_trailing_substatement
+	                        | while_statement
+	                        | if_then_else_statement
+	                        | if_then_statement
+                        | for_loop'''
+            p[0] = Node('statement' , [p[1]], None,None,None,p[1].code,None)
 
 def p_if_then_statement(p):
     #TODO creating new scope in all the following
@@ -643,7 +683,7 @@ def p_if_then_else_statement(p):
 # what are the following three rules ??
 def p_if_then_else_statement_no_short_if(p):
     'if_then_else_statement_no_short_if : K_IF LPAREN expression RPAREN statement_no_short_if K_ELSE statement_no_short_if'
-    
+
 def p_statement_no_short_if(p):
     '''  statement_no_short_if : statement_without_trailing_substatement
                                             | if_then_else_statement_no_short_if'''
@@ -669,7 +709,7 @@ def p_expression_statement(p):
     p[0] = Node("expression_statement", [p[1], p[2]], None, None, None, p[1].code, p[1].place)
 
 
-def p_statement_expression(p):                  ######what will be the place of method_invocation ?? Should be assigned later as temp.place() whenever  temp = func() 
+def p_statement_expression(p):                  ######what will be the place of method_invocation ?? Should be assigned later as temp.place() whenever  temp = func()
     '''  statement_expression : assignment
                                             | method_invocation
                                             | class_instance_creation_expression'''
