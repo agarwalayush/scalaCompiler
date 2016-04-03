@@ -46,6 +46,8 @@ def create_leaf(name1,name2,dataType="Unit"):
 
 
 
+#####################################
+
 def p_compilation_unit(p):
     'compilation_unit :  import_declarations_extras classes_objects_list'
     p[0] = Node("compilation_unit",[p[1],p[2]])
@@ -82,6 +84,7 @@ def p_classes_objects_list(p):
 def p_class_and_objects_declaration(p):
     '''class_and_objects_declaration : object_declaration
                                                 | class_declaration'''
+
     p[0] = Node("class_and_objects_declaration",[p[1]])
 
 
@@ -122,61 +125,145 @@ def p_class_declaration(p):
     p[0] = Node("class_type",[p[1],p[2]])
 
 
-def p_class_header(p):
-    '''class_header : K_CLASS IDENTIFIER LPAREN class_arguement_header RPAREN super'''
-    child1 = create_leaf("K_EXTENDS", p[1])
-    p[0] = Node("class_type",[p[1],p[2]])
+def p_class_header(p):              # classes can't be defined inside objects
+    '''class_header : K_CLASS IDENTIFIER func_begin_bracket argument_header RPAREN super'''
+    child1 = create_leaf("K_CLASS", p[1])
+    child2 = create_leaf('IDENTIFIER',p[2])
+    child3 = create_leaf('RPAREN', p[4])
+    p[0] = Node("class_header",[child1,child2,p[3],p[4],child3,p[5]])
 
 
 def p_class_body(p):
-        '''class_body : BLOCK_BEGIN class_body_declarations_extras BLOCK_END '''
+    '''class_body : BLOCK_BEGIN class_body_declarations_extras block_end '''
+    child = create_leaf('BLOCK_BEGIN',p[1])
+    p[0] = Node('class_body', [child,p[2],p[3]])
+
+def p_block_end(p):
+    '''block_end : BLOCK_END'''
+    global CURR
+    PREV_ENV=CURR.parent
+    CURR=PREV_ENV
+    child = create_leaf('BLOCK_END',p[1])
+    p[0]= Node('block_end',[child])
+
 
 def p_class_body_declarations_extras(p):
-      '''class_body_declarations_extras : class_body_declarations
+    '''class_body_declarations_extras : class_body_declarations
                                                     | empty'''
+    p[0] = Node('class_body_declarations_extras' , [p[1]])                                                    
 
 def p_class_body_declarations(p):
     '''class_body_declarations : class_body_declaration
                                           | class_body_declarations class_body_declaration'''
+    if(len(p)==2):
+        p[0] = Node('class_body_declarations', [p[1]])
+    else:
+        p[0] = Node('class_body_declarations' , [p[1],p[2]])                   
 
 def p_class_body_declaration(p):
     '''class_body_declaration : field_declaration
                                           | method_declaration'''
+    p[0] = Node('class_body_declaration' , [p[1]])                                              
+
+def p_argument_header(p):
+    '''argument_header : argument_list
+                        | empty '''
+    p[0]= Node("argument_header", [p[1]])
+
+
+def p_arguement_list(p):
+    '''argument_list : argument
+                        | argument_list COMMA argument'''
+
+    if (len(p) == 2):
+        p[0] = Node("argument_list", [p[1]],[p[1].type],[p[1].size])
+    else:
+        child = create_leaf("COMMA", p[2])
+        p[0] = Node("argument_list", [p[1], child, p[3]], p[3].type.append(p[1].type), p[3].size + p[1].size)
+  
+
+def p_argument(p):
+    '''argument : IDENTIFIER COLON type'''    
+    child1 = create_leaf("IDENTIFIER", p[1])
+    child2 = create_leaf("COLON", p[2])
+    attr = {}
+    attr['Type']=p[3].type
+    attr['Size']=p[3].size
+    CURR.add_symbol(p[1],attr)
+    p[0] = Node("argument", [child1, child2, p[3]],p[3].type,p[3].size)
+
 
 def p_field_declaration(p):
-    'field_declaration :   variable_header variable_body  semi'
+    'field_declaration :   variable_header variable_body  semi'    
+    p[0] = Node("field_declaration", [p[1], p[2],p[3]])
+
+def p_variable_body(p):
+      '''variable_body : local_variable_and_type  ASSIGN  variable_rhs '''
+
 
 def p_semi(p):
     '''semi : SEMI_COLON
               | NEWLINE'''
+    child =create_leaf('SEMI', p[1])
+    p[0] = Node("semi",[child])
 
-def p_class_arguement_header(p):
-  '''class_arguement_header : class_arguement_list
-                                        | empty '''
-
-def p_class_arguement_list(p):
-  '''class_arguement_list : IDENTIFIER COLON type
-                                    | IDENTIFIER COLON type COMMA class_arguement_list'''
-
-def p_func_arguement_list_extras(p):
-  '''func_arguement_list_extras : type_of_variable
-                                                | type_of_variable COMMA func_arguement_list_extras
-                                                | empty '''
 
 def p_method_declaration(p):
-        '''method_declaration : K_DEF IDENTIFIER LPAREN func_arguement_list_extras RPAREN method_return_type_extras '''
+    '''method_declaration : method_header method_body '''
+    p[0]= Node('method_declaration',[p[1].p[2]])
+    
 
-def p_method_return_type_extras(p):
-  '''method_return_type_extras : COLON method_return_type ASSIGN method_body
-                                          | ASSIGN method_body
-                                          | empty method_body'''
+def p_method_header(p):
+    '''method_header :  K_DEF IDENTIFIER func_begin_bracket argument_header RPAREN COLON method_return_type ASSIGN 
+                        | K_DEF IDENTIFIER func_begin_bracket argument_header RPAREN ASSIGN 
+                        | K_DEF IDENTIFIER func_begin_bracket argument_header RPAREN'''
+    child1= create_leaf('K_DEF',p[1])
+    child2 = create_leaf('IDENTIFIER',p[2])
+    child3 = create_leaf('RPAREN', p[5])
+    attr = {}
+    attr['Type'] = p[4].type
+    if(len(p)==5):
+        attr['ReturnType'] = 'Unit'
+        p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5]])
+    elif(len(p)==6):
+        attr['ReturnType'] = 'Unit'
+        child4= create_leaf('ASSIGN',p[6])            
+        p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4])
+    else:
+        attr['ReturnType'] = p[7].type            
+        child4 = create_leaf('COLON',p[6])
+        child5= create_leaf('ASSIGN',p[8])            
+        p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4,p[7],child5])
+    CURR.parent.add_func(p[2],attr)
+
+# def p_method_return_type_extras(p):
+#     '''method_return_type_extras : COLON method_return_type ASSIGN method_body
+#                                           | ASSIGN method_body
+#                                           | empty method_body'''
 
 def p_method_return_type(p):
-        '''method_return_type : type'''
+    '''method_return_type : type'''
+    p[0]= Node('method_return_type',[p[1]], p[1].type, p[1].size)
+
+
+def p_func_begin_bracket(p):
+    '''func_begin_bracket : LPAREN'''
+    global CURR
+    NEW_ENV= Scope(CURR)
+    CURR = NEW_ENV
+
+    child = Node('LPAREN',p[1])
+    p[0] = Node('func_begin_bracket',[child])
+
+
 
 def p_method_body(p):
-        '''method_body : block'''
+    '''method_body : BLOCK_BEGIN block_body block_end'''
+    child=create_leaf('BLOCK_BEGIN', p[1])
+    p[0] = Node('method_body', [child,p[2],p[3]])
 
+
+################################################
 
 def p_expression(p):
     '''expression : assignment
@@ -221,7 +308,6 @@ def p_xor_expression(p):
         temp = newtmp()
         l1 = ["^," + temp + "," + p[1].place + "," + p[3].place]
         p[0] = Node("xor_expression", [p[1], child, p[2]], None, None, None, p[1].code + p[3].code + l1, temp)
-
 
 def p_equality_expression(p):
     '''equality_expression : relational_expression
