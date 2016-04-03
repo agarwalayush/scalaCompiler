@@ -22,6 +22,14 @@ def newlabel():
     label_count += 1
     return labelname
 
+def higher(type1,type2):
+    if((type1,type2) == ('Int', 'Float')):
+        return type2
+    elif ((type1,type2) == ( 'Float','Int')):
+        return type1
+    else:
+        return type1
+
 class Node(object):
     id = 1
     def __init__(self, name, child_list, type = "Unit", size = None, val = None, code = [], place = None):
@@ -161,7 +169,7 @@ def p_class_body_declarations(p):
         p[0] = Node('class_body_declarations' , [p[1],p[2]])                   
 
 def p_class_body_declaration(p):
-    '''class_body_declaration : field_declaration
+    '''class_body_declaration : local_variable
                                           | method_declaration'''
     p[0] = Node('class_body_declaration' , [p[1]])                                              
 
@@ -192,13 +200,6 @@ def p_argument(p):
     CURR.add_symbol(p[1],attr)
     p[0] = Node("argument", [child1, child2, p[3]],p[3].type,p[3].size)
 
-
-def p_field_declaration(p):
-    'field_declaration :   variable_header variable_body  semi'    
-    p[0] = Node("field_declaration", [p[1], p[2],p[3]])
-
-def p_variable_body(p):
-      '''variable_body : local_variable_and_type  ASSIGN  variable_rhs '''
 
 
 def p_semi(p):
@@ -266,67 +267,61 @@ def p_method_body(p):
 ################################################
 
 def p_expression(p):
-    '''expression : assignment
-                        | or_expression'''
-    p[0] = Node("assignment_expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
+    '''expression : or_expression'''
+    p[0] = Node("expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
 
-def p_assignment(p):
-    '''assignment : left_hand_side ASSIGN or_expression'''
-    tas = ["=," + p[1].place + "," + p[3].place]
-    child1 = create_leaf("ASSIGN", p[2])
-    p[0] = Node("assignment", [p[1], child1, p[3]], None, None, None, p[1].code + p[3].code + tas)
 
 def p_or_expression(p):
     '''or_expression : and_expression
                             | or_expression OR and_expression'''
     if(len(p) == 2):
-        p[0] = Node("or_expression", [p[1]], None, None, None, p[1].code, p[1].place)
+        p[0] = Node("or_expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
     else:
         child = create_leaf("OR", p[2])
         temp = newtmp()
         l1 = ["|," + temp + "," + p[1].place + "," + p[3].place]
-        p[0] = Node("or_expression", [p[1], child, p[2]], None, None, None, p[1].code + p[3].code + l1, temp)
+        p[0] = Node("or_expression", [p[1], child, p[2]], p[3].type, None, None, p[1].code + p[3].code + l1, temp)
 
 def p_and_expression(p):
     '''and_expression : xor_expression
-                            | and_expression AND xor_expression'''
+                        | and_expression AND xor_expression'''
     if(len(p) == 2):
-        p[0] = Node("and_expression", [p[1]], None, None, None, p[1].code, p[1].place)
+        p[0] = Node("and_expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
     else:
         child = create_leaf("AND", p[2])
         temp = newtmp()
         l1 = ["&," + temp + "," + p[1].place + "," + p[3].place]
-        p[0] = Node("and_expression", [p[1], child, p[2]], None, None, None, p[1].code + p[3].code + l1, temp)
+        p[0] = Node("and_expression", [p[1], child, p[2]], p[3].type, None, None, p[1].code + p[3].code + l1, temp)
 
 def p_xor_expression(p):
     '''xor_expression : equality_expression
                             | xor_expression XOR equality_expression'''
     if(len(p) == 2):
-        p[0] = Node("xor_expression", [p[1]], None, None, None, p[1].code, p[1].place)
+        p[0] = Node("xor_expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
     else:
         child = create_leaf("XOR", p[2])
         temp = newtmp()
         l1 = ["^," + temp + "," + p[1].place + "," + p[3].place]
-        p[0] = Node("xor_expression", [p[1], child, p[2]], None, None, None, p[1].code + p[3].code + l1, temp)
+        p[0] = Node("xor_expression", [p[1], child, p[2]], p[3].type, None, None, p[1].code + p[3].code + l1, temp)
 
 def p_equality_expression(p):
     '''equality_expression : relational_expression
                                     | equality_expression EQUAL relational_expression
                                     | equality_expression NEQUAL relational_expression'''
     if(len(p) == 2):
-        p[0] = Node("equality_expression", [p[1]], None, None, None, None, p[1].place)
+        p[0] = Node("equality_expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
     elif p[2] == "==":
         child = create_leaf("EQUAL", p[2])
         temp1 = newtmp()
         temp2 = newtmp()
         l1 = ["^," + temp1 + "," + p[1].place + "," + p[3].place]
         l2 = ["-," + temp2 + ", 1, " + temp1]
-        p[0] = Node("equality_expression", [p[1], child, p[3]], None, None, None, p[1].code + p[3].code + l1 + l2, temp2)
+        p[0] = Node("equality_expression", [p[1], child, p[3]], 'Bool', None, None, p[1].code + p[3].code + l1 + l2, temp2)
     elif p[2] == "!=":
         child = create_leaf("NEQUAL", p[2])
         temp = newtmp()
         l1 = ["^," + temp + "," + p[1].place + "," + p[3].place]
-        p[0] = Node("equality_expression", [p[1], child, p[3]], None, None, None, p[1].code + p[3].code + l1, temp)
+        p[0] = Node("equality_expression", [p[1], child, p[3]], 'Bool', None, None, p[1].code + p[3].code + l1, temp)
 
 def p_relational_expression(p):
     '''relational_expression : add_expression
@@ -335,7 +330,7 @@ def p_relational_expression(p):
                                         | relational_expression LESS_THAN add_expression
                                         | relational_expression LESS_THAN_EQUAL add_expression'''
     if(len(p) == 2):
-        p[0] = Node("relational_expression", [p[1]], None, None, None, None, p[1].place)
+        p[0] = Node("relational_expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
         return
     child = create_leaf("RelOp", p[2])
     if(p[2] == ">"):
@@ -356,24 +351,28 @@ def p_relational_expression(p):
     l5 = ["label, " + etrue]
     l6 = ["=," + temp + ", 1"]
     l7 = ["label, " + efalse]
-    p[0] = Node("relational_expression", [p[1], child, p[3]], None, None, None, p[1].code + p[3].code + l1 + l2 + l3, l4 + l5 + l6 + l7, temp)
+    p[0] = Node("relational_expression", [p[1], child, p[3]], 'Bool', None, None, p[1].code + p[3].code + l1 + l2 + l3, l4 + l5 + l6 + l7, temp)
 
 def p_add_expression(p):
     '''add_expression : mult_expression
                                     | add_expression PLUS mult_expression
                                     | add_expression MINUS mult_expression'''
-    child = create_leaf("PLUS_MINUS", p[2])
-    temp = newtmp()
-    l1 = p[2] + ", " + temp + ", " + p[1].place + "," + p[3].place
-    p[0] = Node("add_expression", [p[1], child, p[3]], None, None, None, p[1].code + p[3].code + l1, temp)
+    if(len(p)==2):
+        p[0] = Node("add_expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
+
+    else:
+        child = create_leaf("PLUS_MINUS", p[2])
+        temp = newtmp()
+        l1 = p[2] + ", " + temp + ", " + p[1].place + "," + p[3].place
+        p[0] = Node("add_expression", [p[1], child, p[3]], higher(p[1].type,p[3].type), None, None, p[1].code + p[3].code + l1, temp)
 
 def p_mult_expression(p):
     '''mult_expression : unary_expression
-                                             | mult_expression DIVIDE unary_expression
-                                             | mult_expression MULT unary_expression
-                                             | mult_expression MOD unary_expression'''
+                         | mult_expression DIVIDE unary_expression
+                         | mult_expression MULT unary_expression
+                         | mult_expression MOD unary_expression'''
     if(len(p) == 2):
-        p[0] = Node("mult_expression", [p[1]], None, None, None, None, p[1].place)
+        p[0] = Node("mult_expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
     else :
         child = create_leaf("DIV_MOD", p[2])
         temp = newtmp()
@@ -389,59 +388,83 @@ def p_unary_expression(p):
         child = create_leaf("PLUS_MINUS", p[1])
         if(p[1] == MINUS):
             l1 = ["-, " + p[2].place + ", 0, " + p[2].place]
-            p[0] = Node("unary_expression", [child, p[2]], None, None, None, p[2].code + l1, p[2].place)
+            p[0] = Node("unary_expression", [child, p[2]], p[2].type, None, None, p[2].code + l1, p[2].place)
         else:
-            p[0] = Node("unary_expression", [child, p[2]], None, None, None, p[2].code, p[2].place)
+            p[0] = Node("unary_expression", [child, p[2]], p[2].type, None, None, p[2].code, p[2].place)
     else: 
-        p[0] = Node("unary_expression", [p[1]], None, None, None, p[1].code, p[1].place)
+        p[0] = Node("unary_expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
 
 def p_postfix_not_expression(p):
     '''postfix_not_expression : postfix_expression
     | NOT unary_expression'''
-    if(len(p) == 2):
+    if(len(p) != 2):
         child = create_leaf("NOT", p[1])
         l1 = ["!, " + p[2].place + "," + p[2].place]
-        p[0] = Node("postfix_not_expression", [child, p[2]], None, None, None, p[2].code + l1, p[2].place)
+        p[0] = Node("postfix_not_expression", [child, p[2]], p[2].type, None, None, p[2].code + l1, p[2].place)
     else:
-        p[0] = Node("postfix_not_expression", [p[1]], None, None, None, p[1].code, p[1].place)
+        p[0] = Node("postfix_not_expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
 
-def p_postfix_expression(p):
-    '''  postfix_expression : primary_no_new_array
-                                    | ambiguous_name'''
-    p[0] = Node("postfix_expression", [p[1]], None, None, None, p[1].code)
+def p_postfix_expression1(p):
+    '''  postfix_expression : primary_no_new_array'''
+    p[0] = Node("postfix_expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
+
+def p_postfix_expression2(p):
+    '''  postfix_expression : ambiguous_name'''
+
+    #LOOKUP(ambiguous_name) in symbol_list
+    p[0] = Node("postfix_expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
+1
 
 def p_primary_no_new_array(p):
     '''  primary_no_new_array : literal
-                                            | method_invocation
-                                            | LPAREN expression RPAREN
-                                            | array_invocation'''
+                                | method_invocation
+                                | LPAREN expression RPAREN
+                                | array_invocation'''
     if(len(p) == 2):
-        p[0] = Node("primary_no_new_array", [p[1]], None, None, None, p[1].code, p[1].place)
+        p[0] = Node("primary_no_new_array", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
     else:
         child1 = create_leaf("LPAREN", p[1])
         child2 = create_leaf("RPAREN", p[3])
-        p[0] = Node("primary_no_new_array", [child1, p[2], child2], p[2].code, p[2].place)
-
-def p_array_invocation(p):
-    '''array_invocation : ambiguous_name SQUARE_BEGIN expression SQUARE_END '''
-    temp = newtemp()
-    l1 = ["<-" + temp + ", " + p[1].val + "," + p[3].place]
-    child1 = create_leaf("SQUARE_BEGIN", p[2])
-    child2 = create_leaf("SQUARE_END", p[4])
-    p[0] = Node("array_invocation", [p[1], child1,p[3], child2], None, None, None, p[3].code + l1, temp)
+        p[0] = Node("primary_no_new_array", [child1, p[2], child2], p[2].type, None,None, p[2].code, p[2].place)
 
 def p_literal(p):
-  '''literal : STRING
+    '''literal : STRING
             | CHAR
             | K_FALSE
             | K_TRUE
             | K_NULL
             | FLOAT
             | INT'''
-  temp = newtmp()
-  l1 = ["=, " + temp + ", " + p[1]]
-  child = create_leaf("LITERAL", p[1])
-  p[0] = Node("literal", [child], None, None, None, l1, temp)
+    temp = newtmp()
+    l1 = ["=, " + temp + ", " + p[1]]
+    child = create_leaf("LITERAL", p[1])
+    type = 'None'
+    size = 0
+    if (p[1] == STRING):
+        type = 'String'
+    elif(p[1] == K_FALSE or p[1] == K_TRUE):
+        type = 'Bool'
+    elif (p[1] == CHAR):
+        type = 'Char'
+        size =1
+    elif (p[1] == INT):
+        type = 'Int'
+        size = 2
+    elif (p[1] == FLOAT):
+        type = 'Float'
+        size = 4
+
+    p[0] = Node("literal", [child], type, size, None, l1, temp)
+
+def p_array_invocation(p):
+    '''array_invocation : ambiguous_name SQUARE_BEGIN expression SQUARE_END '''
+    temp = newtemp()
+    l1 = ["<-" + temp + ", " + p[1].val + "," + p[3].place]
+    type = CURR.symbol_list[p[1].value]['Type']
+    #LOOKUP(ambiguous_name) in symbol_list
+    child1 = create_leaf("SQUARE_BEGIN", p[2])
+    child2 = create_leaf("SQUARE_END", p[4])
+    p[0] = Node("array_invocation", [p[1], child1,p[3], child2], type, None, None, p[3].code + l1, temp)
 
 def p_method_invocation(p):
     '''method_invocation : ambiguous_name LPAREN argument_list_extras RPAREN '''
@@ -454,39 +477,61 @@ def p_method_invocation(p):
     for k in p[3].place:
         code.append("push, " + k)
     code.append("call," + transform(p[1].val))
-    p[0] = Node("method_invocation", [p[1], child1, p[3], child2], None, None, None, p[1].code + p[3].code + code)
+
+    #LOOKUP(ambiguous_name) in function_list
+
+    #semantic check = is type of function p[1] == type of p[3]
+    type = CURR.function_list[p[1].value]['Type']
+    returntype = CURR.function_list[p[1].value]['ReturnType']
+
+    if ((type != p[3].type)):
+        assert(false)
+
+    p[0] = Node("method_invocation", [p[1], child1, p[3], child2], returntype, None, None, p[1].code + p[3].code + code)
 
 
 def p_argument_list_extras(p):
     '''argument_list_extras : argument_list
                                 | empty'''
-    p[0] = Node("argument_list_extras", [p[1]], None, None, None, p[1].code, [p[1].place])
+    p[0] = Node("argument_list_extras", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
 
 def p_argument_list(p):
     '''argument_list : expression
                             | argument_list COMMA expression'''
     if(len(p) == 2):
-        p[0] = Node("argumentList", [p[1]], None, None, None, p[1].code, [p[1].place])
+        p[0] = Node("argumentList", [p[1]], [p[1].type], None, None, p[1].code, [p[1].place])
     else:
         child = create_leaf("COMMA", p[2]);
-        p[0] = Node("argumentList", [p[1], child, p[3]], None, None, None, p[1].code + p[3].code, p[1].place + [p[3].place])
+        p[0] = Node("argumentList", [p[1], child, p[3]], p[1].type + [p[3].type], None, None, p[1].code + p[3].code, p[1].place + [p[3].place])
 
 def p_ambiguous_name(p):
     '''ambiguous_name : IDENTIFIER
-                                | ambiguous_name DOT IDENTIFIER'''
-#TODO : Complete when scope is implemented
+                        | ambiguous_name DOT IDENTIFIER'''
+    if(len(p)==2):
+        child = create_leaf('IDENTIFIER', p[1])
+        p[0] = Node('ambiguous_name', [child],None,None,p[1],None,None)
+    else:
+        child = create_leaf('IDENTIFIER', p[3])
+        child2 = create_leaf('.', p[2])
+        p[0] = Node('ambiguous_name', [p[1],child2,child],None,None,p[1].value + '.' + p[3],None,None)
 
-def p_left_hand_side(p):
-    '''left_hand_side : ambiguous_name
-                            | array_invocation'''
-    p[0] = Node("left_hand_side", [p[1]], None, None, None, p[1].code, p[1].place)
 
-# BLOCK STATEMENTS
+
+###################### BLOCK STATEMENTS
 
 
 def p_block(p):
-      '''block : BLOCK_BEGIN block_body BLOCK_END '''
-#TODO after scope
+      '''block : block_begin block_body block_end '''
+      p[0] = Node("block", [p[1], p[2], p[3]])
+
+def p_block_begin(p):
+    '''block_begin : BLOCK_BEGIN'''
+    global CURR
+    NEW_ENV = Scope(CURR)
+    CURR = NEW_ENV
+    child = create_leaf("BLOCK_BEGIN", p[1])
+    p[0] = Node("block_begin", [child])
+
 
 def p_block_body(p):
       '''block_body : block_statement_list
@@ -503,27 +548,41 @@ def p_block_statement_list(p):
 
 
 def p_block_statement(p):
-      '''block_statement : local_variable
-                                    | method_declaration
-                                    | statement'''
-    #TODO after finishing scope
+    '''block_statement : local_variable
+                        | method_declaration
+                        | statement'''
+    p[0] = Node('block_statement', [p[1]])                        
 
 def p_variable_header(p):
-  '''variable_header : K_VAL
-                            | K_VAR '''
-  child = create_leaf("K_VAL", p[1])
-  p[0] = Node("variable_header", p[1])
+    '''variable_header : K_VAL
+                    | K_VAR '''
+    child = create_leaf("K_VAL", p[1])
+    p[0] = Node("variable_header", p[1])
+
 
 def p_local_variable(p):
-      '''local_variable : variable_header variable_body  semi '''
-      #TODO add entry in the symbolTable
+    'local_variable :   variable_header variable_body  semi'    
+    p[0] = Node("local_variable", [p[1], p[2],p[3]])
 
+
+#### Checked , typed and scoped till here ############
+
+
+def p_variable_body(p):
+    '''variable_body : local_variable_and_type  ASSIGN  variable_rhs '''
+    
+
+def p_type_of_variable(p):
+      '''type_of_variable : IDENTIFIER COLON type'''
 
 def p_variable_rhs(p):
   '''variable_rhs : expression
                         | array_initializer
                         | class_instance_creation_expression'''
-      
+
+def p_local_variable_and_type(p):
+      '''local_variable_and_type : type_of_variable
+                                            | IDENTIFIER'''
 
 def p_array_initializer(p):
   ''' array_initializer : K_NEW K_ARRAY SQUARE_BEGIN type SQUARE_END LPAREN INT RPAREN
@@ -534,18 +593,6 @@ def p_array_initializer(p):
 def p_class_instance_creation_expression(p):
   ''' class_instance_creation_expression : K_NEW nonarray_datatype LPAREN argument_list_extras RPAREN '''
 
-
-def p_variable_body(p):
-      '''variable_body : local_variable_and_type  ASSIGN  variable_rhs '''
-
-
-def p_type_of_variable(p):
-      '''type_of_variable : IDENTIFIER COLON type'''
-
-
-def p_local_variable_and_type(p):
-      '''local_variable_and_type : type_of_variable
-                                            | IDENTIFIER'''
 
 
 def p_statement(p):
@@ -604,10 +651,10 @@ def p_statement_no_short_if(p):
 
 def p_statement_without_trailing_substatement(p):
     '''  statement_without_trailing_substatement : block
-                                                                        | switch
-                                                                        | expression_statement
-                                                                        | blank_statement
-                                                                        | return_statement'''
+                                                | switch
+                                                | expression_statement
+                                                | blank_statement
+                                                | return_statement'''
 
 def p_blank_statement(p):
     'blank_statement : semi'
@@ -615,18 +662,31 @@ def p_blank_statement(p):
 
 def p_empty(p):
     'empty :'
-    p[0].code = {}
+    p[0] = Node('empty', [], 'Unit',None,None,[])
 
 def p_expression_statement(p):
     'expression_statement : statement_expression semi'
     p[0] = Node("expression_statement", [p[1], p[2]], None, None, None, p[1].code, p[1].place)
 
 
-def p_statement_expression(p):
+def p_statement_expression(p):                  ######what will be the place of method_invocation ?? Should be assigned later as temp.place() whenever  temp = func() 
     '''  statement_expression : assignment
                                             | method_invocation
                                             | class_instance_creation_expression'''
     p[0] = Node("statement_expression", [p[1]], None, None, None, p[1].code, p[1].place)
+
+
+def p_assignment(p):
+    '''assignment : left_hand_side ASSIGN or_expression'''
+    tas = ["=," + p[1].place + "," + p[3].place]
+    child1 = create_leaf("ASSIGN", p[2])
+    p[0] = Node("assignment", [p[1], child1, p[3]], None, None, None, p[1].code + p[3].code + tas)
+
+def p_left_hand_side(p):
+    '''left_hand_side : ambiguous_name
+                            | array_invocation'''
+    p[0] = Node("left_hand_side", [p[1]], None, None, None, p[1].code, p[1].place)
+
 
 #I think the default statement is missing !!
 def p_switch(p):
