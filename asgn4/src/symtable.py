@@ -4,8 +4,8 @@ class Scope:
     id = 1
 
     def __init__(self, parent = None):
-        self.id = id
-        id = id + 1
+        self.id = Scope.id
+        Scope.id = Scope.id + 1
         self.parent = parent
         self.child_list = []
         if(parent != None):
