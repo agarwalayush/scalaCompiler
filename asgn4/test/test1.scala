@@ -1,9 +1,9 @@
 
 object HelloWorld {
-       val b = 31;
+       val c = 31;
        def print() = {
            val b =10;
-           val a = b + 21;
+           c = 4 + b;
        }
        print();
 
