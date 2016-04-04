@@ -386,14 +386,14 @@ def p_relational_expression(p):
         rel = jle
         temp = newtmp()
         etrue = newlabel()
-        efalse = newlabel()
+        eFalse = newlabel()
         l1 = ["cmp, " + p[1].place + ", " + p[3].place]
         l2 = [rel + "," + etrue]
         l3 = ["=," + temp + ", 0"]
-        l4 = ["goto, " + efalse]
+        l4 = ["goto, " + eFalse]
         l5 = ["label, " + etrue]
         l6 = ["=," + temp + ", 1"]
-        l7 = ["label, " + efalse]
+        l7 = ["label, " + eFalse]
         p[0] = Node("relational_expression", [p[1], child, p[3]], 'Bool', None, None, p[1].code + p[3].code + l1 + l2 + l3, l4 + l5 + l6 + l7, temp)
 
 def p_add_expression(p):
@@ -456,12 +456,12 @@ def p_postfix_expression2(p):
     #classes and objects not done
     '''  postfix_expression : ambiguous_name'''
 
-    (x, y) = CURR.check_for_variable_declaration(p[1])
+    (x, y) = CURR.check_for_variable_declaration(p[1].val) 
     if(x == 0):
         print('Undeclared variable')
-        assert(false)
+        assert(False)
     else:
-        holding_variable = str(y.id) + "_" + p[1]
+        holding_variable = str(y.id) + "_" + p[1].val
         p[0] = Node("postfix_expression", [p[1]], p[1].type, None, None, p[1].code, holding_variable)
 
 
@@ -469,7 +469,7 @@ def p_primary_no_new_array(p):
     '''  primary_no_new_array : literal
                                 | method_invocation
                                 | LPAREN expression RPAREN
-                                | array_invocation'''
+                                | array_invocation_right'''
     if(len(p) == 2):
         p[0] = Node("primary_no_new_array", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
     else:
@@ -506,19 +506,21 @@ def p_literal(p):
 
     p[0] = Node("literal", [child], type, size, p[1], l1, temp)
 
-def p_array_invocation(p):
-    '''array_invocation : ambiguous_name SQUARE_BEGIN expression SQUARE_END '''
+
+def p_array_invocation_right(p):
+    '''array_invocation_right : ambiguous_name SQUARE_BEGIN expression SQUARE_END '''
     global CURR
-    temp = newtemp()
-    l1 = ["<-" + temp + ", " + p[1].val + "," + p[3].place]
-    type = CURR.symbol_list[p[1].value]['Type']
+    temp = newtmp()
+    l1 = ["<-," + temp + ", " + p[1].val + "," + p[3].place]
+    #type = CURR.symbol_list[p[1].value]['Type']
     #LOOKUP(ambiguous_name) in symbol_list
-    if(~CURR.check_for_variable_declaration(p[1])):
+    (x, y) = CURR.check_for_variable_declaration(p[1].val)
+    if(x==0):
         print('Undeclared variable')
-        assert(false)
-        child1 = create_leaf("SQUARE_BEGIN", p[2])
-        child2 = create_leaf("SQUARE_END", p[4])
-        p[0] = Node("array_invocation", [p[1], child1,p[3], child2], type, None, None, p[3].code + l1, temp)
+        assert(False)
+    child1 = create_leaf("SQUARE_BEGIN", p[2])
+    child2 = create_leaf("SQUARE_END", p[4])
+    p[0] = Node("array_invocation_right", [p[1], child1,p[3], child2], None, None, None, p[3].code + l1, temp)
 
 def p_method_invocation(p):
     #TODO: classes and objects
@@ -643,8 +645,8 @@ def p_variable_body(p):
     #only valid if RHS is variable_rhs = an expression
     code = ['=,' + p[1].place + ','+  p[3].place]
     child = create_leaf('ASSIGN', p[2])
-    if( CURR.symbol_list[p[1].place]['Type'] == 'Undefined'):
-    	CURR.symbol_list[p[1].place]['Type'] = p[3].type
+    # if( CURR.symbol_list[p[1].place]['Type'] == 'Undefined'):
+    # 	CURR.symbol_list[p[1].place]['Type'] = p[3].type
 
     p[0] = Node('variable_body', [p[1],child,p[2]], None,None,None, p[3].code +code,None)
 
@@ -660,7 +662,6 @@ def p_type_of_variable(p):
         attr['Size'] = p[3].size
         CURR.add_symb(p[1], attr)
         holding_variable = str(CURR.id) + "_" + p[1]
-        print('....' , holding_variable)
         child1 = create_leaf("IDENTIFIER", p[1])
         child2 = create_leaf("COLON", p[2])
         p[0] = Node("type_of_variable", [child1, child2, p[3]],p[3].type,None,None,[], holding_variable)
@@ -683,11 +684,12 @@ def p_local_variable_and_type2(p):
         print("variable already defined")
         assert("False")
     else:
-	    attr = {}
-	    attr['Type'] = 'Undefined'
-	    CURR.add_symb(p[1], attr)
-	    child1 = create_leaf("IDENTIFIER", p[1])
-	    p[0] = Node("local_variable_and_type", [child1], 'Undefined',None,None,None,p[1])
+        attr = {}
+        attr['Type'] = 'Undefined'
+        CURR.add_symb(p[1], attr)
+        holding_variable = str(CURR.id) + "_" + p[1]
+        child1 = create_leaf("IDENTIFIER", p[1])
+        p[0] = Node("local_variable_and_type", [child1], None,None,None,None,holding_variable)
 
 # def p_array_initializer(p):
 # 	''' array_initializer : K_NEW K_ARRAY SQUARE_BEGIN type SQUARE_END LPAREN INT RPAREN
@@ -802,22 +804,37 @@ def p_statement_expression(p):
     p[0] = Node("statement_expression", [p[1]], None, None, None, p[1].code, p[1].place)
 
 
-def p_assignment(p):
+def p_assignment1(p):
     '''assignment : left_hand_side ASSIGN or_expression'''
     tas = ["=," + p[1].place + "," + p[3].place]
     child1 = create_leaf("ASSIGN", p[2])
     p[0] = Node("assignment", [p[1], child1, p[3]], None, None, None, p[1].code + p[3].code + tas)
 
+def p_assignment2(p):
+    '''assignment : ambiguous_name SQUARE_BEGIN expression SQUARE_END ASSIGN or_expression'''
+    global CURR
+    temp = newtmp()
+    l1 = ["->," + p[6].place + ", " + p[1].val + "," + p[3].place]    
+    (x, y) = CURR.check_for_variable_declaration(p[1])
+    if(x==0):
+        print('Undeclared variable')
+        #assert(False)
+    child1 = create_leaf("SQUARE_BEGIN", p[2])
+    child2 = create_leaf("SQUARE_END", p[4])
+    child3 = create_leaf("ASSIGN", p[5])
+
+    p[0] = Node("assignment", [p[1], child1,p[3], child2,child3,p[6]], None, None, None, p[6].code + p[3].code + l1, None)
+
+
 def p_left_hand_side(p):
     #class and objects not supported in ambiguous name till now. Migght work for arrays
-    '''left_hand_side : ambiguous_name
-                            | array_invocation'''
+    '''left_hand_side : ambiguous_name'''
     global CURR
     #array invocation not handled till now
     (x, y) = CURR.check_for_variable_declaration(p[1].val)
     if(x == 0):
         print("Correct the semantics")
-        assert(false)
+        assert(False)
     else:
         holding_variable = str(y.id) + "_" + p[1].val
         p[0] = Node("left_hand_side", [p[1]], None, None, None, p[1].code, holding_variable)
