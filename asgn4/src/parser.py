@@ -637,20 +637,21 @@ def p_local_variable(p):
 
 
 def p_variable_body(p):
-    #TODO: allow for instantiation of class objects and arrays
     '''variable_body : local_variable_and_type  ASSIGN  variable_rhs '''
     global CURR
     #only valid if RHS is variable_rhs = an expression
     code = ['=,' + p[1].place + ','+  p[3].place]
     child = create_leaf('ASSIGN', p[2])
-    if( CURR.symbol_list[p[1].place]['Type'] == 'Undefined'):
-    	CURR.symbol_list[p[1].place]['Type'] = p[3].type
+   # if( CURR.symbol_list[p[1].place]['Type'] == 'Undefined'):
+   #CURR.symbol_list[p[1].place]['Type'] = p[3].type
 
     p[0] = Node('variable_body', [p[1],child,p[2]], None,None,None, p[3].code +code,None)
 
 def p_type_of_variable(p):
     '''type_of_variable : IDENTIFIER COLON type'''
     global CURR
+    print("Hello")
+    print("hola" + CURR.id)
     if p[1] in CURR.symbol_list.keys():
         print("variable already defined")
         assert("False")
@@ -673,21 +674,23 @@ def p_variable_rhs(p):
     p[0] = Node("variable_rhs", [p[1]], p[1].type, None,None, p[1].code, p[1].place)
 
 def p_local_variable_and_type1(p):
-	'''local_variable_and_type : type_of_variable'''
-	p[0] = Node("local_variable_and_type", [p[1]], p[1].type, None, None, [], p[1].place)
+    '''local_variable_and_type : type_of_variable'''
+    p[0] = Node("local_variable_and_type", [p[1]], p[1].type, None, None, [], p[1].place)
 
 def p_local_variable_and_type2(p):
     '''local_variable_and_type : IDENTIFIER'''
     global CURR
+#    print("id = ", CURR.id)
     if p[1] in CURR.symbol_list.keys():
         print("variable already defined")
         assert("False")
     else:
-	    attr = {}
-	    attr['Type'] = 'Undefined'
-	    CURR.add_symb(p[1], attr)
-	    child1 = create_leaf("IDENTIFIER", p[1])
-	    p[0] = Node("local_variable_and_type", [child1], 'Undefined',None,None,None,p[1])
+        holding_variable = str(CURR.id) + "_" + p[1]
+        attr = {}
+        attr['Type'] = 'Undefined'
+        CURR.add_symb(p[1], attr)
+        child1 = create_leaf("IDENTIFIER", p[1])
+        p[0] = Node("local_variable_and_type", [child1], 'Undefined',None,None,None, place = holding_variable)
 
 # def p_array_initializer(p):
 # 	''' array_initializer : K_NEW K_ARRAY SQUARE_BEGIN type SQUARE_END LPAREN INT RPAREN
