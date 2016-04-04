@@ -4,5 +4,5 @@ object example {
           case 1 => t = 2;
           case 2 => t = 3;
           }
-       val t = 32;
+       val e = 32;
 }

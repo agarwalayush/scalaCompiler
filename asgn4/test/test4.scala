@@ -1,16 +1,19 @@
-import scala.collection.immuatable
-
 object sort {
 
     def quicksort(arr: Array[Int]) {
 
-        def swap(i: Int, j: Int) {
+      def arr(i: Int):Int = {
+        return 2;
+      }
+
+        def swap(i: Int, j: Int): Int= {
             val t = arr(i); 
-            a[i] = arr(j); 
+            t = arr(j); 
+            return 1;
         }
 
         def sort(l: Int, r: Int) {
-            val pivot = arr((l + r) / 2);
+            val pivot = swap((l + r),2);
             var i = l;
             var j = r;
             while (i <= j) {
@@ -26,11 +29,11 @@ object sort {
             if (j < r) sort(i, r);
         }
 
-        sort(0, arr.length - 1);
+        sort(0, arr(- 1));
     }
 
     def main() {
-        val a = Array(4, 3, 9, 2, 0);
+        val a = new Array[Int](4);
         quicksort(a);
     }
 

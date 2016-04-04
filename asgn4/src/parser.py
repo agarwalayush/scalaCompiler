@@ -175,7 +175,7 @@ def p_class_begin_bracket(p):
 def p_class_body(p):
     '''class_body : BLOCK_BEGIN class_body_declarations_extras block_end '''
     child = create_leaf('BLOCK_BEGIN',p[1])
-    p[0] = Node('class_body', [child,p[2],p[3]], None, None, None, p[1].code)
+    p[0] = Node('class_body', [child,p[2],p[3]], None, None, None, p[2].code)
 
 def p_block_end(p):
     '''block_end : BLOCK_END'''
@@ -447,7 +447,7 @@ def p_unary_expression(p):
                                  | postfix_not_expression'''
     if(len(p) !=2):
         child = create_leaf("PLUS_MINUS", p[1])
-        if(p[1] == MINUS):
+        if(p[1] == "-"):
             l1 = ["-, " + p[2].place + ", 0, " + p[2].place]
             p[0] = Node("unary_expression", [child, p[2]], p[2].type, None, None, p[2].code + l1, p[2].place)
         else:
@@ -545,9 +545,9 @@ def p_method_invocation(p):
     #TODO: classes and objects
     '''method_invocation : ambiguous_name LPAREN argument_list_extras RPAREN '''
     global CURR
+    retval = None
     # check whether the function name is valid.
     (x, y) = CURR.check_for_function_declaration(p[1].val)
-    retval = newtmp()
     if(x == 0):
         print("Fuction not in scope ", p[1].val)
         raise Exception(ERROR_MSG)
@@ -566,7 +566,9 @@ def p_method_invocation(p):
         code.append("pusharg, " + k)
 
     code.append("call," + func_name)
-    code.append("pop," + retval)
+    if(y.function_list[p[1].val]['ReturnType'] != 'Unit'):
+        retval = newtmp()
+        code.append("pop," + retval)
     p[0] = Node("method_invocation", [p[1], child1, p[3], child2], "Unit", None, None, p[1].code + p[3].code + code,retval)
 
 
@@ -602,7 +604,7 @@ def p_ambiguous_name(p):
         #not implemented till now
         child = create_leaf('IDENTIFIER', p[3])
         child2 = create_leaf('.', p[2])
-        p[0] = Node('ambiguous_name', [p[1],child2,child],None,None,p[1].value + '.' + p[3],[],None)
+        p[0] = Node('ambiguous_name', [p[1],child2,child],None,None,p[1].val + '.' + p[3],[],None)
 
 
 
@@ -845,9 +847,9 @@ def p_assignment2(p):
     global CURR
     temp = newtmp()
     l1 = ["->," + p[6].place + ", " + p[1].val + "," + p[3].place]
-    (x, y) = CURR.check_for_variable_declaration(p[1])
+    (x, y) = CURR.check_for_variable_declaration(p[1].val)
     if(x==0):
-        print('Undeclared variable')
+        print('Undeclared variable: ', p[1].val)
         raise Exception(ERROR_MSG)
     child1 = create_leaf("SQUARE_BEGIN", p[2])
     child2 = create_leaf("SQUARE_END", p[4])
@@ -976,8 +978,6 @@ def p_for_loop(p):
     iterator = p[3].place
     exp1 = p[3].val[2]
     exp2 = p[3].val[3]
-    print(iterator)
-    print(exp1)
     l1 = ["=," + iterator + "," + exp1]
     l2 = ["label," + s_begin]
     l3 = ["cmp," + exp2 + "," + iterator]
