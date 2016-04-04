@@ -15,6 +15,7 @@ temp_count = 0
 label_count = 0
 def newtmp(dataType= 'Unit'):
     global temp_count
+    global CURR
     symbolname= "temp" + str(temp_count)
     temp_count += 1
     attr= {'Type' : dataType}
@@ -63,7 +64,7 @@ def create_leaf(name1,name2,dataType="Unit"):
 def p_compilation_unit(p):
     'compilation_unit :  import_declarations_extras classes_objects_list'
     p[0] = Node("compilation_unit",[p[1],p[2]], None, None, None, p[2].code)
-
+    print("\n".join(p[0].code))
 
 def p_import_declarations_extras(p):
     '''import_declarations_extras : import_declarations
@@ -106,6 +107,7 @@ def p_object_declaration(p):
 
 def p_object_declare(p):
     '''ObjectDeclare : K_OBJECT IDENTIFIER super '''
+    global CURR
     child1 = create_leaf("K_OBJECT", p[1])
     child2 = create_leaf("IDENTIFIER", p[2])
     CURR.object_list.append(p[2])
@@ -140,6 +142,7 @@ def p_class_declaration(p):
 
 def p_class_header(p):              # classes can't be defined inside objects
     '''class_header : K_CLASS IDENTIFIER class_begin_bracket argument_header RPAREN super'''
+    global CURR
     child1 = create_leaf("K_CLASS", p[1])
     child2 = create_leaf('IDENTIFIER',p[2])
     child3 = create_leaf('RPAREN', p[4])
@@ -197,7 +200,10 @@ def p_class_body_declaration(p):
 def p_argument_header(p):
     '''argument_header : argument_list
                         | empty '''
-    p[0]= Node("argument_header", [p[1]], None, None, p[1].val)
+    global CURR
+    if(p[1].val is None): p[1].val = 0
+    if(p[1].place is None): p[1].place = []
+    p[0]= Node("argument_header", [p[1]], None, None, val = p[1].val, place = p[1].place)
     if(~(p[1].val is None)):
         CURR.num_arg = p[1].val
 
@@ -206,21 +212,22 @@ def p_arguement_list(p):
                         | argument_list COMMA argument'''
 
     if (len(p) == 2):
-        p[0] = Node("argument_list", [p[1]],[p[1].type],[p[1].size], 1)
+        p[0] = Node("argument_list", [p[1]],[p[1].type],[p[1].size], val = 1, place = p[1].place)
     else:
         child = create_leaf("COMMA", p[2])
-        p[0] = Node("argument_list", [p[1], child, p[3]], p[3].type.append(p[1].type), p[3].size + p[1].size, p[1].val + 1)
+        p[0] = Node("argument_list", [p[1], child, p[3]], p[3].type.append(p[1].type), p[3].size + p[1].size, val = p[1].val + 1, place = p[1].place + p[3].place)
         
 #checking the identifiers !!
 def p_argument(p):
     '''argument : IDENTIFIER COLON type'''
+    global CURR
     child1 = create_leaf("IDENTIFIER", p[1])
     child2 = create_leaf("COLON", p[2])
     attr = {}
     attr['Type']=p[3].type
     attr['Size']=p[3].size
     CURR.add_symb(p[1],attr)
-    p[0] = Node("argument", [child1, child2, p[3]],p[3].type,p[3].size)
+    p[0] = Node("argument", [child1, child2, p[3]],p[3].type,p[3].size, place = [])
 
 
 
@@ -241,6 +248,7 @@ def p_method_header(p):
     '''method_header :  K_DEF IDENTIFIER func_begin_bracket argument_header RPAREN COLON method_return_type ASSIGN
                         | K_DEF IDENTIFIER func_begin_bracket argument_header RPAREN ASSIGN
                         | K_DEF IDENTIFIER func_begin_bracket argument_header RPAREN'''
+    global CURR
     child1= create_leaf('K_DEF',p[1])
     child2 = create_leaf('IDENTIFIER',p[2])
     child3 = create_leaf('RPAREN', p[5])
@@ -248,9 +256,9 @@ def p_method_header(p):
     func_label = str(CURR.parent.id) + "_" + p[2]
     l1 = ["label," + func_label]
     attr['Type'] = p[4].type
-    attr['num_arg'] = p[3].val
+    print(p[4].val)
+    attr['num_arg'] = p[4].val
     if(len(p)==6):
-        print("Hola")
         attr['ReturnType'] = 'Unit'
         p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5]], None, None, None, l1)
     elif(len(p)==7):
@@ -263,7 +271,8 @@ def p_method_header(p):
         child4 = create_leaf('COLON',p[6])
         child5= create_leaf('ASSIGN',p[8])            
         p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4,p[7],child5], None, None, None, l1)
-        CURR.parent.function_list[p[2]] = attr
+    print(CURR.parent.id)
+    CURR.parent.function_list[p[2]] = attr
         # def p_method_return_type_extras(p):
         #     '''method_return_type_extras : COLON method_return_type ASSIGN method_body
         #                                           | ASSIGN method_body
@@ -426,6 +435,7 @@ def p_unary_expression(p):
 def p_postfix_not_expression(p):
     '''postfix_not_expression : postfix_expression
     | NOT unary_expression'''
+    global CURR
     if(len(p) != 2):
         child = create_leaf("NOT", p[1])
         l1 = ["!, " + p[2].place + "," + p[2].place]
@@ -493,6 +503,7 @@ def p_literal(p):
 
 def p_array_invocation(p):
     '''array_invocation : ambiguous_name SQUARE_BEGIN expression SQUARE_END '''
+    global CURR
     temp = newtemp()
     l1 = ["<-" + temp + ", " + p[1].val + "," + p[3].place]
     type = CURR.symbol_list[p[1].value]['Type']
@@ -507,17 +518,17 @@ def p_array_invocation(p):
 def p_method_invocation(p):
     #TODO: classes and objects
     '''method_invocation : ambiguous_name LPAREN argument_list_extras RPAREN '''
-
+    global CURR
     # check whether the function name is valid.
-    (x, y) = CURR.check_for_function_declaration(p[1])
+    (x, y) = CURR.check_for_function_declaration(p[1].val)
     if(x == 0):
         print("correct your semantics")
         assert(False)
-    elif(p[3].val != y.function_list[p[1]]["num_arg"]):
+    elif(p[3].val != y.function_list[p[1].val]["num_arg"]):
         print("wrong number of arguments!")
         assert(False)
     else:
-        func_name = str(y.id) + "_" + p[1]
+        func_name = str(y.id) + "_" + p[1].val
     # implementing push in 3 address code
     child1 = create_leaf("LPAREN", p[2])
     child2 = create_leaf("RPAREN", p[4])
@@ -525,7 +536,7 @@ def p_method_invocation(p):
     for k in p[3].place:
         code.append("pusharg, " + k)
     code.append("call," + func_name)
-    p[0] = Node("method_invocation", [p[1], child1, p[3], child2], returntype, None, None, p[1].code + p[3].code + code)
+    p[0] = Node("method_invocation", [p[1], child1, p[3], child2], "Unit", None, None, p[1].code + p[3].code + code)
 
 
 def p_argument_list_extras(p):
@@ -533,6 +544,7 @@ def p_argument_list_extras(p):
                                 | empty'''
     if(p[1].val is None):
         p[1].val = 0
+    if(p[1].place == None): p[1].place = []
     p[0] = Node("argument_list_extras", [p[1]], p[1].type, None, p[1].val, p[1].code, p[1].place)
 
 def p_argument_list(p):
@@ -614,6 +626,7 @@ def p_local_variable(p):
 def p_variable_body(p):
     #TODO: allow for instantiation of class objects and arrays
     '''variable_body : local_variable_and_type  ASSIGN  variable_rhs '''
+    global CURR
     #only valid if RHS is variable_rhs = an expression
     code = ['=,' + p[1].place + ','+  p[3].place]
     child = create_leaf('ASSIGN', p[2])
@@ -624,6 +637,7 @@ def p_variable_body(p):
 
 def p_type_of_variable(p):
     '''type_of_variable : IDENTIFIER COLON type'''
+    global CURR
     if p[1] in CURR.symbol_list.keys():
           print("variable already defined")
           assert("False")
@@ -649,11 +663,12 @@ def p_local_variable_and_type1(p):
 	p[0] = Node("local_variable_and_type", [p[1]], p[1].type, None, None, [], p[1].place)
 
 def p_local_variable_and_type2(p):
-	'''local_variable_and_type : IDENTIFIER'''
-	if p[1] in CURR.symbol_list.keys():
-	    print("variable already defined")
-	    assert("False")
-	else:
+    '''local_variable_and_type : IDENTIFIER'''
+    global CURR
+    if p[1] in CURR.symbol_list.keys():
+        print("variable already defined")
+        assert("False")
+    else:
 	    attr = {}
 	    attr['Type'] = 'Undefined'
 	    CURR.add_symb(p[1], attr)
@@ -733,7 +748,7 @@ def p_statement_without_trailing_substatement(p):
                                                 | expression_statement
                                                 | blank_statement
                                                 | return_statement'''
-
+    p[0] = Node("statement_without_trailing_substatement", [p[1]], None, None, None, p[1].code)
 def p_blank_statement(p):
     'blank_statement : semi'
     p[0] = Node("blank_statement", [p[1]])
@@ -765,6 +780,7 @@ def p_left_hand_side(p):
     #class and objects not supported in ambiguous name till now. Migght work for arrays
     '''left_hand_side : ambiguous_name
                             | array_invocation'''
+    global CURR
     #array invocation not handled till now
     (x, y) = CURR.check_for_variable_declaration(p[1])
     if(x == 0):
