@@ -702,7 +702,7 @@ def p_local_variable_and_type2(p):
 def p_array_initializer(p):
     ''' array_initializer : K_NEW K_ARRAY SQUARE_BEGIN type SQUARE_END LPAREN INT RPAREN'''
     child1 = create_leaf('K_NEW', p[1])
-    child2 = create_leaf('K_ARRAY', p[2])    
+    child2 = create_leaf('K_ARRAY', p[2])
     child3 = create_leaf('SQUARE_BEGIN', p[3])
     child5 = create_leaf('SQUARE_END', p[5])
     child6 = create_leaf('LPAREN', p[6])
@@ -743,37 +743,43 @@ def p_if_then_statement(p):
 
 def p_if_then_else_statement(p):
     'if_then_else_statement : K_IF LPAREN expression RPAREN statement_no_short_if K_ELSE statement'
-    'if_then_statement : K_IF LPAREN expression RPAREN statement'
-    if(len(p) == 8):
-        child1 = create_leaf("K_IF", p[1])
-        child2 = create_leaf("LPAREN", p[2])
-        child3 = create_leaf("RPAREN", p[4])
-        child4 = create_leaf("K_ELSE", p[6])
-        selse = newlabel()
-        safter = newlabel()
-        l1 = ["cmp, 0, " + p[3].place]
-        l2 = ["je, " + selse]
-        l3 = ["goto," + safter]
-        l4 = ["label," + selse]
-        l5 = ["label," + safter]
-        p[0] = Node("if_then_statement", [child1, child2, p[3], child3, p[5], child4, p[7]], None, None, None, p[3].code + l1 + l2 + p[5].code + l3 + l4 + p[7].code + l5)
-    else:
-        child1 = create_leaf("K_IF", p[1])
-        child2 = create_leaf("LPAREN", p[2])
-        child3 = create_leaf("RPAREN", p[4])
-        selse = newlabel()
-        l1 = ["cmp, 0, " + p[3].place]
-        l2 = ["je, " + selse]
-        l3 = ["label," + selse]
-        p[0] = Node("if_then_statement", [child1, child2, p[3], child3, p[5]], None, None, None, p[3].code + l1 + l2 + p[5].code + l3)
+
+    child1 = create_leaf("K_IF", p[1])
+    child2 = create_leaf("LPAREN", p[2])
+    child3 = create_leaf("RPAREN", p[4])
+    child4 = create_leaf("K_ELSE", p[6])
+    selse = newlabel()
+    safter = newlabel()
+    l1 = ["cmp, 0, " + p[3].place]
+    l2 = ["je, " + selse]
+    l3 = ["goto," + safter]
+    l4 = ["label," + selse]
+    l5 = ["label," + safter]
+    p[0] = Node("if_then_else_statement", [child1, child2, p[3], child3, p[5], child4, p[7]], None, None, None, p[3].code + l1 + l2 + p[5].code + l3 + l4 + p[7].code + l5)
 
 # what are the following three rules ??
 def p_if_then_else_statement_no_short_if(p):
     'if_then_else_statement_no_short_if : K_IF LPAREN expression RPAREN statement_no_short_if K_ELSE statement_no_short_if'
 
+    child1 = create_leaf("K_IF", p[1])
+    child2 = create_leaf("LPAREN", p[2])
+    child3 = create_leaf("RPAREN", p[4])
+    child4 = create_leaf("K_ELSE", p[6])
+    selse = newlabel()
+    safter = newlabel()
+    l1 = ["cmp, 0, " + p[3].place]
+    l2 = ["je, " + selse]
+    l3 = ["goto," + safter]
+    l4 = ["label," + selse]
+    l5 = ["label," + safter]
+    p[0] = Node("if_then_else_statement_no_short_if", [child1, child2, p[3], child3, p[5], child4, p[7]], None, None, None, p[3].code + l1 + l2 + p[5].code + l3 + l4 + p[7].code + l5)
+
+
 def p_statement_no_short_if(p):
     '''  statement_no_short_if : statement_without_trailing_substatement
                                             | if_then_else_statement_no_short_if'''
+
+    p[0] = Node("statement_no_short_if", [p[1]], code = p[1].code)
 
 
 def p_statement_without_trailing_substatement(p):
@@ -818,7 +824,7 @@ def p_assignment2(p):
     '''assignment : ambiguous_name SQUARE_BEGIN expression SQUARE_END ASSIGN or_expression'''
     global CURR
     temp = newtmp()
-    l1 = ["->," + p[6].place + ", " + p[1].val + "," + p[3].place]    
+    l1 = ["->," + p[6].place + ", " + p[1].val + "," + p[3].place]
     (x, y) = CURR.check_for_variable_declaration(p[1])
     if(x==0):
         print('Undeclared variable')
@@ -1005,8 +1011,8 @@ def p_basic_type(p):
 def p_array_datatype(p):
     '''array_datatype : K_ARRAY square_block
                                 | K_LIST square_block'''
-    child = create_leaf('Array/List', p[1])     
-    p[0] = Node('array_datatype', [child, p[2]], 'Array['+p[2].type+']' )                           
+    child = create_leaf('Array/List', p[1])
+    p[0] = Node('array_datatype', [child, p[2]], 'Array['+p[2].type+']' )
 
 def p_square_block(p):
     ''' square_block : SQUARE_BEGIN type SQUARE_END'''
@@ -1024,7 +1030,7 @@ logging.basicConfig(
 log = logging.getLogger()
 parser = yacc.yacc()
 if __name__ == "__main__" :
-    
+
     file = (open(sys.argv[1],'r')).read()
     file+= "\n"
     result = parser.parse(file,debug=log)
