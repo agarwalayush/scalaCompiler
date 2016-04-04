@@ -1,4 +1,0 @@
-- cd asgn3
-- make
-- bin/parser test/test1.scala
-- firefox test1.html
