@@ -509,16 +509,17 @@ def p_literal(p):
 def p_array_invocation(p):
     '''array_invocation : ambiguous_name SQUARE_BEGIN expression SQUARE_END '''
     global CURR
-    temp = newtemp()
+    temp = newtmp()
     l1 = ["<-" + temp + ", " + p[1].val + "," + p[3].place]
-    type = CURR.symbol_list[p[1].value]['Type']
+    #type = CURR.symbol_list[p[1].value]['Type']
     #LOOKUP(ambiguous_name) in symbol_list
-    if(~CURR.check_for_variable_declaration(p[1])):
+    (x, y) = CURR.check_for_variable_declaration(p[1].val)
+    if(x == 0):
         print('Undeclared variable')
         assert(false)
-        child1 = create_leaf("SQUARE_BEGIN", p[2])
-        child2 = create_leaf("SQUARE_END", p[4])
-        p[0] = Node("array_invocation", [p[1], child1,p[3], child2], type, None, None, p[3].code + l1, temp)
+    child1 = create_leaf("SQUARE_BEGIN", p[2])
+    child2 = create_leaf("SQUARE_END", p[4])
+    p[0] = Node("array_invocation", [p[1], child1,p[3], child2], type, None, None, p[3].code + l1, temp)
 
 def p_method_invocation(p):
     #TODO: classes and objects
@@ -819,8 +820,9 @@ def p_left_hand_side(p):
     #array invocation not handled till now
     (x, y) = CURR.check_for_variable_declaration(p[1].val)
     if(x == 0):
+        print(p[1].val)
         print("Correct the semantics")
-        assert(false)
+        assert(False)
     else:
         holding_variable = str(y.id) + "_" + p[1].val
         p[0] = Node("left_hand_side", [p[1]], None, None, None, p[1].code, holding_variable)
@@ -830,14 +832,15 @@ def p_switch(p):
     'switch : switch_header switch_body'
     exp = p[1].place
     code = []
-    l = p[2].val.size()
+    l = len(p[2].val)
+    print(p[2].val[l - 1])
     #?
     code += ["label," + p[2].val[0]]
-    for i in [1..l - 1]:
-        code += ["cmp, " + p[2].place + ", " + exp]
+    for i in range(1, l - 1):
+        code += ["cmp," + p[2].place[i] + "," + exp]
         code += ["je," + p[2].val[i]]
-        code += ["label," + p[2].val[l]]
-        p[0] = Node("switch", [p[1], p[2]], None, None, None, p[1].code + p[2].code + code)
+    code += ["label" + "," + p[2].val[l-1]]
+    p[0] = Node("switch", [p[1], p[2]], None, None, None, p[1].code + p[2].code + code)
 
 def p_switch_header(p):
     '''switch_header : expression K_MATCH'''
@@ -854,12 +857,13 @@ def p_switch_body(p):
     pl.append("$")
     child1 = create_leaf("BLOCK_BEGIN", p[1])
     child2 = create_leaf("BLOCK_END", p[3])
-    l = p[2].place.size()
-    for i in [1..l]:
+    l = len(p[2].place)
+    for i in range(1,l):
         vl.append(p[2].val[i])
         pl.append(p[2].place[i])
-        vl.append(next)
-        p[0] = Node("switch_body", [child1, p[2], child2], None, None, vl, p[2].code, pl)
+    vl.append(next)
+    pl.append("$")
+    p[0] = Node("switch_body", [child1, p[2], child2], None, None, vl, p[2].code, pl)
 
 def p_multiple_inner_switch_statement(p):
     '''  multiple_inner_switch_statement : single_inner_switch_statement
@@ -875,8 +879,7 @@ def p_multiple_inner_switch_statement(p):
         pl.append(p[1].place)
         l1 = ["label," + lab]
         l2 = ["goto," + next]
-        p[0] = Node("multiple_inner_switch", [p[1]], None, None, vl, l1 + p[1].code + l2, pl)
-
+        p[0] = Node("multiple_inner_switch", [p[1]], None, None, vl,p[1].code[0] + l1 + p[1].code[1] + l2, pl)
     else:
         vl = p[1].val
         pl = p[1].place
@@ -885,11 +888,11 @@ def p_multiple_inner_switch_statement(p):
         pl.append(p[2].place)
         l1 = ["label," + lab]
         l2 = ["goto," + p[1].val[0]]
-        p[0] = Node("multiple_inner_switch", [p[1], p[2]], None, None, vl, l1 + p[2].code + l2, pl)
+        p[0] = Node("multiple_inner_switch", [p[1], p[2]], None, None, vl, p[2].code[0] + p[1].code + l1 + p[2].code[1] + l2, pl)
 
 def p_single_inner_switch_statement(p):
     '''single_inner_switch_statement : single_switch_statement_header single_switch_statement_body '''
-    p[0] = Node("single_inner_switch_statement", [p[1], p[2]], None, None, None, p[1].code + p[2].code, p[1].place)
+    p[0] = Node("single_inner_switch_statement", [p[1], p[2]], None, None, None, [p[1].code , p[2].code], p[1].place)
 
 def p_single_switch_statement_body(p):
     '''single_switch_statement_body : expression
