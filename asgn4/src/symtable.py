@@ -32,18 +32,20 @@ class Scope:
             if(var in c_scope.symbol_list.keys()):
                 flag = 1
                 break
-            c_scope = self.parent
+            c_scope = c_scope.parent
         return (flag, c_scope)
 
 
     def check_for_function_declaration(self, var):
             flag = 0
             c_scope = self
-            while(c_scope != None):
+            print(var)
+            while(c_scope is not None):
+                print(c_scope.function_list)
                 if(var in c_scope.function_list.keys()):
                     flag = 1
                     break
-                c_scope = self.parent
+                c_scope = c_scope.parent
             return (flag, c_scope)
 
 

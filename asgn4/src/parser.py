@@ -64,7 +64,10 @@ def create_leaf(name1,name2,dataType="Unit"):
 def p_compilation_unit(p):
     'compilation_unit :  import_declarations_extras classes_objects_list'
     p[0] = Node("compilation_unit",[p[1],p[2]], None, None, None, p[2].code)
-    print("\n".join(p[0].code))
+
+
+    print(('\n').join(p[0].code))
+
 
 def p_import_declarations_extras(p):
     '''import_declarations_extras : import_declarations
@@ -92,7 +95,7 @@ def p_classes_objects_list(p):
         p[0] = Node("classes_objects_list",[p[1],p[2]], None, None, None, p[1].code + p[2].code )
     else :
         p[0] = Node("classes_objects_list",[p[1]], None, None, None, p[1].code)
-
+        
 
 def p_class_and_objects_declaration(p):
     '''class_and_objects_declaration : object_declaration
@@ -104,6 +107,7 @@ def p_class_and_objects_declaration(p):
 def p_object_declaration(p):
     'object_declaration : ObjectDeclare block'
     p[0] = Node("class_object_declaration",[p[1], p[2]], None, None, None, p[2].code)
+#    print(p[0].code)
 
 def p_object_declare(p):
     '''ObjectDeclare : K_OBJECT IDENTIFIER super '''
@@ -112,7 +116,7 @@ def p_object_declare(p):
     child2 = create_leaf("IDENTIFIER", p[2])
     CURR.object_list.append(p[2])
     p[0] = Node("ObjectDeclare",[child1, child2, p[1]])
-
+    
 def p_class_type(p):
     '''class_type : IDENTIFIER
                     | K_WITH class_type'''
@@ -509,11 +513,11 @@ def p_array_invocation(p):
     type = CURR.symbol_list[p[1].value]['Type']
     #LOOKUP(ambiguous_name) in symbol_list
     if(~CURR.check_for_variable_declaration(p[1])):
-	    print('Undeclared variable')
-	    assert(false)
-    child1 = create_leaf("SQUARE_BEGIN", p[2])
-    child2 = create_leaf("SQUARE_END", p[4])
-    p[0] = Node("array_invocation", [p[1], child1,p[3], child2], type, None, None, p[3].code + l1, temp)
+        print('Undeclared variable')
+        assert(false)
+        child1 = create_leaf("SQUARE_BEGIN", p[2])
+        child2 = create_leaf("SQUARE_END", p[4])
+        p[0] = Node("array_invocation", [p[1], child1,p[3], child2], type, None, None, p[3].code + l1, temp)
 
 def p_method_invocation(p):
     #TODO: classes and objects
@@ -530,13 +534,18 @@ def p_method_invocation(p):
     else:
         func_name = str(y.id) + "_" + p[1].val
     # implementing push in 3 address code
+
+
     child1 = create_leaf("LPAREN", p[2])
     child2 = create_leaf("RPAREN", p[4])
     code = []
     for k in p[3].place:
         code.append("pusharg, " + k)
+
     code.append("call," + func_name)
     p[0] = Node("method_invocation", [p[1], child1, p[3], child2], "Unit", None, None, p[1].code + p[3].code + code)
+
+
 
 
 def p_argument_list_extras(p):
@@ -544,8 +553,10 @@ def p_argument_list_extras(p):
                                 | empty'''
     if(p[1].val is None):
         p[1].val = 0
+
     if(p[1].place == None): p[1].place = []
     p[0] = Node("argument_list_extras", [p[1]], p[1].type, None, p[1].val, p[1].code, p[1].place)
+
 
 def p_argument_list(p):
     '''argument_list : expression
@@ -575,14 +586,15 @@ def p_ambiguous_name(p):
 
 def p_block(p):
     '''block : block_begin block_body block_end '''
-    p[0] = Node("block", [p[1], p[2], p[3]])
+    p[0] = Node("block", [p[1], p[2], p[3]],code=p[2].code)
+    print(p[0].code)
 
 def p_block_begin(p):
     '''block_begin : BLOCK_BEGIN'''
     global CURR
-    NEW_ENV = Scope(CURR, CURR.object_list[-1:][0])
+    NEW_ENV = Scope(CURR)
     CURR = NEW_ENV
-    
+
     OBJECT_SCOPE.append(CURR)
     child = create_leaf("BLOCK_BEGIN", p[1])
     p[0] = Node("block_begin", [child])
@@ -597,9 +609,9 @@ def p_block_statement_list(p):
     '''block_statement_list : block_statement
                                     | block_statement_list block_statement'''
     if(len(p) == 2):
-          p[0] = Node("block_statement_list", [p[1]], None, None, None, p[1].code)
+        p[0] = Node("block_statement_list", [p[1]], None, None, None, p[1].code)
     else:
-          p[0] = Node("block_statement_list", [p[1], p[2]], None, None, None, p[1].code + p[2].code)
+        p[0] = Node("block_statement_list", [p[1], p[2]], None, None, None, p[1].code + p[2].code)
 
 
 def p_block_statement(p):
@@ -639,17 +651,17 @@ def p_type_of_variable(p):
     '''type_of_variable : IDENTIFIER COLON type'''
     global CURR
     if p[1] in CURR.symbol_list.keys():
-          print("variable already defined")
-          assert("False")
+        print("variable already defined")
+        assert("False")
     else:
-          attr = {}
-          attr['Type'] = p[3].type
-          attr['Size'] = p[3].size
-          CURR.add_symb(p[1], attr)
-          holding_variable = str(CURR.id) + "_" + p[1]
-          child1 = create_leaf("IDENTIFIER", p[1])
-          child2 = create_leaf("COLON", p[2])
-          p[0] = Node("type_of_variable", [child1, child2, p[3]],p[3].type,None,None,[], holding_variable)
+        attr = {}
+        attr['Type'] = p[3].type
+        attr['Size'] = p[3].size
+        CURR.add_symb(p[1], attr)
+        holding_variable = str(CURR.id) + "_" + p[1]
+        child1 = create_leaf("IDENTIFIER", p[1])
+        child2 = create_leaf("COLON", p[2])
+        p[0] = Node("type_of_variable", [child1, child2, p[3]],p[3].type,None,None,[], holding_variable)
 
 
 def p_variable_rhs(p):
@@ -748,7 +760,11 @@ def p_statement_without_trailing_substatement(p):
                                                 | expression_statement
                                                 | blank_statement
                                                 | return_statement'''
-    p[0] = Node("statement_without_trailing_substatement", [p[1]], None, None, None, p[1].code)
+
+
+    p[0] = Node("statement_without_trailing_subspace", [p[1]], code =p[1].code)
+
+
 def p_blank_statement(p):
     'blank_statement : semi'
     p[0] = Node("blank_statement", [p[1]])
@@ -763,7 +779,7 @@ def p_expression_statement(p):
 
 
 def p_statement_expression(p):
-######what will be the place of method_invocation ?? Should be assigned later as temp.place() whenever  temp = func()
+    ######what will be the place of method_invocation ?? Should be assigned later as temp.place() whenever  temp = func()
     '''  statement_expression : assignment
                                             | method_invocation
                                             | class_instance_creation_expression'''
@@ -788,7 +804,7 @@ def p_left_hand_side(p):
         assert(false)
     else:
         holding_variable = str(y.id) + "_" + p[1]
-    p[0] = Node("left_hand_side", [p[1]], None, None, None, p[1].code, holding_variable)
+        p[0] = Node("left_hand_side", [p[1]], None, None, None, p[1].code, holding_variable)
 
 #I think the default statement is missing !!
 def p_switch(p):
@@ -970,13 +986,13 @@ if __name__ == "__main__" :
     file+= "\n"
     result = parser.parse(file,debug=log)
     rules_raw = open("rules_used.txt",'w')
-    f = open("parselog.txt")
-    for line in f.read():
+    for line in open("parselog.txt",'r').readlines():
         if re.match("INFO:root:Action(.*)", line):
             rules_raw.write(line)
-            f.close()
-            rules_raw.close();
-            #Clean the garbage words
+
+
+    rules_raw.close();
+                #Clean the garbage words
     rules_raw = "rules_used.txt"
     rules_clean = "reverse_actions.txt"
     fin = open(rules_raw)
