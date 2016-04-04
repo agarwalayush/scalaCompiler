@@ -658,20 +658,23 @@ def p_local_variable(p):
 
 
 def p_variable_body(p):
-    '''variable_body : variable_body local_variable_and_type  ASSIGN  variable_rhs 
-                      | local_variable_and_type  ASSIGN  variable_rhs'''
-    global CURR
-    #only valid if RHS is variable_rhs = an expression
-    code = ['=,' + p[1].place + ','+  p[3].place]
-    child = create_leaf('ASSIGN', p[2])
+    '''variable_body : local_variable_and_type  ASSIGN  variable_rhs
+                     |  local_variable_and_type  ASSIGN  variable_rhs COMMA  variable_body   '''
 
-    p[0] = Node('variable_body', [p[1],child,p[2]], None,None,None, p[3].code +code,None)
+    if(len(p) == 4) :
+        code = ['=,' + p[1].place + ','+  p[3].place]
+        child = create_leaf('ASSIGN', p[2])
+        p[0] = Node('variable_body', [p[1],child,p[3]], None,None,None, p[3].code +code,None)
+    else :
+        code = ['=,' + p[1].place + ','+  p[3].place]
+        child1 = create_leaf('ASSIGN', p[2])
+        child2 = create_leaf('COMMA', p[4])
+        p[0] = Node('variable_body', [p[1],child1,p[3], child2, p[5]], None,None,None, p[3].code + code + p[5].code, None)
+        pass
 
 def p_type_of_variable(p):
     '''type_of_variable : IDENTIFIER COLON type'''
     global CURR
-    print("Hello")
-    print("hola" + CURR.id)
     if p[1] in CURR.symbol_list.keys():
         print("variable already defined")
         assert("False")
@@ -718,7 +721,7 @@ def p_local_variable_and_type2(p):
 def p_array_initializer(p):
     ''' array_initializer : K_NEW K_ARRAY SQUARE_BEGIN type SQUARE_END LPAREN INT RPAREN'''
     child1 = create_leaf('K_NEW', p[1])
-    child2 = create_leaf('K_ARRAY', p[2])    
+    child2 = create_leaf('K_ARRAY', p[2])
     child3 = create_leaf('SQUARE_BEGIN', p[3])
     child5 = create_leaf('SQUARE_END', p[5])
     child6 = create_leaf('LPAREN', p[6])
@@ -759,37 +762,43 @@ def p_if_then_statement(p):
 
 def p_if_then_else_statement(p):
     'if_then_else_statement : K_IF LPAREN expression RPAREN statement_no_short_if K_ELSE statement'
-    'if_then_statement : K_IF LPAREN expression RPAREN statement'
-    if(len(p) == 8):
-        child1 = create_leaf("K_IF", p[1])
-        child2 = create_leaf("LPAREN", p[2])
-        child3 = create_leaf("RPAREN", p[4])
-        child4 = create_leaf("K_ELSE", p[6])
-        selse = newlabel()
-        safter = newlabel()
-        l1 = ["cmp, 0, " + p[3].place]
-        l2 = ["je, " + selse]
-        l3 = ["goto," + safter]
-        l4 = ["label," + selse]
-        l5 = ["label," + safter]
-        p[0] = Node("if_then_statement", [child1, child2, p[3], child3, p[5], child4, p[7]], None, None, None, p[3].code + l1 + l2 + p[5].code + l3 + l4 + p[7].code + l5)
-    else:
-        child1 = create_leaf("K_IF", p[1])
-        child2 = create_leaf("LPAREN", p[2])
-        child3 = create_leaf("RPAREN", p[4])
-        selse = newlabel()
-        l1 = ["cmp, 0, " + p[3].place]
-        l2 = ["je, " + selse]
-        l3 = ["label," + selse]
-        p[0] = Node("if_then_statement", [child1, child2, p[3], child3, p[5]], None, None, None, p[3].code + l1 + l2 + p[5].code + l3)
+
+    child1 = create_leaf("K_IF", p[1])
+    child2 = create_leaf("LPAREN", p[2])
+    child3 = create_leaf("RPAREN", p[4])
+    child4 = create_leaf("K_ELSE", p[6])
+    selse = newlabel()
+    safter = newlabel()
+    l1 = ["cmp, 0, " + p[3].place]
+    l2 = ["je, " + selse]
+    l3 = ["goto," + safter]
+    l4 = ["label," + selse]
+    l5 = ["label," + safter]
+    p[0] = Node("if_then_else_statement", [child1, child2, p[3], child3, p[5], child4, p[7]], None, None, None, p[3].code + l1 + l2 + p[5].code + l3 + l4 + p[7].code + l5)
 
 # what are the following three rules ??
 def p_if_then_else_statement_no_short_if(p):
     'if_then_else_statement_no_short_if : K_IF LPAREN expression RPAREN statement_no_short_if K_ELSE statement_no_short_if'
 
+    child1 = create_leaf("K_IF", p[1])
+    child2 = create_leaf("LPAREN", p[2])
+    child3 = create_leaf("RPAREN", p[4])
+    child4 = create_leaf("K_ELSE", p[6])
+    selse = newlabel()
+    safter = newlabel()
+    l1 = ["cmp, 0, " + p[3].place]
+    l2 = ["je, " + selse]
+    l3 = ["goto," + safter]
+    l4 = ["label," + selse]
+    l5 = ["label," + safter]
+    p[0] = Node("if_then_else_statement_no_short_if", [child1, child2, p[3], child3, p[5], child4, p[7]], None, None, None, p[3].code + l1 + l2 + p[5].code + l3 + l4 + p[7].code + l5)
+
+
 def p_statement_no_short_if(p):
     '''  statement_no_short_if : statement_without_trailing_substatement
                                             | if_then_else_statement_no_short_if'''
+
+    p[0] = Node("statement_no_short_if", [p[1]], code = p[1].code)
 
 
 def p_statement_without_trailing_substatement(p):
@@ -834,7 +843,7 @@ def p_assignment2(p):
     '''assignment : ambiguous_name SQUARE_BEGIN expression SQUARE_END ASSIGN or_expression'''
     global CURR
     temp = newtmp()
-    l1 = ["->," + p[6].place + ", " + p[1].val + "," + p[3].place]    
+    l1 = ["->," + p[6].place + ", " + p[1].val + "," + p[3].place]
     (x, y) = CURR.check_for_variable_declaration(p[1])
     if(x==0):
         print('Undeclared variable')
@@ -956,46 +965,71 @@ def p_while_statement(p):
 #Leave the for loop for later
 def p_for_loop(p):
     #TODO : create a new scope and push the iterator in the symbol table of the scope
-    'for_loop : K_FOR LPAREN for_variables  RPAREN statement'
+    'for_loop : K_FOR LPAREN for_variables RPAREN statement'
     child1 = create_leaf("K_FOR", p[1])
     child2 = create_leaf("LPAREN", p[2])
     child3 = create_leaf("RPAREN", p[3])
-    type = p[3].val[0]
     to_until = p[3].val[1]
     if(to_until == 0): sym = "jge"
     else: sym = "jg"
     s_begin = newlabel()
     s_after = newlabel()
-    if(type == 0):
-        #two expressions in the for statement
-        iterator = newtmp()
-        exp1 = p[3].val[2]
-        exp2 = p[3].val[3]
-        l1 = ["=," + iterator + "," + exp1]
-        l2 = ["label," + s_begin]
-        l3 = ["cmp, " + exp2 + "," + iterator]
-        l4 = [sym + "," + s_after]
-        l7 = ["+," + counter + "," + counter]
-        l5 = ["goto," + s_begin]
-        l6 = ["label," + s_after]
-        p[0] = Node("for_loop", [child1 + child2 + p[3] + child3 + p[5]], None, None, None, [p[3].code + l1 + l2 + l3+ l4 + p[5].code + l7 + l5 + l6])
-    else:
-        pass
+    #two expressions in the for statement
+    iterator = p[3].place
+    exp1 = p[3].val[2]
+    exp2 = p[3].val[3]
+    print(iterator)
+    print(exp1)
+    l1 = ["=," + iterator + "," + exp1]
+    l2 = ["label," + s_begin]
+    l3 = ["cmp," + exp2 + "," + iterator]
+    l4 = [sym + "," + s_after]
+    l7 = ["+," + iterator + "," + iterator + ",1"]
+    l5 = ["goto," + s_begin]
+    l6 = ["label," + s_after]
+    p[0] = Node("for_loop", [child1,child2,p[3],child3,p[5]], None, None, None, p[3].code + l1 + l2 + l3+ l4 + p[5].code + l7 + l5 + l6)
+    
 
 
 def p_for_variables(p):
     ''' for_variables : declaration_keyword_extras IDENTIFIER IN expression for_untilTo expression '''
+    child1 = create_leaf("IDENTIFIER", p[2])
+    child2 = create_leaf("IN", p[3])
+    vl = []
+    vl.append("$")
+    vl.append(p[5].type)
+    vl.append(p[4].place)
+    vl.append(p[6].place)
+    p[0] = Node("for_variables", [p[1], child1, child2, p[4], p[5], p[6]], None, None, vl, p[4].code + p[6].code, p[2])
 
 def p_declaration_keyword_extras(p):
     '''declaration_keyword_extras : variable_header
                                     | empty'''
+    p[0] = Node("declaration_keyword", [p[1]])
+
 def p_for_untilTo(p):
     '''  for_untilTo : K_UNTIL
                         | K_TO'''
+    child1 = create_leaf("K_UNTIL", p[1])
+    child2 = create_leaf("K_TO", p[1])
+    p[0] = Node("for_until_to", [child1, child2], code = [])
+    if(p[1] == "until"):
+        p[0].type = 0
+    else:
+        p[0].type = 1
+
 
 def p_return_statement(p):
     '''return_statement : K_RETURN expression semi
                                     | K_RETURN semi'''
+    if(len(p) == 4) :
+        child1 = create_leaf("K_RETURN", p[1])
+        l1 = ['ret,' + p[2].place]
+        p[0] = Node("return_statement", [child1, p[2], p[3]], code = p[3].code + l1)
+    else :
+        child1 = create_leaf("K_RETURN", p[1])
+        l1 = ['ret']
+        p[0] = Node("return_statement", [child1, p[2]], code = l1)
 
 #types
 def p_type(p):
@@ -1021,8 +1055,8 @@ def p_basic_type(p):
 def p_array_datatype(p):
     '''array_datatype : K_ARRAY square_block
                                 | K_LIST square_block'''
-    child = create_leaf('Array/List', p[1])     
-    p[0] = Node('array_datatype', [child, p[2]], 'Array['+p[2].type+']' )                           
+    child = create_leaf('Array/List', p[1])
+    p[0] = Node('array_datatype', [child, p[2]], 'Array['+p[2].type+']' )
 
 def p_square_block(p):
     ''' square_block : SQUARE_BEGIN type SQUARE_END'''
@@ -1040,7 +1074,7 @@ logging.basicConfig(
 log = logging.getLogger()
 parser = yacc.yacc()
 if __name__ == "__main__" :
-    
+
     file = (open(sys.argv[1],'r')).read()
     file+= "\n"
     result = parser.parse(file,debug=log)
