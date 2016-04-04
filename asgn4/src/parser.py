@@ -23,6 +23,7 @@ def newtmp(dataType= 'Unit'):
     return symbolname
 
 def newlabel():
+    global label_count
     labelname= "label" + str(label_count)
     label_count += 1
     return labelname
@@ -503,7 +504,7 @@ def p_literal(p):
         type = 'Float'
         size = 4
 
-    p[0] = Node("literal", [child], type, size, None, l1, temp)
+    p[0] = Node("literal", [child], type, size, p[1], l1, temp)
 
 def p_array_invocation(p):
     '''array_invocation : ambiguous_name SQUARE_BEGIN expression SQUARE_END '''
@@ -587,7 +588,7 @@ def p_ambiguous_name(p):
 def p_block(p):
     '''block : block_begin block_body block_end '''
     p[0] = Node("block", [p[1], p[2], p[3]],code=p[2].code)
-#    print(p[0].code)
+
 
 def p_block_begin(p):
     '''block_begin : BLOCK_BEGIN'''
@@ -659,6 +660,7 @@ def p_type_of_variable(p):
         attr['Size'] = p[3].size
         CURR.add_symb(p[1], attr)
         holding_variable = str(CURR.id) + "_" + p[1]
+        print('....' , holding_variable)
         child1 = create_leaf("IDENTIFIER", p[1])
         child2 = create_leaf("COLON", p[2])
         p[0] = Node("type_of_variable", [child1, child2, p[3]],p[3].type,None,None,[], holding_variable)
@@ -687,14 +689,28 @@ def p_local_variable_and_type2(p):
 	    child1 = create_leaf("IDENTIFIER", p[1])
 	    p[0] = Node("local_variable_and_type", [child1], 'Undefined',None,None,None,p[1])
 
+# def p_array_initializer(p):
+# 	''' array_initializer : K_NEW K_ARRAY SQUARE_BEGIN type SQUARE_END LPAREN INT RPAREN
+#                             | K_ARRAY LPAREN argument_list_extras RPAREN '''
+
 def p_array_initializer(p):
-	''' array_initializer : K_NEW K_ARRAY SQUARE_BEGIN type SQUARE_END LPAREN INT RPAREN
-                            | K_ARRAY LPAREN argument_list_extras RPAREN '''
-    #Sarthak will do this
+    ''' array_initializer : K_NEW K_ARRAY SQUARE_BEGIN type SQUARE_END LPAREN INT RPAREN'''
+    child1 = create_leaf('K_NEW', p[1])
+    child2 = create_leaf('K_ARRAY', p[2])    
+    child3 = create_leaf('SQUARE_BEGIN', p[3])
+    child5 = create_leaf('SQUARE_END', p[5])
+    child6 = create_leaf('LPAREN', p[6])
+    child7 = create_leaf('INT', p[7])
+    child8 = create_leaf('RPAREN', p[8])
+    type = 'Array(' + str(p[7]) + ','+p[4].type + ')'
+    temp = newtmp()
+    #size = p[4].size * p[7]
+    code = ['array,' +temp+',' +str(p[7])]
+    p[0] = Node('array_initializer', [child1,child2,child3,p[4],child5,child6,child7,child8],type, None, None, code,temp)
 
 
 def p_class_instance_creation_expression(p):
-	''' class_instance_creation_expression : K_NEW nonarray_datatype LPAREN argument_list_extras RPAREN '''
+	''' class_instance_creation_expression : K_NEW ambiguous_name LPAREN argument_list_extras RPAREN '''
     #Sarthak will do this
 
 
@@ -713,7 +729,7 @@ def p_if_then_statement(p):
     child1 = create_leaf("K_IF", p[1])
     child2 = create_leaf("LPAREN", p[2])
     child3 = create_leaf("RPAREN", p[4])
-    selse = newtmp()
+    selse = newlabel()
     l1 = ["cmp, 0, " + p[3].place]
     l2 = ["je, " + selse]
     l3 = ["label," + selse]
@@ -727,8 +743,8 @@ def p_if_then_else_statement(p):
         child2 = create_leaf("LPAREN", p[2])
         child3 = create_leaf("RPAREN", p[4])
         child4 = create_leaf("K_ELSE", p[6])
-        selse = newtmp()
-        safter = newtmp()
+        selse = newlabel()
+        safter = newlabel()
         l1 = ["cmp, 0, " + p[3].place]
         l2 = ["je, " + selse]
         l3 = ["goto," + safter]
@@ -739,7 +755,7 @@ def p_if_then_else_statement(p):
         child1 = create_leaf("K_IF", p[1])
         child2 = create_leaf("LPAREN", p[2])
         child3 = create_leaf("RPAREN", p[4])
-        selse = newtmp()
+        selse = newlabel()
         l1 = ["cmp, 0, " + p[3].place]
         l2 = ["je, " + selse]
         l3 = ["label," + selse]
@@ -798,12 +814,12 @@ def p_left_hand_side(p):
                             | array_invocation'''
     global CURR
     #array invocation not handled till now
-    (x, y) = CURR.check_for_variable_declaration(p[1])
+    (x, y) = CURR.check_for_variable_declaration(p[1].val)
     if(x == 0):
         print("Correct the semantics")
         assert(false)
     else:
-        holding_variable = str(y.id) + "_" + p[1]
+        holding_variable = str(y.id) + "_" + p[1].val
         p[0] = Node("left_hand_side", [p[1]], None, None, None, p[1].code, holding_variable)
 
 #I think the default statement is missing !!
@@ -945,8 +961,8 @@ def p_return_statement(p):
 #types
 def p_type(p):
     '''type : basic_type
-                 | other_type '''
-    p[0] = Node("type", [p[1]])
+                | array_datatype '''
+    p[0] = Node("type", [p[1]], p[1].type, None, p[1].type,None,None)
 
 def p_basic_type(p):
     '''basic_type : K_CHAR
@@ -955,21 +971,25 @@ def p_basic_type(p):
                              | K_STRING
                              | K_BOOLEAN
                              | K_INT'''
+    child = create_leaf('Type' , p[1])
+    p[0] = Node("basic_type", [child], p[1], None, None,None,None)
 
 
-def p_other_type(p):
-    '''other_type : nonarray_datatype
-                        | array_datatype'''
+# def p_other_type(p):
+#     '''other_type : nonarray_datatype
+#                         | array_datatype'''
 
 def p_array_datatype(p):
     '''array_datatype : K_ARRAY square_block
                                 | K_LIST square_block'''
+    child = create_leaf('Array/List', p[1])     
+    p[0] = Node('array_datatype', [child, p[2]], 'Array['+p[2].type+']' )                           
 
 def p_square_block(p):
     ''' square_block : SQUARE_BEGIN type SQUARE_END'''
-
-def p_nonarray_datatype(p):
-    '''nonarray_datatype : IDENTIFIER'''
+    child1 = create_leaf('SQUARE_BEGIN', p[1])
+    child2 = create_leaf('SQUARE_END', p[3])
+    p[0] = Node('square_block', [child1, p[2],child2], p[2].type, None,None,None,None)
 
 
 logging.basicConfig(
