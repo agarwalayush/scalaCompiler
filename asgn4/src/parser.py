@@ -203,24 +203,35 @@ def p_class_body_declaration(p):
 
 #p[1].val currently contains the number of arguments
 def p_argument_header(p):
-    '''argument_header : argument_list
+    '''argument_header : argument_list_in_definition
                         | empty '''
     global CURR
     if(p[1].val is None): p[1].val = 0
     if(p[1].place is None): p[1].place = []
-    p[0]= Node("argument_header", [p[1]], None, None, val = p[1].val, place = p[1].place)
+    code = []
+    (p[1].place).reverse()
+    for k in p[1].place:
+        code.append("pop," + k)
+    (p[1].place).reverse()
+    p[0]= Node("argument_header", [p[1]], None, None, val = p[1].val, place = p[1].place,code = code)
     if(~(p[1].val is None)):
         CURR.num_arg = p[1].val
+    
 
-def p_arguement_list(p):
-    '''argument_list : argument
-                        | argument_list COMMA argument'''
 
+
+def p_argument_list_in_definition(p):
+    '''argument_list_in_definition : argument
+                        | argument COMMA argument_list_in_definition '''
     if (len(p) == 2):
-        p[0] = Node("argument_list", [p[1]],[p[1].type],[p[1].size], val = 1, place = p[1].place)
+        if (p[1].place is None):
+            print("len 2")
+        p[0] = Node("argument_list", [p[1]], val = 1, place = p[1].place)
     else:
         child = create_leaf("COMMA", p[2])
-        p[0] = Node("argument_list", [p[1], child, p[3]], p[3].type.append(p[1].type), p[3].size + p[1].size, val = p[1].val + 1, place = p[1].place + p[3].place)
+        if (p[1].val is None):
+            print("len 3")
+        p[0] = Node("argument_list", [p[1], child, p[3]], place = p[1].place + p[3].place )
 
 #checking the identifiers !!
 def p_argument(p):
@@ -231,8 +242,13 @@ def p_argument(p):
     attr = {}
     attr['Type']=p[3].type
     attr['Size']=p[3].size
+    code = ['pop,' + p[1]]
     CURR.add_symb(p[1],attr)
-    p[0] = Node("argument", [child1, child2, p[3]],p[3].type,p[3].size, place = [])
+    list1 = []
+    list2 = []
+    holding_variable = str(CURR.id) + "_" + p[1]
+    list1.append(holding_variable)
+    p[0] = Node("argument", [child1, child2, p[3]],list2.append(p[3].type), val = p[1], place = list1)
 
 
 
@@ -265,23 +281,19 @@ def p_method_header(p):
     attr['num_arg'] = p[4].val
     if(len(p)==6):
         attr['ReturnType'] = 'Unit'
-        p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5]], None, None, None, l1)
+        p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5]], None, None, None, l1+p[4].code)
     elif(len(p)==7):
         attr['ReturnType'] = 'Unit'
         child4= create_leaf('ASSIGN',p[6])
-        p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4], None, None, None, l1)
+        p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4], None, None, None, l1+p[4].code)
     else:
         print(len(p))
         attr['ReturnType'] = p[7].type
         child4 = create_leaf('COLON',p[6])
         child5= create_leaf('ASSIGN',p[8])
-        p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4,p[7],child5], None, None, None, l1)
-    print(CURR.parent.id)
-    CURR.parent.function_list[p[2]] = attr
-        # def p_method_return_type_extras(p):
-        #     '''method_return_type_extras : COLON method_return_type ASSIGN method_body
-        #                                           | ASSIGN method_body
-        #                                           | empty method_body'''
+        p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4,p[7],child5], None, None, None, l1+p[4].code)
+    CURR.parent.add_func(p[2],attr)
+
 
 def p_method_return_type(p):
     '''method_return_type : type'''
@@ -533,6 +545,8 @@ def p_method_invocation(p):
     # check whether the function name is valid.
     (x, y) = CURR.check_for_function_declaration(p[1].val)
     if(x == 0):
+        print(p[1].val)
+        print(CURR.function_list)
         print("correct your semantics")
         assert(False)
     elif(p[3].val != y.function_list[p[1].val]["num_arg"]):
@@ -573,6 +587,7 @@ def p_argument_list(p):
     else:
         child = create_leaf("COMMA", p[2]);
         p[0] = Node("argumentList", [p[1], child, p[3]], p[1].type + [p[3].type], None, None, p[1].code + p[3].code, p[1].place + [p[3].place])
+
 
 def p_ambiguous_name(p):
     '''ambiguous_name : IDENTIFIER
@@ -643,7 +658,8 @@ def p_local_variable(p):
 
 
 def p_variable_body(p):
-    '''variable_body : local_variable_and_type  ASSIGN  variable_rhs '''
+    '''variable_body : variable_body local_variable_and_type  ASSIGN  variable_rhs 
+                      | local_variable_and_type  ASSIGN  variable_rhs'''
     global CURR
     #only valid if RHS is variable_rhs = an expression
     code = ['=,' + p[1].place + ','+  p[3].place]
@@ -793,7 +809,7 @@ def p_blank_statement(p):
 
 def p_empty(p):
     'empty :'
-    p[0] = Node('empty', [], 'Unit',None,None,[])
+    p[0] = Node('empty', [], 'Unit',None,None,[],place=[])
 
 def p_expression_statement(p):
     'expression_statement : statement_expression semi'
