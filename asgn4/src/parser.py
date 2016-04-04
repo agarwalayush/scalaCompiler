@@ -643,19 +643,23 @@ def p_local_variable(p):
 
 
 def p_variable_body(p):
-    '''variable_body : local_variable_and_type  ASSIGN  variable_rhs '''
-    global CURR
-    #only valid if RHS is variable_rhs = an expression
-    code = ['=,' + p[1].place + ','+  p[3].place]
-    child = create_leaf('ASSIGN', p[2])
+    '''variable_body : local_variable_and_type  ASSIGN  variable_rhs
+                     |  local_variable_and_type  ASSIGN  variable_rhs COMMA  variable_body   '''
 
-    p[0] = Node('variable_body', [p[1],child,p[2]], None,None,None, p[3].code +code,None)
+    if(len(p) == 4) :
+        code = ['=,' + p[1].place + ','+  p[3].place]
+        child = create_leaf('ASSIGN', p[2])
+        p[0] = Node('variable_body', [p[1],child,p[3]], None,None,None, p[3].code +code,None)
+    else :
+        code = ['=,' + p[1].place + ','+  p[3].place]
+        child1 = create_leaf('ASSIGN', p[2])
+        child2 = create_leaf('COMMA', p[4])
+        p[0] = Node('variable_body', [p[1],child1,p[3], child2, p[5]], None,None,None, p[3].code + code + p[5].code, None)
+        pass
 
 def p_type_of_variable(p):
     '''type_of_variable : IDENTIFIER COLON type'''
     global CURR
-    print("Hello")
-    print("hola" + CURR.id)
     if p[1] in CURR.symbol_list.keys():
         print("variable already defined")
         assert("False")
@@ -1003,6 +1007,14 @@ def p_for_untilTo(p):
 def p_return_statement(p):
     '''return_statement : K_RETURN expression semi
                                     | K_RETURN semi'''
+    if(len(p) == 4) :
+        child1 = create_leaf("K_RETURN", p[1])
+        l1 = ['ret,' + p[2].place]
+        p[0] = Node("return_statement", [child1, p[2], p[3]], code = p[3].code + l1)
+    else :
+        child1 = create_leaf("K_RETURN", p[1])
+        l1 = ['ret']
+        p[0] = Node("return_statement", [child1, p[2]], code = l1)
 
 #types
 def p_type(p):

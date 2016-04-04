@@ -1,0 +1,22 @@
+* Build and Run
+
+- ~cd asgn4~
+- ~make~
+- ~bin/irgen file~
+
+* Features
+
+- ~val~ and ~var~ declaration with constraint that value of ~val~ cannot be changed. Also, It is necessary that declaration be 
+accompanied by a value. It is optional to specify type. Multiple variables can be declared in same line.
+
+- Array
+- Object
+- For : Nested Foe loops are implemented with new scope beginning at each loop. 
+- While : Nested While loops are implemented with new scope beginning at each loop. 
+- If/Else : Nested If/Else are implemented with new scope at each if, else.
+  
+
+- Case Switch
+
+- Functions with multiple arguments and Single return value. A new scope is formed for each function.
+  Recursion is also suported.
