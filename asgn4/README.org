@@ -1,3 +1,16 @@
+#+OPTIONS:    toc:nil
+#+STARTUP:    align fold nodlcheck hidestars oddeven lognotestate
+#+SEQ_TODO:   TODO(t) INPROGRESS(i) WAITING(w@) | DONE(d) CANCELED(c@)
+#+TAGS:       Write(w) Update(u) Fix(f) Check(c)
+#+TITLE:      Assignment 4 - CS335
+#+AUTHOR:     Group 14
+#+EMAIL:      nishant.gupta291995@gmail.com
+#+LANGUAGE:   en
+#+PRIORITIES: A C B
+#+LaTeX_CLASS: article
+#+LaTeX_HEADER: \usepackage[margin=0.75in]{geometry}
+
+
 * Build and Run
 
 - ~cd asgn4~
@@ -6,17 +19,12 @@
 
 * Features
 
-- ~val~ and ~var~ declaration with constraint that value of ~val~ cannot be changed. Also, It is necessary that declaration be 
-accompanied by a value. It is optional to specify type. Multiple variables can be declared in same line.
-
-- Array
-- Object
-- For : Nested Foe loops are implemented with new scope beginning at each loop. 
-- While : Nested While loops are implemented with new scope beginning at each loop. 
-- If/Else : Nested If/Else are implemented with new scope at each if, else.
-  
-
-- Case Switch
-
-- Functions with multiple arguments and Single return value. A new scope is formed for each function.
+- *Declaration* : ~val~ and ~var~ declaration are supported. Also, It is necessary that declaration be accompanied by a value. It is optional to specify type. Multiple variables can be declared in same line.
+- *Array* : Integer Arrays are Supported with predefined length. They can be used just like any other other variable with standard array referencing. 
+- *Objects* : There can be multiple singleton objects(Scala-Like). They cannot be referenced from each other. Also, code in outer most scope of both the objects will be executed(unlike scala, in which only the code of objects extending ~App~ are executed.)
+- *For* : Nested For loops are implemented with new scope beginning at each loop. There are two variants ~to~ and ~until~ 
+- *While* : Nested While loops are implemented with new scope beginning at each loop. 
+- *If/Else* : Nested If/Else are implemented with new scope at each if, else.
+- *Case Switch* : Case/switch are supported and no new scope is made for them.
+- *Functions* : Functions with multiple arguments and Single return value. A new scope is formed for each function.
   Recursion is also suported.
