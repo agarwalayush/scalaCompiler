@@ -96,7 +96,7 @@ def p_classes_objects_list(p):
         p[0] = Node("classes_objects_list",[p[1],p[2]], None, None, None, p[1].code + p[2].code )
     else :
         p[0] = Node("classes_objects_list",[p[1]], None, None, None, p[1].code)
-        
+
 
 def p_class_and_objects_declaration(p):
     '''class_and_objects_declaration : object_declaration
@@ -117,7 +117,7 @@ def p_object_declare(p):
     child2 = create_leaf("IDENTIFIER", p[2])
     CURR.object_list.append(p[2])
     p[0] = Node("ObjectDeclare",[child1, child2, p[1]])
-    
+
 def p_class_type(p):
     '''class_type : IDENTIFIER
                     | K_WITH class_type'''
@@ -221,7 +221,7 @@ def p_arguement_list(p):
     else:
         child = create_leaf("COMMA", p[2])
         p[0] = Node("argument_list", [p[1], child, p[3]], p[3].type.append(p[1].type), p[3].size + p[1].size, val = p[1].val + 1, place = p[1].place + p[3].place)
-        
+
 #checking the identifiers !!
 def p_argument(p):
     '''argument : IDENTIFIER COLON type'''
@@ -268,13 +268,13 @@ def p_method_header(p):
         p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5]], None, None, None, l1)
     elif(len(p)==7):
         attr['ReturnType'] = 'Unit'
-        child4= create_leaf('ASSIGN',p[6])            
+        child4= create_leaf('ASSIGN',p[6])
         p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4], None, None, None, l1)
     else:
         print(len(p))
         attr['ReturnType'] = p[7].type
         child4 = create_leaf('COLON',p[6])
-        child5= create_leaf('ASSIGN',p[8])            
+        child5= create_leaf('ASSIGN',p[8])
         p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4,p[7],child5], None, None, None, l1)
     print(CURR.parent.id)
     CURR.parent.function_list[p[2]] = attr
@@ -352,13 +352,14 @@ def p_equality_expression(p):
                                     | equality_expression EQUAL relational_expression
                                     | equality_expression NEQUAL relational_expression'''
     if(len(p) == 2):
+        #print(p[1])
         p[0] = Node("equality_expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
     elif p[2] == "==":
         child = create_leaf("EQUAL", p[2])
         temp1 = newtmp()
         temp2 = newtmp()
         l1 = ["^," + temp1 + "," + p[1].place + "," + p[3].place]
-        l2 = ["-," + temp2 + ", 1, " + temp1]
+        l2 = ["-," + temp2 + ",1, " + temp1]
         p[0] = Node("equality_expression", [p[1], child, p[3]], 'Bool', None, None, p[1].code + p[3].code + l1 + l2, temp2)
     elif p[2] == "!=":
         child = create_leaf("NEQUAL", p[2])
@@ -377,24 +378,26 @@ def p_relational_expression(p):
         return
     child = create_leaf("RelOp", p[2])
     if(p[2] == ">"):
-        rel = jg
+        rel = "jg"
     elif p[2] == ">=":
-        rel = jge
+        rel = "jge"
     elif p[2] == "<":
-        rel = jl
+        rel = "jl"
     elif p[2] == "<=":
-        rel = jle
-        temp = newtmp()
-        etrue = newlabel()
-        efalse = newlabel()
-        l1 = ["cmp, " + p[1].place + ", " + p[3].place]
-        l2 = [rel + "," + etrue]
-        l3 = ["=," + temp + ", 0"]
-        l4 = ["goto, " + efalse]
-        l5 = ["label, " + etrue]
-        l6 = ["=," + temp + ", 1"]
-        l7 = ["label, " + efalse]
-        p[0] = Node("relational_expression", [p[1], child, p[3]], 'Bool', None, None, p[1].code + p[3].code + l1 + l2 + l3, l4 + l5 + l6 + l7, temp)
+        rel = "jle"
+    temp = newtmp()
+    etrue = newlabel()
+    efalse = newlabel()
+    l1 = ["cmp," + p[1].place + "," + p[3].place]
+    l2 = [rel + "," + etrue]
+    l3 = ["=," + temp + ",0"]
+    l4 = ["goto," + efalse]
+    l5 = ["label," + etrue]
+    l6 = ["=," + temp + ",1"]
+    l7 = ["label," + efalse]
+    p[0] = Node("relational_expression", [p[1], child, p[3]], 'Bool', None, None, p[1].code + p[3].code + l1 + l2 + l3 + l4 + l5 + l6 + l7, temp)
+    # if p[0] == None :
+    #     print(p[2], p[0],p[1].val, p[3].val)
 
 def p_add_expression(p):
     '''add_expression : mult_expression
@@ -406,7 +409,7 @@ def p_add_expression(p):
     else:
         child = create_leaf("PLUS_MINUS", p[2])
         temp = newtmp()
-        l1 = [p[2] + ", " + temp + ", " + p[1].place + "," + p[3].place]
+        l1 = [p[2] + "," + temp + "," + p[1].place + "," + p[3].place]
         p[0] = Node("add_expression", [p[1], child, p[3]], higher(p[1].type,p[3].type), None, None, p[1].code + p[3].code + l1, temp)
 
 def p_mult_expression(p):
@@ -469,7 +472,7 @@ def p_primary_no_new_array(p):
     '''  primary_no_new_array : literal
                                 | method_invocation
                                 | LPAREN expression RPAREN
-                                | array_invocation'''
+                                | array_invocation_right'''
     if(len(p) == 2):
         p[0] = Node("primary_no_new_array", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
     else:
@@ -486,7 +489,7 @@ def p_literal(p):
             | FLOAT
             | INT'''
     temp = newtmp()
-    l1 = ["=, " + temp + ", " + str(p[1])]
+    l1 = ["=," + temp + "," + str(p[1])]
     child = create_leaf("LITERAL", p[1])
     type = 'None'
     size = 0
@@ -506,20 +509,22 @@ def p_literal(p):
 
     p[0] = Node("literal", [child], type, size, p[1], l1, temp)
 
-def p_array_invocation(p):
-    '''array_invocation : ambiguous_name SQUARE_BEGIN expression SQUARE_END '''
+
+def p_array_invocation_right(p):
+    '''array_invocation_right : ambiguous_name SQUARE_BEGIN expression SQUARE_END '''
     global CURR
     temp = newtmp()
-    l1 = ["<-" + temp + ", " + p[1].val + "," + p[3].place]
+    l1 = ["<-," + temp + ", " + p[1].val + "," + p[3].place]
     #type = CURR.symbol_list[p[1].value]['Type']
     #LOOKUP(ambiguous_name) in symbol_list
     (x, y) = CURR.check_for_variable_declaration(p[1].val)
-    if(x == 0):
+    if(x==0):
         print('Undeclared variable')
-        assert(false)
+        assert(False)
     child1 = create_leaf("SQUARE_BEGIN", p[2])
     child2 = create_leaf("SQUARE_END", p[4])
-    p[0] = Node("array_invocation", [p[1], child1,p[3], child2], type, None, None, p[3].code + l1, temp)
+    p[0] = Node("array_invocation_right", [p[1], child1,p[3], child2], None, None, None, p[3].code + l1, temp)
+
 
 def p_method_invocation(p):
     #TODO: classes and objects
@@ -643,8 +648,6 @@ def p_variable_body(p):
     #only valid if RHS is variable_rhs = an expression
     code = ['=,' + p[1].place + ','+  p[3].place]
     child = create_leaf('ASSIGN', p[2])
-   # if( CURR.symbol_list[p[1].place]['Type'] == 'Undefined'):
-   #CURR.symbol_list[p[1].place]['Type'] = p[3].type
 
     p[0] = Node('variable_body', [p[1],child,p[2]], None,None,None, p[3].code +code,None)
 
@@ -662,7 +665,6 @@ def p_type_of_variable(p):
         attr['Size'] = p[3].size
         CURR.add_symb(p[1], attr)
         holding_variable = str(CURR.id) + "_" + p[1]
-        print('....' , holding_variable)
         child1 = create_leaf("IDENTIFIER", p[1])
         child2 = create_leaf("COLON", p[2])
         p[0] = Node("type_of_variable", [child1, child2, p[3]],p[3].type,None,None,[], holding_variable)
@@ -806,16 +808,31 @@ def p_statement_expression(p):
     p[0] = Node("statement_expression", [p[1]], None, None, None, p[1].code, p[1].place)
 
 
-def p_assignment(p):
+def p_assignment1(p):
     '''assignment : left_hand_side ASSIGN or_expression'''
     tas = ["=," + p[1].place + "," + p[3].place]
     child1 = create_leaf("ASSIGN", p[2])
     p[0] = Node("assignment", [p[1], child1, p[3]], None, None, None, p[1].code + p[3].code + tas)
 
+def p_assignment2(p):
+    '''assignment : ambiguous_name SQUARE_BEGIN expression SQUARE_END ASSIGN or_expression'''
+    global CURR
+    temp = newtmp()
+    l1 = ["->," + p[6].place + ", " + p[1].val + "," + p[3].place]    
+    (x, y) = CURR.check_for_variable_declaration(p[1])
+    if(x==0):
+        print('Undeclared variable')
+        #assert(False)
+    child1 = create_leaf("SQUARE_BEGIN", p[2])
+    child2 = create_leaf("SQUARE_END", p[4])
+    child3 = create_leaf("ASSIGN", p[5])
+
+    p[0] = Node("assignment", [p[1], child1,p[3], child2,child3,p[6]], None, None, None, p[6].code + p[3].code + l1, None)
+
+
 def p_left_hand_side(p):
     #class and objects not supported in ambiguous name till now. Migght work for arrays
-    '''left_hand_side : ambiguous_name
-                            | array_invocation'''
+    '''left_hand_side : ambiguous_name'''
     global CURR
     #array invocation not handled till now
     (x, y) = CURR.check_for_variable_declaration(p[1].val)
@@ -914,10 +931,10 @@ def p_while_statement(p):
     child2 = create_leaf("LPAREN", p[2])
     child3 = create_leaf("RPAREN", p[4])
     l1 = ["label," + s_begin]
-    l2 = ["cmp, 0, " + p[3].place]
-    l3 = ["je, " + s_after]
-    l4 = ["goto, " + s_begin]
-    l5 = ["label, " + s_after]
+    l2 = ["cmp,0," + p[3].place]
+    l3 = ["je," + s_after]
+    l4 = ["goto," + s_begin]
+    l5 = ["label," + s_after]
     p[0] = Node("while_statement", [child1, child2, p[3], child3, p[5]], None, None, None, l1 + p[3].code + l2 + l3 + p[5].code + l4 + l5)
 
 #Leave the for loop for later
