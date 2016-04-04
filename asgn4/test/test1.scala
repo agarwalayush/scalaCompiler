@@ -1,14 +1,10 @@
 
 object HelloWorld {
-       def print() = {
-           val a = 2;
-           print();
-       }
 
+// Variable declarations
        val a = 5;
-  // Variable declarations
-       var b = 21;
-
+       val b : Int = 27,  aldo = 21;
+/*
     // Array declarations and usage   
       val c = new Array[Int](21);
        c[5] = a;
@@ -20,9 +16,15 @@ object HelloWorld {
          case 7 => a = 3;
          case 2 => {a = 4; a = 6;}
        }
-
+*/
      // Recursive functions
-           // nested while loops with scopes.
+        def print() = {
+           val a = 2;
+           print();
+           return a;
+       }
+/*
+      // nested while loops with scopes.
        while(a >= 2) {
            print();
            a = a - 1;
@@ -34,15 +36,26 @@ object HelloWorld {
 
       // nested if else.
 
+//nested if else,
    if(a ==31) {
-      print();
-        if(b == 5) {
         print();
-      }
-}
-      else {
+        if(b == 5) {
+             print();
+        }
+   }
+   else {
          a = 31;
-      }
+   }
 
-       val d = 32;
+   val i = 31;
+
+// nested for loop, with scope usage and both forms.
+   for ( i <- 23 to 71) {
+       val j = 32;
+       for ( j <- 21 until 23) a = a*2;
+       print();
+   }
+
+    val d = 32;
+*/
 }

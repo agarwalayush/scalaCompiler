@@ -39,9 +39,7 @@ class Scope:
     def check_for_function_declaration(self, var):
             flag = 0
             c_scope = self
-#            print(var)
             while(c_scope is not None):
-                print(c_scope.function_list)
                 if(var in c_scope.function_list.keys()):
                     flag = 1
                     break

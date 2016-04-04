@@ -1,15 +1,8 @@
 object example {
-
-
-    val t = Node(Node(Leaf(1), Leaf(2)), Node(Leaf(11), Leaf(12)));
-
-    def sumL(t: Tree): Int = { t match {
-        case Node(l, r) => sumL(l) + sumL(r)
-        case Leaf(x) => x
-      }
-    }
-
-    def main(args: Array[String]) {
-        println("sum of leaves = " + sumL(t));
-    }
+       val t = 1;
+        t match {
+          case 1 => t = 2;
+          case 2 => t = 3;
+          }
+       val t = 32;
 }

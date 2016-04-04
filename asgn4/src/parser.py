@@ -6,6 +6,15 @@ import os
 import re
 from symtable import *
 
+
+def exceptionHandler(exception_type, exception, traceback):
+    # All your trace are belong to us!
+    # your format
+    print ("%s: %s "% (exception_type.__name__, exception))
+
+sys.stderr = open('errors.log', 'w')
+sys.excepthook = exceptionHandler
+ERROR_MSG = "Error in Program"
 CURR = Scope()
 ROOT = CURR
 CLASS_SCOPE = []
@@ -59,8 +68,6 @@ def create_leaf(name1,name2,dataType="Unit"):
     return leaf2
 
 
-
-#####################################
 
 def p_compilation_unit(p):
     'compilation_unit :  import_declarations_extras classes_objects_list'
@@ -216,7 +223,7 @@ def p_argument_header(p):
     p[0]= Node("argument_header", [p[1]], None, None, val = p[1].val, place = p[1].place,code = code)
     if(~(p[1].val is None)):
         CURR.num_arg = p[1].val
-    
+
 
 
 
@@ -224,14 +231,10 @@ def p_argument_list_in_definition(p):
     '''argument_list_in_definition : argument
                         | argument COMMA argument_list_in_definition '''
     if (len(p) == 2):
-        if (p[1].place is None):
-            print("len 2")
         p[0] = Node("argument_list", [p[1]], val = 1, place = p[1].place)
     else:
         child = create_leaf("COMMA", p[2])
-        if (p[1].val is None):
-            print("len 3")
-        p[0] = Node("argument_list", [p[1], child, p[3]], place = p[1].place + p[3].place )
+        p[0] = Node("argument_list", [p[1], child, p[3]], val = 1 + p[3].val, place = p[1].place + p[3].place )
 
 #checking the identifiers !!
 def p_argument(p):
@@ -277,7 +280,7 @@ def p_method_header(p):
     func_label = str(CURR.parent.id) + "_" + p[2]
     l1 = ["label," + func_label]
     attr['Type'] = p[4].type
-    print(p[4].val)
+#    print(p[4].val)
     attr['num_arg'] = p[4].val
     if(len(p)==6):
         attr['ReturnType'] = 'Unit'
@@ -287,7 +290,7 @@ def p_method_header(p):
         child4= create_leaf('ASSIGN',p[6])
         p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4], None, None, None, l1+p[4].code)
     else:
-        print(len(p))
+    #    print(len(p))
         attr['ReturnType'] = p[7].type
         child4 = create_leaf('COLON',p[6])
         child5= create_leaf('ASSIGN',p[8])
@@ -474,7 +477,7 @@ def p_postfix_expression2(p):
     (x, y) = CURR.check_for_variable_declaration(p[1].val)
     if(x == 0):
         print('Undeclared variable', p[1].val)
-        assert(False)
+        raise Exception(ERROR_MSG)
     else:
         holding_variable = str(y.id) + "_" + p[1].val
         p[0] = Node("postfix_expression", [p[1]], p[1].type, None, None, p[1].code, holding_variable)
@@ -531,8 +534,8 @@ def p_array_invocation_right(p):
     #LOOKUP(ambiguous_name) in symbol_list
     (x, y) = CURR.check_for_variable_declaration(p[1].val)
     if(x==0):
-        print('Undeclared variable')
-        assert(False)
+        print('Undeclared variable :', p[1].val)
+        raise Exception(ERROR_MSG)
     child1 = create_leaf("SQUARE_BEGIN", p[2])
     child2 = create_leaf("SQUARE_END", p[4])
     p[0] = Node("array_invocation_right", [p[1], child1,p[3], child2], None, None, None, p[3].code + l1, temp)
@@ -544,14 +547,13 @@ def p_method_invocation(p):
     global CURR
     # check whether the function name is valid.
     (x, y) = CURR.check_for_function_declaration(p[1].val)
+    retval = newtmp()
     if(x == 0):
-        print(p[1].val)
-        print(CURR.function_list)
-        print("correct your semantics")
-        assert(False)
+        print("Fuction not in scope ", p[1].val)
+        raise Exception(ERROR_MSG)
     elif(p[3].val != y.function_list[p[1].val]["num_arg"]):
-        print("wrong number of arguments!")
-        assert(False)
+        print("wrong number of arguments! Expected " ,y.function_list[p[1].val]["num_arg"]," got",p[3].val)
+        raise Exception(ERROR_MSG)
     else:
         func_name = str(y.id) + "_" + p[1].val
     # implementing push in 3 address code
@@ -564,7 +566,8 @@ def p_method_invocation(p):
         code.append("pusharg, " + k)
 
     code.append("call," + func_name)
-    p[0] = Node("method_invocation", [p[1], child1, p[3], child2], "Unit", None, None, p[1].code + p[3].code + code)
+    code.append("pop," + retval)
+    p[0] = Node("method_invocation", [p[1], child1, p[3], child2], "Unit", None, None, p[1].code + p[3].code + code,retval)
 
 
 
@@ -583,10 +586,10 @@ def p_argument_list(p):
     '''argument_list : expression
                             | argument_list COMMA expression'''
     if(len(p) == 2):
-        p[0] = Node("argumentList", [p[1]], [p[1].type], None, None, p[1].code, [p[1].place])
+        p[0] = Node("argumentList", [p[1]], [p[1].type], None, 1, p[1].code, [p[1].place])
     else:
         child = create_leaf("COMMA", p[2]);
-        p[0] = Node("argumentList", [p[1], child, p[3]], p[1].type + [p[3].type], None, None, p[1].code + p[3].code, p[1].place + [p[3].place])
+        p[0] = Node("argumentList", [p[1], child, p[3]], p[1].type + [p[3].type], None, 1+p[1].val, p[1].code + p[3].code, p[1].place + [p[3].place])
 
 
 def p_ambiguous_name(p):
@@ -654,8 +657,6 @@ def p_local_variable(p):
     p[0] = Node("local_variable", [p[1], p[2],p[3]],None,None,None,p[2].code,None)
 
 
-#### Checked , typed and scoped till here ############
-
 
 def p_variable_body(p):
     '''variable_body : local_variable_and_type  ASSIGN  variable_rhs
@@ -676,8 +677,8 @@ def p_type_of_variable(p):
     '''type_of_variable : IDENTIFIER COLON type'''
     global CURR
     if p[1] in CURR.symbol_list.keys():
-        print("variable already defined")
-        assert("False")
+        print("variable already defined", p[1])
+        raise Exception(ERROR_MSG)
     else:
         attr = {}
         attr['Type'] = p[3].type
@@ -704,8 +705,8 @@ def p_local_variable_and_type2(p):
     global CURR
 #    print("id = ", CURR.id)
     if p[1] in CURR.symbol_list.keys():
-        print("variable already defined")
-        assert("False")
+        print("variable already defined", p[1])
+        raise Exception(ERROR_MSG)
     else:
         holding_variable = str(CURR.id) + "_" + p[1]
         attr = {}
@@ -847,7 +848,7 @@ def p_assignment2(p):
     (x, y) = CURR.check_for_variable_declaration(p[1])
     if(x==0):
         print('Undeclared variable')
-        #assert(False)
+        raise Exception(ERROR_MSG)
     child1 = create_leaf("SQUARE_BEGIN", p[2])
     child2 = create_leaf("SQUARE_END", p[4])
     child3 = create_leaf("ASSIGN", p[5])
@@ -862,9 +863,8 @@ def p_left_hand_side(p):
     #array invocation not handled till now
     (x, y) = CURR.check_for_variable_declaration(p[1].val)
     if(x == 0):
-        print(p[1].val)
-        print("Correct the semantics")
-        assert(False)
+        print('Undeclared variable :', p[1].val)
+        raise Exception(ERROR_MSG)
     else:
         holding_variable = str(y.id) + "_" + p[1].val
         p[0] = Node("left_hand_side", [p[1]], None, None, None, p[1].code, holding_variable)
@@ -875,8 +875,6 @@ def p_switch(p):
     exp = p[1].place
     code = []
     l = len(p[2].val)
-    print(p[2].val[l - 1])
-    #?
     code += ["label," + p[2].val[0]]
     for i in range(1, l - 1):
         code += ["cmp," + p[2].place[i] + "," + exp]
@@ -988,7 +986,7 @@ def p_for_loop(p):
     l5 = ["goto," + s_begin]
     l6 = ["label," + s_after]
     p[0] = Node("for_loop", [child1,child2,p[3],child3,p[5]], None, None, None, p[3].code + l1 + l2 + l3+ l4 + p[5].code + l7 + l5 + l6)
-    
+
 
 
 def p_for_variables(p):
@@ -1047,10 +1045,6 @@ def p_basic_type(p):
     child = create_leaf('Type' , p[1])
     p[0] = Node("basic_type", [child], p[1], None, None,None,None)
 
-
-# def p_other_type(p):
-#     '''other_type : nonarray_datatype
-#                         | array_datatype'''
 
 def p_array_datatype(p):
     '''array_datatype : K_ARRAY square_block
