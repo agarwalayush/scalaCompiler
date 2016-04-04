@@ -946,42 +946,59 @@ def p_while_statement(p):
 #Leave the for loop for later
 def p_for_loop(p):
     #TODO : create a new scope and push the iterator in the symbol table of the scope
-    'for_loop : K_FOR LPAREN for_variables  RPAREN statement'
+    'for_loop : K_FOR LPAREN for_variables RPAREN statement'
     child1 = create_leaf("K_FOR", p[1])
     child2 = create_leaf("LPAREN", p[2])
     child3 = create_leaf("RPAREN", p[3])
-    type = p[3].val[0]
     to_until = p[3].val[1]
     if(to_until == 0): sym = "jge"
     else: sym = "jg"
     s_begin = newlabel()
     s_after = newlabel()
-    if(type == 0):
-        #two expressions in the for statement
-        iterator = newtmp()
-        exp1 = p[3].val[2]
-        exp2 = p[3].val[3]
-        l1 = ["=," + iterator + "," + exp1]
-        l2 = ["label," + s_begin]
-        l3 = ["cmp, " + exp2 + "," + iterator]
-        l4 = [sym + "," + s_after]
-        l7 = ["+," + counter + "," + counter]
-        l5 = ["goto," + s_begin]
-        l6 = ["label," + s_after]
-        p[0] = Node("for_loop", [child1 + child2 + p[3] + child3 + p[5]], None, None, None, [p[3].code + l1 + l2 + l3+ l4 + p[5].code + l7 + l5 + l6])
-    else:
-        pass
+    #two expressions in the for statement
+    iterator = p[3].place
+    exp1 = p[3].val[2]
+    exp2 = p[3].val[3]
+    print(iterator)
+    print(exp1)
+    l1 = ["=," + iterator + "," + exp1]
+    l2 = ["label," + s_begin]
+    l3 = ["cmp," + exp2 + "," + iterator]
+    l4 = [sym + "," + s_after]
+    l7 = ["+," + iterator + "," + iterator + ",1"]
+    l5 = ["goto," + s_begin]
+    l6 = ["label," + s_after]
+    p[0] = Node("for_loop", [child1,child2,p[3],child3,p[5]], None, None, None, p[3].code + l1 + l2 + l3+ l4 + p[5].code + l7 + l5 + l6)
+    
 
 
 def p_for_variables(p):
     ''' for_variables : declaration_keyword_extras IDENTIFIER IN expression for_untilTo expression '''
+    child1 = create_leaf("IDENTIFIER", p[2])
+    child2 = create_leaf("IN", p[3])
+    vl = []
+    vl.append("$")
+    vl.append(p[5].type)
+    vl.append(p[4].place)
+    vl.append(p[6].place)
+    p[0] = Node("for_variables", [p[1], child1, child2, p[4], p[5], p[6]], None, None, vl, p[4].code + p[6].code, p[2])
 
 def p_declaration_keyword_extras(p):
     '''declaration_keyword_extras : variable_header
                                     | empty'''
+    p[0] = Node("declaration_keyword", [p[1]])
+
 def p_for_untilTo(p):
     '''  for_untilTo : K_UNTIL
                         | K_TO'''
+    child1 = create_leaf("K_UNTIL", p[1])
+    child2 = create_leaf("K_TO", p[1])
+    p[0] = Node("for_until_to", [child1, child2], code = [])
+    if(p[1] == "until"):
+        p[0].type = 0
+    else:
+        p[0].type = 1
+
 
 def p_return_statement(p):
     '''return_statement : K_RETURN expression semi
