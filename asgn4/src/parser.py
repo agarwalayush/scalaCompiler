@@ -405,7 +405,7 @@ def p_add_expression(p):
     else:
         child = create_leaf("PLUS_MINUS", p[2])
         temp = newtmp()
-        l1 = p[2] + ", " + temp + ", " + p[1].place + "," + p[3].place
+        l1 = [p[2] + ", " + temp + ", " + p[1].place + "," + p[3].place]
         p[0] = Node("add_expression", [p[1], child, p[3]], higher(p[1].type,p[3].type), None, None, p[1].code + p[3].code + l1, temp)
 
 def p_mult_expression(p):
@@ -455,12 +455,12 @@ def p_postfix_expression2(p):
     #classes and objects not done
     '''  postfix_expression : ambiguous_name'''
 
-    (x, y) = CURR.check_for_variable_declaration(p[1])
+    (x, y) = CURR.check_for_variable_declaration(p[1].val)
     if(x == 0):
-        print('Undeclared variable')
-        assert(false)
+        print('Undeclared variable', p[1].val)
+        assert(False)
     else:
-        holding_variable = str(y.id) + "_" + p[1]
+        holding_variable = str(y.id) + "_" + p[1].val
         p[0] = Node("postfix_expression", [p[1]], p[1].type, None, None, p[1].code, holding_variable)
 
 
@@ -587,7 +587,7 @@ def p_ambiguous_name(p):
 def p_block(p):
     '''block : block_begin block_body block_end '''
     p[0] = Node("block", [p[1], p[2], p[3]],code=p[2].code)
-    print(p[0].code)
+#    print(p[0].code)
 
 def p_block_begin(p):
     '''block_begin : BLOCK_BEGIN'''
