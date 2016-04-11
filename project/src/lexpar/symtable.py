@@ -45,9 +45,3 @@ class Scope:
                     break
                 c_scope = c_scope.parent
             return (flag, c_scope)
-
-
-
-
-
-

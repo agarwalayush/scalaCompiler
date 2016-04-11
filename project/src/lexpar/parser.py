@@ -1,11 +1,12 @@
 import ply.yacc as yacc
 import sys
 import logging
-from lexer import tokens
+from .lexer import tokens
 import os
 import re
-from symtable import *
+from .symtable import *
 
+output_3AC = []
 
 def exceptionHandler(exception_type, exception, traceback):
     # All your trace are belong to us!
@@ -71,10 +72,12 @@ def create_leaf(name1,name2,dataType="Unit"):
 
 def p_compilation_unit(p):
     'compilation_unit :  import_declarations_extras classes_objects_list'
+    global output_3AC
     p[0] = Node("compilation_unit",[p[1],p[2]], None, None, None, p[2].code)
-
-
-    print(('\n').join(p[0].code))
+    if __name__ != '__main__' :
+        output_3AC = p[0].code
+    else :
+        print(('\n').join(p[0].code))
 
 
 def p_import_declarations_extras(p):
@@ -1067,6 +1070,7 @@ logging.basicConfig(
 
 log = logging.getLogger()
 parser = yacc.yacc()
+
 if __name__ == "__main__" :
 
     file = (open(sys.argv[1],'r')).read()
@@ -1091,3 +1095,10 @@ if __name__ == "__main__" :
     fin.close()
     fout.close()
     os.remove("rules_used.txt")
+
+
+
+def parse_file(file_name) :
+    ''' Returns a list containing 3AC'''
+    global output_3AC
+    return output_3AC

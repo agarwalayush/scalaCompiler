@@ -1,10 +1,10 @@
 #/usr/bin/env python3
-import data
-import il_parser
-import register_allocator
-import assembly_generator
+from . import data
+from . import il_parser
+from . import register_allocator
+from . import assembly_generator
 
-from data import debug
+from .data import debug
 
 if __name__ == "__main__" :
 
@@ -20,4 +20,8 @@ if __name__ == "__main__" :
     data.debug_flag = args.debug
     debug("Debugging Mode On")
     il_parser.parse_il(args.file)
+    assembly_generator.assembly_generator()
+
+def generate_assembly(list_3AC) :
+    il_parser.parse_il_from_list(list_3AC)
     assembly_generator.assembly_generator()

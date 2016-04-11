@@ -1,6 +1,6 @@
-import register_allocator
-import data
-from data import debug
+from . import register_allocator
+from . import data
+from .data import debug
 
 def boilerplate() :
     '''Generates Variable space and other directives. '''

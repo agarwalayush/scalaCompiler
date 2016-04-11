@@ -1,6 +1,6 @@
-import data
+from . import data
 import math
-from data import debug
+from .data import debug
 
 def initblock():
     #builds the symtable[] once block[] and numins are filled and initializes other data structures
