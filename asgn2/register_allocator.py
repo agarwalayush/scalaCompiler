@@ -48,7 +48,10 @@ def transform(st):
         if st in data.rset :
             return '%'+st
         else:
-            return str(st)
+            if st.startswith('temp') :
+                return st[-2:]+'(%esp)'
+            else :
+                return str(st)
 
 #This function initializes some global variables
 
@@ -62,7 +65,7 @@ def ini():
 # This function pushes the variable stored at "reg" into memory and frees it
 def push(register):
     if data.rdesc[register] != None :
-        data.out.append("movl %{}, {}".format(register, data.rdesc[register]))
+        data.out.append("movl %{}, {}".format(register, transform(data.rdesc[register])))
         data.adesc[data.rdesc[register]] = None
         data.rdesc[register] = None
 
@@ -83,7 +86,7 @@ def empty_reg(ino,exclude = []) :
     for k in data.rset:
         if k in exclude:
             continue
-        if nxtuse < data.symtable[ino][data.rdesc[k]]:
+        if nxtuse <= data.symtable[ino][data.rdesc[k]]:
             m = k
             nxtuse = data.symtable[ino][data.rdesc[k]]
     push(m)
@@ -114,13 +117,16 @@ def getreg(x, y, ino,special = None):
            for k in data.rset:
                if k == data.zprime :
                    continue
-               if nxtuse < data.symtable[ino][data.rdesc[k]]:
+               if nxtuse <= data.symtable[ino][data.rdesc[k]]:
                    data.L = k
                    nxtuse = data.symtable[ino][data.rdesc[k]]
         else:
             data.L = x
     if data.L in data.rset and data.rdesc[data.L] != None:
         push(data.L)
+
+
+
 
 #This function gives Y' and moves Y' to L if value of Y is not already in L
 def gety(var):
@@ -133,7 +139,7 @@ def gety(var):
         data.out.append("movl " + transform(data.yprime) + ", " + transform(data.L))
 
 
-                #This function frees a register if the variable it stores becomes dead
+#This function frees a register if the variable it stores becomes dead
 #TODO: handle the global variable
 def freereg(var, ino):
     if var in data.vset :
