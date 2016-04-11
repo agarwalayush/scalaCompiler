@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 #class for the parsed instructions, add type, target for extra fuinctionality
 class instruction3ac :

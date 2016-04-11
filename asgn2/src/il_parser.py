@@ -32,4 +32,7 @@ def parse_il(file_object) :
             if list_i[1] == 'printstr' :
                 data.stringMap['str'+list_i[0]] = list_i[2]
             debug(list_i[0])
+            if list_i[1] == "cmp" :
+                data.raw.append(data.instruction3ac(int(list_i[0]),list_i[1],list_i[2],list_i[3],None))
+                continue
             data.raw.append(data.instruction3ac(int(list_i[0]),list_i[1],list_i[3],list_i[4],list_i[2]))

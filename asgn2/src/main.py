@@ -1,4 +1,4 @@
-#/usr/bin/env python
+#/usr/bin/env python3
 import data
 import il_parser
 import register_allocator
@@ -10,7 +10,7 @@ if __name__ == "__main__" :
 
     import argparse
     parser = argparse.ArgumentParser(description='Generate Assembly Code from 3-instruction code')
-    parser.add_argument('file', metavar='file_name', type=argparse.FileType('r'), 
+    parser.add_argument('file', metavar='file_name', type=argparse.FileType('r'),
                         help='file containing 3-instruction code.')
     parser.add_argument('-d','--debug', dest='debug', action='store_const',
                         const=1, default=0,

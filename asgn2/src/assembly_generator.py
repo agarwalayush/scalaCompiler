@@ -266,7 +266,10 @@ def XOR(i):
     register_allocator.freereg(z, i)
 
 def RETURN(i) :
-    data.out.append('ret')
+    if data.block[i].out != None :
+        data.out.append('ret ' + data.block[i].out) # in AT&T ret n forwards stack pointer by n bytes
+    else :
+        data.out.append('ret')
     data.out.append('\n')
 
 def CALL(i) :
@@ -312,7 +315,7 @@ def LOAD_ARRAY(i):
         register_allocator.getz(z)
     if data.zprime == None:
         data.zprime = z
-    data.out.append("movl " + register_allocator.transform(data.zprime) + ", %" + k)
+    data.out.append("movl " + register_allocator.transform(data.zprime) + ", " + register_allocator.transform(k))
     data.L = k
     data.out.append("movl " + y + "(, %" + k + ", 4), %" + k)
     register_allocator.update(x)
@@ -338,8 +341,8 @@ def STORE_ARRAY(i):
     register_allocator.getreg(x, y, i)
     debug(Lp = data.L)
     if data.rdesc[data.L] == None:
-        data.out.append("movl " + x + ", " + register_allocator.transform(data.L))
-    data.out.append("movl %" + data.L + ", " + y + "(, %edi, 4)")
+        data.out.append("movl " + register_allocator.transform(x) + ", " + register_allocator.transform(data.L))
+    data.out.append("movl " + register_allocator.transform(data.L) + ", " + y + "(, %edi, 4)")
     data.adesc[x] = data.L
     data.rdesc[data.L] = x
 
@@ -365,7 +368,7 @@ def COMPARE(i):
         # print("------------" + data.adesc[y])
         if data.zprime in data.vset and data.adesc[y] == None:
             temp = register_allocator.empty_reg(i,[])
-            data.out.append("movl " + y + ", " + register_allocator.transform(temp))
+            data.out.append("movl " + register_allocator.transform(y) + ", " + register_allocator.transform(temp))
             data.adesc[y] = temp
             data.rdesc[temp] = y
             data.L = temp
@@ -395,4 +398,15 @@ def JL(i):
 def JNE(i):
     data.out.append("jne " + data.block[i].out)
 
-OP_MAP = {'+': ADD, '-': SUB, '*': MUL, '=' : ASSIGN,'/' : DIV, '%' : MOD, '^' : XOR, '&' : AND, '|' : OR, 'ret' : RETURN, 'call' : CALL, 'print' : PRINT, 'read' : READ, 'goto' : GOTO, '<-' : LOAD_ARRAY, '->' : STORE_ARRAY, 'array' : DEC, 'printstr': PRINT_STR, 'cmp': COMPARE, 'jl': JL, 'je': JE, 'jg':JG, 'jle':JLE, 'jge':JGE, 'jne':JNE}
+def PUSH_ARG(i) :
+    var = data.block[i].out
+    if data.adesc[var] != None :
+        place = data.adesc[var]
+    else :
+        place = empty_reg(var)
+        data.out.append("movl " + register_allocator.transform(var) + register_allocator.transform(place))
+    data.out.append("pushl %" + place)
+    pass
+
+
+OP_MAP = {'+': ADD, '-': SUB, '*': MUL, '=' : ASSIGN,'/' : DIV, '%' : MOD, '^' : XOR, '&' : AND, '|' : OR, 'ret' : RETURN, 'call' : CALL, 'print' : PRINT, 'read' : READ, 'goto' : GOTO, '<-' : LOAD_ARRAY, '->' : STORE_ARRAY, 'array' : DEC, 'printstr': PRINT_STR, 'cmp': COMPARE, 'jl': JL, 'je': JE, 'jg':JG, 'jle':JLE, 'jge':JGE, 'jne':JNE, 'pusharg':  PUSH_ARG}
