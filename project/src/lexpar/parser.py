@@ -267,7 +267,9 @@ def p_semi(p):
 
 def p_method_declaration(p):
     '''method_declaration : method_header method_body '''
-    p[0]= Node('method_declaration',[p[1], p[2]], None, None, None, p[1].code + p[2].code)
+    l1 = ['goto,' + p[1].place[2:] + "_marker"]
+    l2 = ['label,' + p[1].place[2:] + "_marker"]
+    p[0]= Node('method_declaration',[p[1], p[2]], None, None, None, l1 + p[1].code + p[2].code + l2)
 
 #adding label of the function by refrecing the class/obejct calling it and adding the number of arguments in the scope of the enclosing class
 
@@ -287,17 +289,17 @@ def p_method_header(p):
     attr['num_arg'] = p[4].val
     if(len(p)==6):
         attr['ReturnType'] = 'Unit'
-        p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5]], None, None, None, l1+p[4].code)
+        p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5]], None, None, None, l1+p[4].code, func_label)
     elif(len(p)==7):
         attr['ReturnType'] = 'Unit'
         child4= create_leaf('ASSIGN',p[6])
-        p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4], None, None, None, l1+p[4].code)
+        p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4], None, None, None, l1+p[4].code, func_label)
     else:
     #    print(len(p))
         attr['ReturnType'] = p[7].type
         child4 = create_leaf('COLON',p[6])
         child5= create_leaf('ASSIGN',p[8])
-        p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4,p[7],child5], None, None, None, l1+p[4].code)
+        p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4,p[7],child5], None, None, None, l1+p[4].code, func_label)
     CURR.parent.add_func(p[2],attr)
 
 

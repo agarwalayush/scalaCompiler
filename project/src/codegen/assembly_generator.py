@@ -65,12 +65,13 @@ def assembly_generator() :
         data.out.clear()
         if data.raw[breakpoints[i]].type == 'cmp' :
             debug(data.raw[breakpoints[i]])
-        if data.raw[breakpoints[i]].type == 'label' and data.raw[breakpoints[i]].out.startswith('func') :
-            data.curr_scope =  data.raw[breakpoints[i]].out
+        if data.raw[breakpoints[i]].type == 'label':
             print("\n{}:".format(data.raw[breakpoints[i]].out))
-            print("\t" + "pushl %ebp")
-            print("\t" + "movl %esp, %ebp")
-            print("\t" + "subl ${}, %esp".format(data.num_var[data.raw[breakpoints[i]].out] - 4))
+            if data.raw[breakpoints[i]].out.startswith('func') :
+                data.curr_scope =  data.raw[breakpoints[i]].out
+                print("\t" + "pushl %ebp")
+                print("\t" + "movl %esp, %ebp")
+                print("\t" + "subl ${}, %esp".format(data.num_var[data.raw[breakpoints[i]].out] - 4))
         if i==0:
            data.block = data.raw[breakpoints[i]:breakpoints[i+1]]
         else:
