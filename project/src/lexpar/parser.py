@@ -1,10 +1,10 @@
 import ply.yacc as yacc
 import sys
 import logging
-from .lexer import tokens
+from lexer import tokens
 import os
 import re
-from .symtable import *
+from symtable import *
 
 output_3AC = []
 
@@ -221,7 +221,7 @@ def p_argument_header(p):
     code = []
     (p[1].place).reverse()
     for k in p[1].place:
-        code.append("pop," + k)
+        code.append("arg," + k)
     (p[1].place).reverse()
     p[0]= Node("argument_header", [p[1]], None, None, val = p[1].val, place = p[1].place,code = code)
     if(~(p[1].val is None)):
@@ -252,7 +252,7 @@ def p_argument(p):
     CURR.add_symb(p[1],attr)
     list1 = []
     list2 = []
-    holding_variable = str(CURR.id) + "_" + p[1]
+    holding_variable = 'var_' + str(CURR.id) + "_" + p[1]
     list1.append(holding_variable)
     p[0] = Node("argument", [child1, child2, p[3]],list2.append(p[3].type), val = p[1], place = list1)
 
@@ -280,7 +280,7 @@ def p_method_header(p):
     child2 = create_leaf('IDENTIFIER',p[2])
     child3 = create_leaf('RPAREN', p[5])
     attr = {}
-    func_label = str(CURR.parent.id) + "_" + p[2]
+    func_label = 'func_' + str(CURR.parent.id) + "_" + p[2]
     l1 = ["label," + func_label]
     attr['Type'] = p[4].type
 #    print(p[4].val)
@@ -482,7 +482,7 @@ def p_postfix_expression2(p):
         print('Undeclared variable', p[1].val)
         raise Exception(ERROR_MSG)
     else:
-        holding_variable = str(y.id) + "_" + p[1].val
+        holding_variable = 'var_' + str(y.id) + "_" + p[1].val
         p[0] = Node("postfix_expression", [p[1]], p[1].type, None, None, p[1].code, holding_variable)
 
 
@@ -558,7 +558,7 @@ def p_method_invocation(p):
         print("wrong number of arguments! Expected " ,y.function_list[p[1].val]["num_arg"]," got",p[3].val)
         raise Exception(ERROR_MSG)
     else:
-        func_name = str(y.id) + "_" + p[1].val
+        func_name = 'func_' + str(y.id) + "_" + p[1].val
     # implementing push in 3 address code
 
 
@@ -566,7 +566,7 @@ def p_method_invocation(p):
     child2 = create_leaf("RPAREN", p[4])
     code = []
     for k in p[3].place:
-        code.append("pusharg, " + k)
+        code.append("pusharg," + k)
 
     code.append("call," + func_name)
     if(y.function_list[p[1].val]['ReturnType'] != 'Unit'):
@@ -689,7 +689,7 @@ def p_type_of_variable(p):
         attr['Type'] = p[3].type
         attr['Size'] = p[3].size
         CURR.add_symb(p[1], attr)
-        holding_variable = str(CURR.id) + "_" + p[1]
+        holding_variable = 'var_' + str(CURR.id) + "_" + p[1]
         child1 = create_leaf("IDENTIFIER", p[1])
         child2 = create_leaf("COLON", p[2])
         p[0] = Node("type_of_variable", [child1, child2, p[3]],p[3].type,None,None,[], holding_variable)
@@ -713,7 +713,7 @@ def p_local_variable_and_type2(p):
         print("variable already defined", p[1])
         raise Exception(ERROR_MSG)
     else:
-        holding_variable = str(CURR.id) + "_" + p[1]
+        holding_variable = 'var_' + str(CURR.id) + "_" + p[1]
         attr = {}
         attr['Type'] = 'Undefined'
         CURR.add_symb(p[1], attr)
@@ -871,7 +871,7 @@ def p_left_hand_side(p):
         print('Undeclared variable :', p[1].val)
         raise Exception(ERROR_MSG)
     else:
-        holding_variable = str(y.id) + "_" + p[1].val
+        holding_variable = 'var_' + str(y.id) + "_" + p[1].val
         p[0] = Node("left_hand_side", [p[1]], None, None, None, p[1].code, holding_variable)
 
 #I think the default statement is missing !!

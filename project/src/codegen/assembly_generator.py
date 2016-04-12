@@ -5,7 +5,7 @@ from data import debug
 def boilerplate() :
     '''Generates Variable space and other directives. '''
     print(".section .data")
-    for v in data.vset:
+    for v in data.globmap :
         print("{}:".format(v))
         print("\t.long {}".format(1))
     for v in data.arrayset.keys():
@@ -68,9 +68,9 @@ def assembly_generator() :
         if data.raw[breakpoints[i]].type == 'label' and data.raw[breakpoints[i]].out.startswith('func') :
             data.curr_scope =  data.raw[breakpoints[i]].out
             print("\n{}:".format(data.raw[breakpoints[i]].out))
-            print("pushl %ebp")
-            print("movl %esp, %ebp")
-            print("subl, ${}, %esp".format(data.num_var[data.raw[breakpoints[i]].out] - 4))
+            print("\t" + "pushl %ebp")
+            print("\t" + "movl %esp, %ebp")
+            print("\t" + "subl ${}, %esp".format(data.num_var[data.raw[breakpoints[i]].out] - 4))
         if i==0:
            data.block = data.raw[breakpoints[i]:breakpoints[i+1]]
         else:
@@ -274,19 +274,17 @@ def XOR(i):
     register_allocator.freereg(z, i)
 
 def RETURN(i) :
-    data.out.append("movl %ebp, %esp")
-    data.out.append("pop %ebp")
     if data.block[i].out != None :
-        data.out.append('ret ' + data.block[i].out) # in AT&T ret n forwards stack pointer by n bytes
-    else :
-        data.out.append("movl {}, %eax", register_allocator.transform(data.block[i].out))
-        curr_scope = ""
-        data.out.append('ret')
+        data.out.append("movl {}, %eax".format(register_allocator.transform(data.block[i].out)))
+    data.out.append("movl %ebp, %esp")
+    data.out.append("popl %ebp")
+    data.out.append('ret')
     data.out.append('\n')
+    data.curr_scope = ""
 
 def CALL(i) :
     data.out.append('call ' + data.block[i].out)
-    data.out.append('\n')
+    data.out.append('addl ${}, %esp'.format(data.num_arg[data.block[i].out]-8))
 
 
 def PRINT(i):
@@ -415,10 +413,13 @@ def PUSH_ARG(i) :
     if data.adesc[var] != None :
         place = data.adesc[var]
     else :
-        place = empty_reg(var)
-        data.out.append("movl " + register_allocator.transform(var) + register_allocator.transform(place))
+        place = register_allocator.empty_reg(var)
+        data.out.append("movl " + register_allocator.transform(var) +', ' +  register_allocator.transform(place))
     data.out.append("pushl %" + place)
     pass
 
+def LABEL(i) :
+    pass
 
-OP_MAP = {'+': ADD, '-': SUB, '*': MUL, '=' : ASSIGN,'/' : DIV, '%' : MOD, '^' : XOR, '&' : AND, '|' : OR, 'ret' : RETURN, 'call' : CALL, 'print' : PRINT, 'read' : READ, 'goto' : GOTO, '<-' : LOAD_ARRAY, '->' : STORE_ARRAY, 'array' : DEC, 'printstr': PRINT_STR, 'cmp': COMPARE, 'jl': JL, 'je': JE, 'jg':JG, 'jle':JLE, 'jge':JGE, 'jne':JNE, 'pusharg':  PUSH_ARG, 'arg' : ARG}
+
+OP_MAP = {'+': ADD, '-': SUB, '*': MUL, '=' : ASSIGN,'/' : DIV, '%' : MOD, '^' : XOR, '&' : AND, '|' : OR, 'ret' : RETURN, 'call' : CALL, 'print' : PRINT, 'read' : READ, 'goto' : GOTO, '<-' : LOAD_ARRAY, '->' : STORE_ARRAY, 'array' : DEC, 'printstr': PRINT_STR, 'cmp': COMPARE, 'jl': JL, 'je': JE, 'jg':JG, 'jle':JLE, 'jge':JGE, 'jne':JNE, 'pusharg':  PUSH_ARG, 'arg' : ARG, 'label' : LABEL}

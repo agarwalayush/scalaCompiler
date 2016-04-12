@@ -21,12 +21,14 @@ def parse_il(file_object) :
     argcount = 8
     localcount = -4
     scope_func = 0
+    index = 0
     for line in file_object.readlines():
-        if ',' not in line : continue
+#        if ',' not in line : continue
+        index+=1
         list_temp = line.split(',')
-        list_i = [None]*5
-        list_i[:len(list_temp)] = list_temp
-        list_i[len(list_temp)-1] = list_i[len(list_temp)-1].replace('\n', '')
+        list_i = [index]+[None]*4
+        list_i[1:len(list_temp)+1] = list_temp
+        list_i[len(list_temp)] = list_i[len(list_temp)].replace('\n', '')
         if not check_branching(list_i[1]) and not check_array(list_i[1]):
             for i in range(2,len(list_temp)) :
                 if check_variable(list_i[i]) :
@@ -48,6 +50,10 @@ def parse_il(file_object) :
         if(list_i[1] == 'ret'):
             flag = 0
             data.num_var[scope_func] = -localcount
+            data.num_arg[scope_func] = argcount
+            argcount = 8
+            localcount = -4
+            scope_func = 0
         if list_i[1] == 'array':
             data.arrayset[list_i[2]] = list_i[3]
         if list_i[1] == 'printstr' :
@@ -66,7 +72,7 @@ def parse_il_from_list(lst) :
         if ',' not in line :
             continue
         list_temp = line.split(',')
-        list_i = [1]+[None]*4
+        list_i = [index]+[None]*4
         list_i[1:len(list_temp)+1] = list_temp
         list_i[len(list_temp)-1] = list_i[len(list_temp)-1].replace('\n', '')
         if not check_branching(list_i[1]) and not check_array(list_i[1]):

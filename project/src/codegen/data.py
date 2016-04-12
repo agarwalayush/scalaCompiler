@@ -35,7 +35,9 @@ symtable = []
 adesc = {}
 
 curr_scope = ""
+#For keeping count of Number of function temps and arguments.
 num_var = dict()
+num_arg = dict()
 #For mapping local variables and function arguments to the correct stack pointer
 memmap = dict()
 globmap = set()
