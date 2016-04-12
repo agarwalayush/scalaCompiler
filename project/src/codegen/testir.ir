@@ -1,0 +1,9 @@
+1,=,2_a,3
+2,=,2_b,4
+3,label,func_2_xyz
+4,arg,3_a
+5,arg,3_b
+7,+,temp1,3_a,3
+8,+,3_b,temp1,6
+6,ret,3_a
+
