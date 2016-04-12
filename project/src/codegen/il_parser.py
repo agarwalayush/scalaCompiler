@@ -23,19 +23,20 @@ def parse_il(file_object) :
     scope_func = 0
     index = 0
     for line in file_object.readlines():
-#        if ',' not in line : continue
         index+=1
         list_temp = line.split(',')
         list_i = [index]+[None]*4
         list_i[1:len(list_temp)+1] = list_temp
         list_i[len(list_temp)] = list_i[len(list_temp)].replace('\n', '')
         if not check_branching(list_i[1]) and not check_array(list_i[1]):
-            for i in range(2,len(list_temp)) :
+            for i in range(2,len(list_temp)+1) :
                 if check_variable(list_i[i]) :
                     if(flag == 1):
                         if(list_i[i] not in data.memmap[scope_func].keys()):
-                            if(i > 0 and list_i[1] == 'arg'):
-                                data.memmap[scope_func][list_i[i]] = str(argcount) + "(%ebp)"
+                            debug(name = list_i[1])
+                            if list_i[1] == 'arg':
+                                debug('Hnishya')
+                                data.memmap[scope_func][list_i[2]] = str(argcount) + "(%ebp)"
                                 argcount += 4
                             elif(list_i[i] not in data.globmap):
                                 data.memmap[scope_func][list_i[i]] = str(localcount) + "(%ebp)"
@@ -57,8 +58,7 @@ def parse_il(file_object) :
         if list_i[1] == 'array':
             data.arrayset[list_i[2]] = list_i[3]
         if list_i[1] == 'printstr' :
-            data.stringMap['str'+list_i[0]] = list_i[2]
-        debug(list_i[0])
+            data.stringMap['str'+str(list_i[0])] = list_i[2]
         if list_i[1] == "cmp" :
             data.raw.append(data.instruction3ac(int(list_i[0]),list_i[1],list_i[2],list_i[3],None))
             continue
@@ -83,7 +83,6 @@ def parse_il_from_list(lst) :
                             data.arrayset[list_i[2]] = list_i[3]
                 if list_i[1] == 'printstr' :
                     data.stringMap['str'+list_i[0]] = list_i[2]
-                debug(list_i[0])
                 if list_i[1] == "cmp" :
                     data.raw.append(data.instruction3ac(int(list_i[0]),list_i[1],list_i[2],list_i[3],None))
                 continue

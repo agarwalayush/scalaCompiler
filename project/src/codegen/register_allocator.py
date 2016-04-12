@@ -51,6 +51,7 @@ def transform(st):
             if data.curr_scope != "" and st in data.memmap[data.curr_scope].keys() :
                 return data.memmap[data.curr_scope][st]
             else :
+                debug(frormtransform = st)
                 return str(st)
 
 #This function initializes some global variables

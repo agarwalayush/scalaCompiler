@@ -1,13 +1,11 @@
 object Test {
-/*       
-       def println(a : Int,b: Int) =  {
+       def println(a: Int) =  {
+           a = a + 3;
+           if( a == 10 ) {
+               println(a);
+               return;
+           }
            return;
        }
-*/       
-       val a = 3, b = 5;
-//       println(a,b);
-       a = b + 3;
-//       return;
-
-
+       println(7);
 }
