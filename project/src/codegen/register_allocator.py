@@ -1,6 +1,6 @@
-from . import data
+import data
 import math
-from .data import debug
+from data import debug
 
 def initblock():
     #builds the symtable[] once block[] and numins are filled and initializes other data structures
@@ -20,7 +20,7 @@ def initblock():
     for x in range(0, data.numins-1):
         data.symtable.append({})
         for y in data.vset :
-            data.symtable[x][y] = math.inf
+            data.symtable[x][y] = 1000000007
     data.symtable.append({})
     for y in data.vset :
         data.symtable[data.numins-1][y] = data.numins-1
@@ -48,8 +48,8 @@ def transform(st):
         if st in data.rset :
             return '%'+st
         else:
-            if st.startswith('temp') :
-                return st[-2:]+'(%esp)'
+            if data.curr_scope != "" and st in data.memmap[data.curr_scope].keys() :
+                return data.memmap[data.curr_scope][st]
             else :
                 return str(st)
 
@@ -100,7 +100,7 @@ def empty_reg(ino,exclude = []) :
 def getreg(x, y, ino,special = None):
     if special != None :
         data.L = special
-    elif y in data.vset and data.adesc[y] != None and data.symtable[ino][y] == math.inf:
+    elif y in data.vset and data.adesc[y] != None and data.symtable[ino][y] == 1000000007:
         data.L = data.adesc[y]
         return
     elif data.adesc[x] != None:
@@ -112,7 +112,7 @@ def getreg(x, y, ino,special = None):
             if data.rdesc[k] == None:
                 data.L = k
     if data.L == None :
-        if(data.symtable[ino][x] != math.inf or (data.zprime not in data.rset)):
+        if(data.symtable[ino][x] != 1000000007 or (data.zprime not in data.rset)):
            nxtuse = -1
            for k in data.rset:
                if k == data.zprime :
@@ -143,7 +143,7 @@ def gety(var):
 #TODO: handle the global variable
 def freereg(var, ino):
     if var in data.vset :
-        if data.symtable[ino][var] == math.inf and data.adesc[var] != None:
+        if data.symtable[ino][var] == 1000000007 and data.adesc[var] != None:
             data.rdesc[data.adesc[var]] = None
             debug('reset', var = var, )
             data.adesc[var] = None

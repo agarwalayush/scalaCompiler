@@ -1,10 +1,10 @@
-#/usr/bin/env python3
-from . import data
-from . import il_parser
-from . import register_allocator
-from . import assembly_generator
+#!/usr/bin/env python3
+import data
+import il_parser
+import register_allocator
+import assembly_generator
 
-from .data import debug
+from data import debug
 
 if __name__ == "__main__" :
 

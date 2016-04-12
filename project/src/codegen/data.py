@@ -34,6 +34,11 @@ symtable = []
 # and thus var should be present in memory
 adesc = {}
 
+curr_scope = ""
+num_var = dict()
+#For mapping local variables and function arguments to the correct stack pointer
+memmap = dict()
+globmap = set()
 #register descriptor rdesc{} is a dictionary st rdesc[reg] = var st reg currently holds the correct value of the "live" variable
 #var. Note that a register can contain atmost 1 variable. rdesc[reg] = None implies that the register is free.
 rdesc = {}

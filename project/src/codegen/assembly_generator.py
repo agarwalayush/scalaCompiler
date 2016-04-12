@@ -1,6 +1,6 @@
-from . import register_allocator
-from . import data
-from .data import debug
+import register_allocator
+import data
+from data import debug
 
 def boilerplate() :
     '''Generates Variable space and other directives. '''
@@ -27,6 +27,8 @@ def programEnd():
 
 def assembly_generator() :
     '''Entry point for assembly generation after parse_il()'''
+    debug(memmap=data.memmap)
+    debug(globmap=data.globmap)
     def block_assembly_generator() :
         '''Generates assembly code for current block. '''
         data.numins = len(data.block)
@@ -63,8 +65,12 @@ def assembly_generator() :
         data.out.clear()
         if data.raw[breakpoints[i]].type == 'cmp' :
             debug(data.raw[breakpoints[i]])
-        if data.raw[breakpoints[i]].type == 'label' :
+        if data.raw[breakpoints[i]].type == 'label' and data.raw[breakpoints[i]].out.startswith('func') :
+            data.curr_scope =  data.raw[breakpoints[i]].out
             print("\n{}:".format(data.raw[breakpoints[i]].out))
+            print("pushl %ebp")
+            print("movl %esp, %ebp")
+            print("subl, ${}, %esp".format(data.num_var[data.raw[breakpoints[i]].out] - 4))
         if i==0:
            data.block = data.raw[breakpoints[i]:breakpoints[i+1]]
         else:
@@ -77,6 +83,8 @@ def assembly_generator() :
 
 
 ###  OP_CODE SRC, DEST
+def ARG(i) :
+    pass
 
 def ADD(i) :
     (x, y, z) = (data.block[i].out, data.block[i].in1, data.block[i].in2)
@@ -266,9 +274,13 @@ def XOR(i):
     register_allocator.freereg(z, i)
 
 def RETURN(i) :
+    data.out.append("movl %ebp, %esp")
+    data.out.append("pop %ebp")
     if data.block[i].out != None :
         data.out.append('ret ' + data.block[i].out) # in AT&T ret n forwards stack pointer by n bytes
     else :
+        data.out.append("movl {}, %eax", register_allocator.transform(data.block[i].out))
+        curr_scope = ""
         data.out.append('ret')
     data.out.append('\n')
 
@@ -409,4 +421,4 @@ def PUSH_ARG(i) :
     pass
 
 
-OP_MAP = {'+': ADD, '-': SUB, '*': MUL, '=' : ASSIGN,'/' : DIV, '%' : MOD, '^' : XOR, '&' : AND, '|' : OR, 'ret' : RETURN, 'call' : CALL, 'print' : PRINT, 'read' : READ, 'goto' : GOTO, '<-' : LOAD_ARRAY, '->' : STORE_ARRAY, 'array' : DEC, 'printstr': PRINT_STR, 'cmp': COMPARE, 'jl': JL, 'je': JE, 'jg':JG, 'jle':JLE, 'jge':JGE, 'jne':JNE, 'pusharg':  PUSH_ARG}
+OP_MAP = {'+': ADD, '-': SUB, '*': MUL, '=' : ASSIGN,'/' : DIV, '%' : MOD, '^' : XOR, '&' : AND, '|' : OR, 'ret' : RETURN, 'call' : CALL, 'print' : PRINT, 'read' : READ, 'goto' : GOTO, '<-' : LOAD_ARRAY, '->' : STORE_ARRAY, 'array' : DEC, 'printstr': PRINT_STR, 'cmp': COMPARE, 'jl': JL, 'je': JE, 'jg':JG, 'jle':JLE, 'jge':JGE, 'jne':JNE, 'pusharg':  PUSH_ARG, 'arg' : ARG}
