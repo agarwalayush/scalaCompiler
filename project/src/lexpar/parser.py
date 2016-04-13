@@ -627,6 +627,7 @@ def p_method_invocation(p):
     child1 = create_leaf("LPAREN", p[2])
     child2 = create_leaf("RPAREN", p[4])
     code = []
+
     for k in p[3].place:
         code.append("pusharg," + k)
 
@@ -843,8 +844,8 @@ def p_if_then_statement(p):
     child2 = create_leaf("LPAREN", p[2])
     child3 = create_leaf("RPAREN", p[4])
     selse = newlabel()
-    l1 = ["cmp, 0, " + p[3].place]
-    l2 = ["je, " + selse]
+    l1 = ["cmp," + p[3].place + ",0"]
+    l2 = ["je," + selse]
     l3 = ["label," + selse]
     p[0] = Node("if_then_statement", [child1, child2, p[3], child3, p[5]], None, None, None, p[3].code + l1 + l2 + p[5].code + l3)
 
@@ -857,7 +858,7 @@ def p_if_then_else_statement(p):
     child4 = create_leaf("K_ELSE", p[6])
     selse = newlabel()
     safter = newlabel()
-    l1 = ["cmp, 0, " + p[3].place]
+    l1 = ["cmp," + p[3].place + ",0"]
     l2 = ["je, " + selse]
     l3 = ["goto," + safter]
     l4 = ["label," + selse]
@@ -874,7 +875,7 @@ def p_if_then_else_statement_no_short_if(p):
     child4 = create_leaf("K_ELSE", p[6])
     selse = newlabel()
     safter = newlabel()
-    l1 = ["cmp, 0, " + p[3].place]
+    l1 = ["cmp," + p[3].place + ",0"]
     l2 = ["je, " + selse]
     l3 = ["goto," + safter]
     l4 = ["label," + selse]
@@ -1054,7 +1055,7 @@ def p_while_statement(p):
     child2 = create_leaf("LPAREN", p[2])
     child3 = create_leaf("RPAREN", p[4])
     l1 = ["label," + s_begin]
-    l2 = ["cmp,0," + p[3].place]
+    l2 = ["cmp," + p[3].place + ",0"]
     l3 = ["je," + s_after]
     l4 = ["goto," + s_begin]
     l5 = ["label," + s_after]

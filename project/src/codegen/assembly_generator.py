@@ -80,7 +80,7 @@ def assembly_generator() :
             else:
                 data.block = data.raw[breakpoints[i]:breakpoints[i+1]]
         block_assembly_generator()
-    #programEnd()
+#    programEnd()
 
 
 ###  OP_CODE SRC, DEST
@@ -296,7 +296,7 @@ def PRINT(i):
         data.adesc[x]
         data.out.append('pushl %' + data.adesc[x])
     except :
-        data.out.append('pushl ' + x)
+        data.out.append('pushl ' + register_allocator.transform(x))
     data.out.append('pushl $printFormat')
     register_allocator.save_to_memory()
     data.out.append('call printf')
@@ -387,7 +387,7 @@ def COMPARE(i):
             data.L = data.adesc[y]
         else:
             data.L = y
-    data.out.append("cmp " + register_allocator.transform(data.zprime) + ", " + register_allocator.transform(data.L))
+    data.out.append("cmp " + register_allocator.transform(data.zprime) + "," + register_allocator.transform(data.L))
     register_allocator.freereg(z, i)
     register_allocator.freereg(y, i)
 
@@ -415,7 +415,8 @@ def PUSH_ARG(i) :
         place = data.adesc[var]
     else :
         place = register_allocator.empty_reg(var)
-        data.out.append("movl " + register_allocator.transform(var) +', ' +  register_allocator.transform(place))
+        data.out.append("movl  " + register_allocator.transform(var) +', ' +  register_allocator.transform(place))
+        data.rdesc[place] = var
     data.out.append("pushl %" + place)
     pass
 
