@@ -1,10 +1,12 @@
 object Test {
-       var anis : Int = 0; 
-       def gcd(a: Int, b: Int) : Int =  {
-           if( b == 0) {return a;}
-           val temp = gcd(b, a%b);
-           return temp;
+       def foo(i: Int) : Int = {
+           i match {
+             case 0 =>{return  0;}
+             case 1 => {return 17;}
+             }
+           return 1267;
        }
-       anis = gcd(16,8);
-       println(anis);
+       var fib_val : Int = 0;
+       fib_val = foo(1);
+       println(fib_val);
 }
