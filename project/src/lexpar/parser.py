@@ -13,8 +13,8 @@ def exceptionHandler(exception_type, exception, traceback):
     # your format
     print ("%s: %s "% (exception_type.__name__, exception))
 
-sys.stderr = open('errors.log', 'w')
-sys.excepthook = exceptionHandler
+# sys.stderr = open('errors.log', 'w')
+# sys.excepthook = exceptionHandler
 ERROR_MSG = "Error in Program"
 CURR = Scope()
 ROOT = CURR
@@ -223,7 +223,7 @@ def p_argument_header(p):
     for k in p[1].place:
         code.append("arg," + k)
     (p[1].place).reverse()
-    p[0]= Node("argument_header", [p[1]], None, None, val = p[1].val, place = p[1].place,code = code)
+    p[0]= Node("argument_header", [p[1]], type=p[1].type, size=p[1].size, val = p[1].val, place = p[1].place,code = code)
     if(~(p[1].val is None)):
         CURR.num_arg = p[1].val
 
@@ -232,13 +232,16 @@ def p_argument_header(p):
 
 def p_argument_list_in_definition(p):
     '''argument_list_in_definition : argument
-                        | argument COMMA argument_list_in_definition '''
+                        | argument_list_in_definition COMMA argument   '''
     if (len(p) == 2):
-        p[0] = Node("argument_list", [p[1]], val = 1, place = p[1].place)
+        p[0] = Node("argument_list", [p[1]], type=p[1].type,size=p[1].size, val = 1, place = p[1].place)
+        # print(p[1].type)
+        # print(p[3].type)
     else:
         child = create_leaf("COMMA", p[2])
-        p[0] = Node("argument_list", [p[1], child, p[3]], val = 1 + p[3].val, place = p[1].place + p[3].place )
-
+        # print(p[1].type, '...', p[3].type)
+        p[0] = Node("argument_list", [p[1], child, p[3]], type= p[1].type + p[3].type, size=p[1].size+p[3].size ,val = 1 + p[3].val, place = p[1].place + p[3].place )
+        # print('...', p[0].type, '...', p[0].size)
 #checking the identifiers !!
 def p_argument(p):
     '''argument : IDENTIFIER COLON type'''
@@ -251,11 +254,10 @@ def p_argument(p):
     code = ['pop,' + p[1]]
     CURR.add_symb(p[1],attr)
     list1 = []
-    list2 = []
     holding_variable = 'var_' + str(CURR.id) + "_" + p[1]
     list1.append(holding_variable)
-    p[0] = Node("argument", [child1, child2, p[3]],list2.append(p[3].type), val = p[1], place = list1)
-
+    p[0] = Node("argument", [child1, child2, p[3]],type = [p[3].type],size = p[3].size, val = 1, place = list1)
+    # print(p[0].type)
 
 
 def p_semi(p):
@@ -285,6 +287,7 @@ def p_method_header(p):
     func_label = 'func_' + str(CURR.parent.id) + "_" + p[2]
     l1 = ["label," + func_label]
     attr['Type'] = p[4].type
+    # attr['Size'] = p[4].size
 #    print(p[4].val)
     attr['num_arg'] = p[4].val
     if(len(p)==6):
@@ -297,6 +300,7 @@ def p_method_header(p):
     else:
     #    print(len(p))
         attr['ReturnType'] = p[7].type
+        print('###WOAH ', p[7].type)
         child4 = create_leaf('COLON',p[6])
         child5= create_leaf('ASSIGN',p[8])
         p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4,p[7],child5], None, None, None, l1+p[4].code, func_label)
@@ -343,7 +347,7 @@ def p_or_expression(p):
         child = create_leaf("OR", p[2])
         temp = newtmp()
         l1 = ["|," + temp + "," + p[1].place + "," + p[3].place]
-        p[0] = Node("or_expression", [p[1], child, p[2]], p[3].type, None, None, p[1].code + p[3].code + l1, temp)
+        p[0] = Node("or_expression", [p[1], child, p[2]], 'Bool', None, None, p[1].code + p[3].code + l1, temp)
 
 def p_and_expression(p):
     '''and_expression : xor_expression
@@ -354,7 +358,7 @@ def p_and_expression(p):
         child = create_leaf("AND", p[2])
         temp = newtmp()
         l1 = ["&," + temp + "," + p[1].place + "," + p[3].place]
-        p[0] = Node("and_expression", [p[1], child, p[2]], p[3].type, None, None, p[1].code + p[3].code + l1, temp)
+        p[0] = Node("and_expression", [p[1], child, p[2]], 'Bool', None, None, p[1].code + p[3].code + l1, temp)
 
 def p_xor_expression(p):
     '''xor_expression : equality_expression
@@ -365,7 +369,7 @@ def p_xor_expression(p):
         child = create_leaf("XOR", p[2])
         temp = newtmp()
         l1 = ["^," + temp + "," + p[1].place + "," + p[3].place]
-        p[0] = Node("xor_expression", [p[1], child, p[2]], p[3].type, None, None, p[1].code + p[3].code + l1, temp)
+        p[0] = Node("xor_expression", [p[1], child, p[2]], 'Bool', None, None, p[1].code + p[3].code + l1, temp)
 
 def p_equality_expression(p):
     '''equality_expression : relational_expression
@@ -430,6 +434,10 @@ def p_add_expression(p):
         child = create_leaf("PLUS_MINUS", p[2])
         temp = newtmp()
         l1 = [p[2] + "," + temp + "," + p[1].place + "," + p[3].place]
+        types_possible= ['Int','Float']
+        if(p[1].type not in types_possible or p[3].type not in types_possible):
+            print('Operation not allowed with data types ', p[1].type, ',', p[3].type)
+            raise(ERROR_MSG)
         p[0] = Node("add_expression", [p[1], child, p[3]], higher(p[1].type,p[3].type), None, None, p[1].code + p[3].code + l1, temp)
 
 def p_mult_expression(p):
@@ -440,10 +448,16 @@ def p_mult_expression(p):
     if(len(p) == 2):
         p[0] = Node("mult_expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
     else :
+        types_possible= ['Int','Float']
+        # print(p[1].type == 'Int', p[3].type)
+        if(p[1].type not in types_possible  or p[3].type not in types_possible):
+            print('Operation not allowed with data types ', p[1].type, ',', p[3].type)
+            raise(ERROR_MSG)
+
         child = create_leaf("DIV_MOD", p[2])
         temp = newtmp()
-        l1 = [p[2] + ", " + temp + ", " + p[1].place + "," + p[3].place]
-        p[0] = Node("mult_expression", [p[1], child, p[3]], None, None, None, p[1].code + p[3].code + l1, temp)
+        l1 = [p[2] + "," + temp + "," + p[1].place + "," + p[3].place]
+        p[0] = Node("mult_expression", [p[1], child, p[3]], higher(p[1].type,p[3].type), None, None, p[1].code + p[3].code + l1, temp)
 
 
 def p_unary_expression(p):
@@ -452,6 +466,10 @@ def p_unary_expression(p):
                                  | postfix_not_expression'''
     if(len(p) !=2):
         child = create_leaf("PLUS_MINUS", p[1])
+        types_possible= ['Int','Float']
+        if(p[2].type not in types_possible ):
+            print('Operation not allowed with data types ', p[2].type)
+            raise(ERROR_MSG)
         if(p[1] == "-"):
             l1 = ["-, " + p[2].place + ", 0, " + p[2].place]
             p[0] = Node("unary_expression", [child, p[2]], p[2].type, None, None, p[2].code + l1, p[2].place)
@@ -467,7 +485,7 @@ def p_postfix_not_expression(p):
     if(len(p) != 2):
         child = create_leaf("NOT", p[1])
         l1 = ["!, " + p[2].place + "," + p[2].place]
-        p[0] = Node("postfix_not_expression", [child, p[2]], p[2].type, None, None, p[2].code + l1, p[2].place)
+        p[0] = Node("postfix_not_expression", [child, p[2]], 'Bool', None, None, p[2].code + l1, p[2].place)
     else:
         p[0] = Node("postfix_not_expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
 
@@ -485,8 +503,10 @@ def p_postfix_expression2(p):
         raise Exception(ERROR_MSG)
     else:
         holding_variable = 'var_' + str(y.id) + "_" + p[1].val
-        p[0] = Node("postfix_expression", [p[1]], p[1].type, None, None, p[1].code, holding_variable)
+        print("rhs type" , y.symbol_list[p[1].val]['Type'], p[1].val )
+        p[0] = Node("postfix_expression", [p[1]], y.symbol_list[p[1].val]['Type'], None, None, p[1].code, holding_variable)
 
+    # print('..++.',p[0].type)
 
 def p_primary_no_new_array(p):
     '''  primary_no_new_array : literal
@@ -494,39 +514,72 @@ def p_primary_no_new_array(p):
                                 | LPAREN expression RPAREN
                                 | array_invocation_right'''
     if(len(p) == 2):
+        if(p[1].type == None):
+            print("Object", p[1].val, "can't appear on RHS")
+            raise(ERROR_MSG)
         p[0] = Node("primary_no_new_array", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
     else:
         child1 = create_leaf("LPAREN", p[1])
         child2 = create_leaf("RPAREN", p[3])
+
         p[0] = Node("primary_no_new_array", [child1, p[2], child2], p[2].type, None,None, p[2].code, p[2].place)
 
-def p_literal(p):
-    '''literal : STRING
-            | CHAR
-            | K_FALSE
-            | K_TRUE
-            | K_NULL
-            | FLOAT
-            | INT'''
+def p_literal1(p):
+    '''literal : STRING'''
+    temp = newtmp()
+    l1 = ["=," + temp + "," + str(p[1])]
+    child = create_leaf("LITERAL", p[1])
+    type = 'String'
+    size=4
+    
+    p[0] = Node("literal", [child], type, size, p[1], l1, temp)
+
+def p_literal2(p):
+    '''literal : CHAR'''
+    temp = newtmp()
+    l1 = ["=," + temp + "," + str(p[1])]
+    child = create_leaf("LITERAL", p[1])
+    type = 'Char'
+    size =1
+    p[0] = Node("literal", [child], type, size, p[1], l1, temp)
+
+def p_literal3(p):
+    '''literal : K_FALSE
+                | K_TRUE'''
+    temp = newtmp()
+    l1 = ["=," + temp + "," + str(p[1])]
+    child = create_leaf("LITERAL", p[1])
+    type = 'Bool'
+    size=2
+    p[0] = Node("literal", [child], type, size, p[1], l1, temp)
+def p_literal4(p):
+    '''literal : K_NULL'''
     temp = newtmp()
     l1 = ["=," + temp + "," + str(p[1])]
     child = create_leaf("LITERAL", p[1])
     type = 'None'
     size = 0
-    if (p[1] == 'STRING'):
-        type = 'String'
-    elif(p[1] == 'FALSE' or p[1] == 'TRUE'):
-        type = 'Bool'
-    elif (p[1] == 'CHAR'):
-        type = 'Char'
-        size =1
-    elif (p[1] == 'INT'):
-        type = 'Int'
-        size = 2
-    elif (p[1] == 'FLOAT'):
-        type = 'Float'
-        size = 4
+    p[0] = Node("literal", [child], type, size, p[1], l1, temp)
+def p_literal5(p):
+    '''literal :  FLOAT'''
+    temp = newtmp()
+    l1 = ["=," + temp + "," + str(p[1])]
+    child = create_leaf("LITERAL", p[1])
 
+    type = 'Float'
+    size = 4
+    # print(p[1], type, 'literals')
+    p[0] = Node("literal", [child], type, size, p[1], l1, temp)
+
+def p_literal6(p):
+    '''literal :  INT'''
+    temp = newtmp()
+    l1 = ["=," + temp + "," + str(p[1])]
+    child = create_leaf("LITERAL", p[1])
+
+    type = 'Int'
+    size = 4
+    # print(p[1], type, 'literals')
     p[0] = Node("literal", [child], type, size, p[1], l1, temp)
 
 
@@ -538,12 +591,14 @@ def p_array_invocation_right(p):
     #type = CURR.symbol_list[p[1].value]['Type']
     #LOOKUP(ambiguous_name) in symbol_list
     (x, y) = CURR.check_for_variable_declaration(p[1].val)
+    type_raw=y.symbol_list[p[1].val]['Type'].split(',')
+    type=type_raw[1][:-1]
     if(x==0):
         print('Undeclared variable :', p[1].val)
         raise Exception(ERROR_MSG)
     child1 = create_leaf("SQUARE_BEGIN", p[2])
     child2 = create_leaf("SQUARE_END", p[4])
-    p[0] = Node("array_invocation_right", [p[1], child1,p[3], child2], None, None, None, p[3].code + l1, temp)
+    p[0] = Node("array_invocation_right", [p[1], child1,p[3], child2], type, None, None, p[3].code + l1, temp)
 
 
 def p_method_invocation(p):
@@ -562,7 +617,12 @@ def p_method_invocation(p):
     else:
         func_name = 'func_' + str(y.id) + "_" + p[1].val
     # implementing push in 3 address code
-
+    expected_arg_type=y.function_list[p[1].val]['Type']
+    received_arg_type = p[3].type
+    print(p[1].val,expected_arg_type, received_arg_type)
+    if(expected_arg_type!=received_arg_type):
+        print("Function arguments don't match for function ", p[1].val )
+        raise Exception(ERROR_MSG)
 
     child1 = create_leaf("LPAREN", p[2])
     child2 = create_leaf("RPAREN", p[4])
@@ -574,7 +634,9 @@ def p_method_invocation(p):
     if(y.function_list[p[1].val]['ReturnType'] != 'Unit'):
         retval = newtmp()
         code.append("pop," + retval)
-    p[0] = Node("method_invocation", [p[1], child1, p[3], child2], "Unit", None, None, p[1].code + p[3].code + code,retval)
+
+    print(y.function_list[p[1].val]['ReturnType'], 'this is returned!!!!!!!')
+    p[0] = Node("method_invocation", [p[1], child1, p[3], child2],y.function_list[p[1].val]['ReturnType'] , None, p[1].val, p[1].code + p[3].code + code,retval)
 
 
 
@@ -602,6 +664,7 @@ def p_argument_list(p):
 def p_ambiguous_name(p):
     '''ambiguous_name : IDENTIFIER
                         | ambiguous_name DOT IDENTIFIER'''
+    
     if(len(p)==2):
         child = create_leaf('IDENTIFIER', p[1])
         p[0] = Node('ambiguous_name', [child],None,None,p[1],[],None)
@@ -670,10 +733,24 @@ def p_variable_body(p):
                      |  local_variable_and_type  ASSIGN  variable_rhs COMMA  variable_body   '''
 
     if(len(p) == 4) :
+        if(p[1].type=='Undefined'):
+            CURR.symbol_list[p[1].val]['Type'] = p[3].type
+            print('variable declared', p[1].val, p[3].type)
+
+        elif(p[1].type != p[3].type):
+            print("Type mismatch ", p[1].val)
+            raise(ERROR_MSG)
+
         code = ['=,' + p[1].place + ','+  p[3].place]
         child = create_leaf('ASSIGN', p[2])
         p[0] = Node('variable_body', [p[1],child,p[3]], None,None,None, p[3].code +code,None)
     else :
+        if(p[1].type=='Undefined'):
+            CURR.symbol_list[p[1].val]['Type'] = p[3].type
+        elif(p[1].type != p[3].type):
+            print("Type mismatch ", p[1].val)
+            raise(ERROR_MSG)
+
         code = ['=,' + p[1].place + ','+  p[3].place]
         child1 = create_leaf('ASSIGN', p[2])
         child2 = create_leaf('COMMA', p[4])
@@ -684,17 +761,18 @@ def p_type_of_variable(p):
     '''type_of_variable : IDENTIFIER COLON type'''
     global CURR
     if p[1] in CURR.symbol_list.keys():
-        print("variable already defined", p[1])
+        print("Variable already defined", p[1])
         raise Exception(ERROR_MSG)
     else:
         attr = {}
         attr['Type'] = p[3].type
         attr['Size'] = p[3].size
         CURR.add_symb(p[1], attr)
+        # CURR.total_width += p[3].size
         holding_variable = 'var_' + str(CURR.id) + "_" + p[1]
         child1 = create_leaf("IDENTIFIER", p[1])
         child2 = create_leaf("COLON", p[2])
-        p[0] = Node("type_of_variable", [child1, child2, p[3]],p[3].type,None,None,[], holding_variable)
+        p[0] = Node("type_of_variable", [child1, child2, p[3]],p[3].type,None,p[1],[], holding_variable)
 
 
 def p_variable_rhs(p):
@@ -703,9 +781,11 @@ def p_variable_rhs(p):
                       | class_instance_creation_expression '''
     p[0] = Node("variable_rhs", [p[1]], p[1].type, None,None, p[1].code, p[1].place)
 
+
 def p_local_variable_and_type1(p):
     '''local_variable_and_type : type_of_variable'''
-    p[0] = Node("local_variable_and_type", [p[1]], p[1].type, None, None, [], p[1].place)
+    p[0] = Node("local_variable_and_type", [p[1]], p[1].type, None, p[1].val, [], p[1].place)
+
 
 def p_local_variable_and_type2(p):
     '''local_variable_and_type : IDENTIFIER'''
@@ -720,7 +800,7 @@ def p_local_variable_and_type2(p):
         attr['Type'] = 'Undefined'
         CURR.add_symb(p[1], attr)
         child1 = create_leaf("IDENTIFIER", p[1])
-        p[0] = Node("local_variable_and_type", [child1], 'Undefined',None,None,None, place = holding_variable)
+        p[0] = Node("local_variable_and_type", [child1], 'Undefined',None,p[1],None, place = holding_variable)
 
 # def p_array_initializer(p):
 # 	''' array_initializer : K_NEW K_ARRAY SQUARE_BEGIN type SQUARE_END LPAREN INT RPAREN
@@ -833,19 +913,31 @@ def p_expression_statement(p):
     p[0] = Node("expression_statement", [p[1], p[2]], None, None, None, p[1].code, p[1].place)
 
 
-def p_statement_expression(p):
+def p_statement_expression1(p):
     ######what will be the place of method_invocation ?? Should be assigned later as temp.place() whenever  temp = func()
     '''  statement_expression : assignment
-                                            | method_invocation
-                                            | class_instance_creation_expression'''
+                                | class_instance_creation_expression'''
     p[0] = Node("statement_expression", [p[1]], None, None, None, p[1].code, p[1].place)
+
+
+def p_statement_expression2(p):
+    ######what will be the place of method_invocation ?? Should be assigned later as temp.place() whenever  temp = func()
+    '''  statement_expression : method_invocation'''
+    p[0] = Node("statement_expression", [p[1]], None, None, None,p[1].code, p[1].place)
+    if(p[1].type != 'Unit'):
+        print("Return value not assigned to anything")
+        print(p[1].type, p[1].val)
+        raise(ERROR_MSG);
 
 
 def p_assignment1(p):
     '''assignment : left_hand_side ASSIGN or_expression'''
     tas = ["=," + p[1].place + "," + p[3].place]
     child1 = create_leaf("ASSIGN", p[2])
-    p[0] = Node("assignment", [p[1], child1, p[3]], None, None, None, p[1].code + p[3].code + tas)
+    if(p[1].type != p[3].type):
+        print('Tyoe mismatch in assignment')
+        raise(ERROR_MSG)
+    p[0] = Node("assignment", [p[1], child1, p[3]], code = p[1].code + p[3].code + tas)
 
 def p_assignment2(p):
     '''assignment : ambiguous_name SQUARE_BEGIN expression SQUARE_END ASSIGN or_expression'''
@@ -874,7 +966,8 @@ def p_left_hand_side(p):
         raise Exception(ERROR_MSG)
     else:
         holding_variable = 'var_' + str(y.id) + "_" + p[1].val
-        p[0] = Node("left_hand_side", [p[1]], None, None, None, p[1].code, holding_variable)
+        # print('lhs type:' , y.symbol_list[p[1].val]['Type'])
+        p[0] = Node("left_hand_side", [p[1]], y.symbol_list[p[1].val]['Type'], None, None, p[1].code, holding_variable)
 
 #I think the default statement is missing !!
 def p_switch(p):
@@ -1038,30 +1131,50 @@ def p_return_statement(p):
 def p_type(p):
     '''type : basic_type
                 | array_datatype '''
-    p[0] = Node("type", [p[1]], p[1].type, None, p[1].type,None,None)
+    p[0] = Node("type", [p[1]], type= p[1].type, size= p[1].size, val=p[1].type)
 
-def p_basic_type(p):
-    '''basic_type : K_CHAR
-                             | K_UNIT
-                             | K_FLOAT
-                             | K_STRING
-                             | K_BOOLEAN
-                             | K_INT'''
+def p_basic_type1(p):
+    '''basic_type : K_CHAR'''
     child = create_leaf('Type' , p[1])
-    p[0] = Node("basic_type", [child], p[1], None, None,None,None)
+    p[0] = Node("basic_type", [child], type=p[1], size= 2)
+
+def p_basic_type2(p):
+    '''basic_type : K_UNIT'''
+    child = create_leaf('Type' , p[1])
+    p[0] = Node("basic_type", [child], type=p[1], size= None)
+
+def p_basic_type3(p):
+    '''basic_type : K_FLOAT'''
+    child = create_leaf('Type' , p[1])
+    p[0] = Node("basic_type", [child], type=p[1], size= 4)
+
+def p_basic_type4(p):
+    '''basic_type : K_STRING'''
+    child = create_leaf('Type' , p[1])
+    p[0] = Node("basic_type", [child], type=p[1], size= 4)
+
+def p_basic_type5(p):
+    '''basic_type : K_BOOLEAN'''
+    child = create_leaf('Type' , p[1])
+    p[0] = Node("basic_type", [child], type=p[1], size= 2)
+
+def p_basic_type6(p):
+    '''basic_type : K_INT'''
+    child = create_leaf('Type' , p[1])
+    p[0] = Node("basic_type", [child], type=p[1], size= 2)
 
 
 def p_array_datatype(p):
     '''array_datatype : K_ARRAY square_block
                                 | K_LIST square_block'''
     child = create_leaf('Array/List', p[1])
-    p[0] = Node('array_datatype', [child, p[2]], 'Array['+p[2].type+']' )
+    p[0] = Node('array_datatype', [child, p[2]], 'Array('+p[2].type+')', size=None )
 
 def p_square_block(p):
     ''' square_block : SQUARE_BEGIN type SQUARE_END'''
     child1 = create_leaf('SQUARE_BEGIN', p[1])
     child2 = create_leaf('SQUARE_END', p[3])
-    p[0] = Node('square_block', [child1, p[2],child2], p[2].type, None,None,None,None)
+    p[0] = Node('square_block', [child1, p[2],child2], type= p[2].type, size = p[2].size)
 
 
 logging.basicConfig(
