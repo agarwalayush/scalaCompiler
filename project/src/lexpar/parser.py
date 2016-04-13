@@ -618,6 +618,32 @@ def p_array_invocation_right(p):
     child2 = create_leaf("SQUARE_END", p[4])
     p[0] = Node("array_invocation_right", [p[1], child1,p[3], child2], type, None, None, p[3].code + l1, temp)
 
+def p_array_invocation_right2(p):
+    '''array_invocation_right : ambiguous_name SQUARE_BEGIN expression COMMA expression SQUARE_END '''
+    global CURR
+    temp = newtmp()
+    (x, y) = CURR.check_for_variable_declaration(p[1].val)
+
+    type_raw=y.symbol_list[p[1].val]['Type'].split(',')
+    type=type_raw[1][:-1]
+    size = type_raw[0].split('-')
+    column= size[1]
+    temp2 = newtmp()
+    code = ['=,'+temp2+','+str(column)]+ ['*,' + temp2 + ','+ temp2 + ',' + p[3].place]+ ['+,' + temp2 + ','+ temp2 + ',' + p[5].place]
+
+    l1 = ["<-," + temp + "," + 'var_'+str(CURR.id)+'_'+p[1].val + "," + temp2]
+    #type = CURR.symbol_list[p[1].value]['Type']
+    #LOOKUP(ambiguous_name) in symbol_list
+
+    
+    if(x==0):
+        print('Undeclared variable :', p[1].val)
+        raise Exception(ERROR_MSG)
+    child1 = create_leaf("SQUARE_BEGIN", p[2])
+    child2 = create_leaf("SQUARE_END", p[6])
+    child3 = create_leaf("COMMA", p[4])
+    p[0] = Node("array_invocation_right", [p[1], child1,p[3],child3,p[5], child2], type, None, None, p[5].code+p[3].code + code+l1, temp)
+
 
 def p_method_invocation(p):
     #TODO: classes and objects
@@ -797,7 +823,12 @@ def p_variable_body(p):
             code = ['=,' + p[1].place + ','+  p[3].place]
         else:
             x = p[3].type.split(',')
-            size=x[0].replace("Array(", "")
+            if '-' in x[0]:
+                temp_size=x[0].replace("Array(","")
+                cr_list = temp_size.split('-')    
+                size = int(cr_list[0])*int(cr_list[1])
+            else:
+                size=x[0].replace("Array(", "")
             code = ['array,' +p[1].place+',' + str(size)]
         child = create_leaf('ASSIGN', p[2])
         p[0] = Node('variable_body', [p[1],child,p[3]], None,None,None, p[3].code +code,None)
@@ -811,7 +842,12 @@ def p_variable_body(p):
             code = ['=,' + p[1].place + ','+  p[3].place]
         else:
             x = p[3].type.split(',')
-            size=x[0].replace("Array(", "")
+            if '-' in x[0]:
+                temp_size=x[0].replace("Array(","")
+                cr_list = temp_size.split('-')    
+                size = int(cr_list[0])*int(cr_list[1])
+            else:
+                size=x[0].replace("Array(", "")
             code = ['array,' +p[1].place+',' + str(size)]
         child1 = create_leaf('ASSIGN', p[2])
         child2 = create_leaf('COMMA', p[4])
@@ -882,6 +918,24 @@ def p_array_initializer(p):
     code =[]
     #code = ['array,' +temp+',' +str(p[7])]
     p[0] = Node('array_initializer', [child1,child2,child3,p[4],child5,child6,child7,child8],type, p[7], None, code,temp)
+
+def p_array_initializer2(p):
+    ''' array_initializer : K_NEW K_ARRAY SQUARE_BEGIN type SQUARE_END LPAREN INT COMMA INT RPAREN'''
+    child1 = create_leaf('K_NEW', p[1])
+    child2 = create_leaf('K_ARRAY', p[2])
+    child3 = create_leaf('SQUARE_BEGIN', p[3])
+    child5 = create_leaf('SQUARE_END', p[5])
+    child6 = create_leaf('LPAREN', p[6])
+    child7 = create_leaf('INT', p[7])
+    child8 = create_leaf('COMMA', p[8])
+    child9 = create_leaf('INT', p[9])
+    child10 = create_leaf('RPAREN', p[10])
+    type = 'Array(' +  str(p[7]) +'-'+ str(p[9])+ ','+p[4].type + ')'
+    temp = newtmp()
+    #size = p[4].size * p[7]
+    code =[]
+    #code = ['array,' +temp+',' +str(p[7])]
+    p[0] = Node('array_initializer', [child1,child2,child3,p[4],child5,child6,child7,child8,child9,child10],type, p[7], None, code,temp)
 
 
 def p_class_instance_creation_expression(p):
@@ -1016,6 +1070,29 @@ def p_assignment2(p):
     child3 = create_leaf("ASSIGN", p[5])
 
     p[0] = Node("assignment", [p[1], child1,p[3], child2,child3,p[6]], None, None, None, p[6].code + p[3].code + l1, None)
+
+def p_assignment3(p):
+    '''assignment : ambiguous_name SQUARE_BEGIN expression COMMA expression SQUARE_END ASSIGN or_expression'''
+    global CURR
+    temp = newtmp()
+    (x, y) = CURR.check_for_variable_declaration(p[1].val)
+    type_raw=y.symbol_list[p[1].val]['Type'].split(',')
+    type=type_raw[1][:-1]
+    size = type_raw[0].split('-')
+    column= size[1]
+    temp2 = newtmp()
+    code = ['=,'+temp2+','+str(column)]+ ['*,' + temp2 + ','+ temp2 + ',' + p[3].place]+ ['+,' + temp2 + ','+ temp2 + ',' + p[5].place]
+
+    l1 = ["->," + p[8].place + "," + 'var_'+str(CURR.id)+'_'+p[1].val + "," + temp2]
+    if(x==0):
+        print('Undeclared variable: ', p[1].val)
+        raise Exception(ERROR_MSG)
+    child1 = create_leaf("SQUARE_BEGIN", p[2])
+    child2 = create_leaf("SQUARE_END", p[4])
+    child3 = create_leaf("ASSIGN", p[7])
+    child4= create_leaf("COMMA",p[4])
+
+    p[0] = Node("assignment", [p[1], child1,p[3],child4, p[5], child2,child3,p[8]], None, None, None, p[8].code + p[3].code + p[5].code +code+ l1, None)
 
 
 def p_left_hand_side(p):
