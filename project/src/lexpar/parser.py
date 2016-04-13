@@ -624,6 +624,7 @@ def p_method_invocation(p):
     '''method_invocation : ambiguous_name LPAREN argument_list_extras RPAREN '''
     global CURR
     retval = None
+    code=[]
     # check whether the function name is valid.
     code = []
     if(p[1].val == "println"):
@@ -634,6 +635,17 @@ def p_method_invocation(p):
             elif(p[3].type[i] == 'Int'):
                 func_name = "print"
                 code.append("print," + p[3].place[i])
+
+        child1 = create_leaf("LPAREN", p[2])
+        child2 = create_leaf("RPAREN", p[4])
+        p[0] = Node("method_invocation", [p[1], child1, p[3], child2], "Unit", None, code = p[1].code + p[3].code + code)
+        return
+    if(p[1].val == "read"):
+        if( len(p[3].type) > 1):
+            print("read() takes only one argument")
+            raise Exception(ERROR_MSG)
+        func_name = "read"
+        code.append("read," + p[3].place[0])
 
         child1 = create_leaf("LPAREN", p[2])
         child2 = create_leaf("RPAREN", p[4])
