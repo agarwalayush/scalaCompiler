@@ -605,10 +605,10 @@ def p_array_invocation_right(p):
     '''array_invocation_right : ambiguous_name SQUARE_BEGIN expression SQUARE_END '''
     global CURR
     temp = newtmp()
-    l1 = ["<-," + temp + ", " + p[1].val + "," + p[3].place]
+    (x, y) = CURR.check_for_variable_declaration(p[1].val)
+    l1 = ["<-," + temp + "," + 'var_'+str(CURR.id)+'_'+p[1].val + "," + p[3].place]
     #type = CURR.symbol_list[p[1].value]['Type']
     #LOOKUP(ambiguous_name) in symbol_list
-    (x, y) = CURR.check_for_variable_declaration(p[1].val)
     type_raw=y.symbol_list[p[1].val]['Type'].split(',')
     type=type_raw[1][:-1]
     if(x==0):
@@ -792,10 +792,13 @@ def p_variable_body(p):
 
         elif(p[1].type != p[3].type):
             print("Type mismatch ", p[1].val)
-            raise  Exception(ERROR_MSG)
-
-
-        code = ['=,' + p[1].place + ','+  p[3].place]
+            raise Exception(ERROR_MSG)
+        if( not p[3].type.startswith('Array')):
+            code = ['=,' + p[1].place + ','+  p[3].place]
+        else:
+            x = p[3].type.split(',')
+            size=x[0].replace("Array(", "")
+            code = ['array,' +p[1].place+',' + str(size)]
         child = create_leaf('ASSIGN', p[2])
         p[0] = Node('variable_body', [p[1],child,p[3]], None,None,None, p[3].code +code,None)
     else :
@@ -804,8 +807,12 @@ def p_variable_body(p):
         elif(p[1].type != p[3].type):
             print("Type mismatch ", p[1].val)
             raise Exception(ERROR_MSG)
-
-        code = ['=,' + p[1].place + ','+  p[3].place]
+        if( not p[3].type.startswith('Array')):
+            code = ['=,' + p[1].place + ','+  p[3].place]
+        else:
+            x = p[3].type.split(',')
+            size=x[0].replace("Array(", "")
+            code = ['array,' +p[1].place+',' + str(size)]
         child1 = create_leaf('ASSIGN', p[2])
         child2 = create_leaf('COMMA', p[4])
         p[0] = Node('variable_body', [p[1],child1,p[3], child2, p[5]], None,None,None, p[3].code + code + p[5].code, None)
@@ -869,11 +876,12 @@ def p_array_initializer(p):
     child6 = create_leaf('LPAREN', p[6])
     child7 = create_leaf('INT', p[7])
     child8 = create_leaf('RPAREN', p[8])
-    type = 'Array(' + str(p[7]) + ','+p[4].type + ')'
+    type = 'Array(' +  str(p[7])+ ','+p[4].type + ')'
     temp = newtmp()
     #size = p[4].size * p[7]
-    code = ['array,' +temp+',' +str(p[7])]
-    p[0] = Node('array_initializer', [child1,child2,child3,p[4],child5,child6,child7,child8],type, None, None, code,temp)
+    code =[]
+    #code = ['array,' +temp+',' +str(p[7])]
+    p[0] = Node('array_initializer', [child1,child2,child3,p[4],child5,child6,child7,child8],type, p[7], None, code,temp)
 
 
 def p_class_instance_creation_expression(p):
@@ -998,8 +1006,8 @@ def p_assignment2(p):
     '''assignment : ambiguous_name SQUARE_BEGIN expression SQUARE_END ASSIGN or_expression'''
     global CURR
     temp = newtmp()
-    l1 = ["->," + p[6].place + ", " + p[1].val + "," + p[3].place]
     (x, y) = CURR.check_for_variable_declaration(p[1].val)
+    l1 = ["->," + p[6].place + "," + 'var_'+str(CURR.id)+'_'+p[1].val + "," + p[3].place]
     if(x==0):
         print('Undeclared variable: ', p[1].val)
         raise Exception(ERROR_MSG)
