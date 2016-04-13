@@ -387,7 +387,7 @@ def COMPARE(i):
             data.L = data.adesc[y]
         else:
             data.L = y
-    data.out.append("cmp " + register_allocator.transform(data.zprime) + "," + register_allocator.transform(data.L))
+    data.out.append("cmp "  + register_allocator.transform(data.L) + "," + register_allocator.transform(data.zprime) )
     register_allocator.freereg(z, i)
     register_allocator.freereg(y, i)
 

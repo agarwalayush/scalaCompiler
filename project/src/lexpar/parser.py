@@ -1013,7 +1013,7 @@ def p_switch_header(p):
 
 def p_switch_body(p):
     'switch_body : BLOCK_BEGIN multiple_inner_switch_statement  BLOCK_END'
-    test = newlabel()
+    test = p[2].size
     next = p[2].val[0]
     vl = []
     pl = []
@@ -1035,6 +1035,7 @@ def p_multiple_inner_switch_statement(p):
     if(len(p) == 2):
         vl = []
         pl = []
+        test = newlabel()
         lab = newlabel()
         next = newlabel()
         vl.append(next)
@@ -1043,7 +1044,8 @@ def p_multiple_inner_switch_statement(p):
         pl.append(p[1].place)
         l1 = ["label," + lab]
         l2 = ["goto," + next]
-        p[0] = Node("multiple_inner_switch", [p[1]], None, None, vl,p[1].code[0] + l1 + p[1].code[1] + l2, pl)
+        l3 = ["goto," + test]
+        p[0] = Node("multiple_inner_switch", [p[1]], None, test, vl,p[1].code[0] + l3 + l1 + p[1].code[1] + l2, pl)
     else:
         vl = p[1].val
         pl = p[1].place
@@ -1052,7 +1054,7 @@ def p_multiple_inner_switch_statement(p):
         pl.append(p[2].place)
         l1 = ["label," + lab]
         l2 = ["goto," + p[1].val[0]]
-        p[0] = Node("multiple_inner_switch", [p[1], p[2]], None, None, vl, p[2].code[0] + p[1].code + l1 + p[2].code[1] + l2, pl)
+        p[0] = Node("multiple_inner_switch", [p[1], p[2]], None, p[1].size, vl, p[2].code[0] + p[1].code + l1 + p[2].code[1] + l2, pl)
 
 def p_single_inner_switch_statement(p):
     '''single_inner_switch_statement : single_switch_statement_header single_switch_statement_body '''
@@ -1120,7 +1122,7 @@ def p_for_variables(p):
     vl.append(p[5].type)
     vl.append(p[4].place)
     vl.append(p[6].place)
-    p[0] = Node("for_variables", [p[1], child1, child2, p[4], p[5], p[6]], None, None, vl, p[4].code + p[6].code, p[2])
+    p[0] = Node("for_variables", [p[1], child1, child2, p[4], p[5], p[6]], None, None, vl, p[4].code + p[6].code, 'var_'+str(CURR.id)+'_'+p[2])
 
 def p_declaration_keyword_extras(p):
     '''declaration_keyword_extras : variable_header
@@ -1145,7 +1147,7 @@ def p_return_statement(p):
     if(len(p) == 4) :
         child1 = create_leaf("K_RETURN", p[1])
         l1 = ['ret,' + p[2].place]
-        p[0] = Node("return_statement", [child1, p[2], p[3]], code = p[3].code + l1)
+        p[0] = Node("return_statement", [child1, p[2], p[3]], code = p[2].code + l1)
     else :
         child1 = create_leaf("K_RETURN", p[1])
         l1 = ['ret']
