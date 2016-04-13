@@ -251,7 +251,7 @@ def p_argument(p):
     attr = {}
     attr['Type']=p[3].type
     attr['Size']=p[3].size
-    code = ['pop,' + p[1]]
+    code = ['arg,' + p[1]]
     CURR.add_symb(p[1],attr)
     list1 = []
     holding_variable = 'var_' + str(CURR.id) + "_" + p[1]
@@ -300,7 +300,9 @@ def p_method_header(p):
     else:
     #    print(len(p))
         attr['ReturnType'] = p[7].type
+
         # print('###WOAH ', p[7].type)
+
         child4 = create_leaf('COLON',p[6])
         child5= create_leaf('ASSIGN',p[8])
         p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4,p[7],child5], None, None, None, l1+p[4].code, func_label)
@@ -380,16 +382,30 @@ def p_equality_expression(p):
         p[0] = Node("equality_expression", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
     elif p[2] == "==":
         child = create_leaf("EQUAL", p[2])
-        temp1 = newtmp()
-        temp2 = newtmp()
-        l1 = ["^," + temp1 + "," + p[1].place + "," + p[3].place]
-        l2 = ["-," + temp2 + ",1, " + temp1]
-        p[0] = Node("equality_expression", [p[1], child, p[3]], 'Bool', None, None, p[1].code + p[3].code + l1 + l2, temp2)
+        temp = newtmp()
+        etrue = newlabel()
+        efalse = newlabel()
+        l1 = ["cmp," + p[1].place + "," + p[3].place]
+        l2 = ["je" + "," + etrue]
+        l3 = ["=," + temp + ",0"]
+        l4 = ["goto," + efalse]
+        l5 = ["label," + etrue]
+        l6 = ["=," + temp + ",1"]
+        l7 = ["label," + efalse]  
+        p[0] = Node("equality_expression", [p[1], child, p[3]], 'Bool', None, None, p[1].code + p[3].code + l1 + l2 + l3 + l4 + l5 + l6 + l7, temp)
     elif p[2] == "!=":
         child = create_leaf("NEQUAL", p[2])
         temp = newtmp()
-        l1 = ["^," + temp + "," + p[1].place + "," + p[3].place]
-        p[0] = Node("equality_expression", [p[1], child, p[3]], 'Bool', None, None, p[1].code + p[3].code + l1, temp)
+        etrue = newlabel()
+        efalse = newlabel()
+        l1 = ["cmp," + p[1].place + "," + p[3].place]
+        l2 = ["jne" + "," + etrue]
+        l3 = ["=," + temp + ",0"]
+        l4 = ["goto," + efalse]
+        l5 = ["label," + etrue]
+        l6 = ["=," + temp + ",1"]
+        l7 = ["label," + efalse]  
+        p[0] = Node("equality_expression", [p[1], child, p[3]], 'Bool', None, None, p[1].code + p[3].code + l1 + l2 + l3 + l4 + l5 + l6 + l7, temp)
 
 def p_relational_expression(p):
     '''relational_expression : add_expression
@@ -518,7 +534,7 @@ def p_primary_no_new_array(p):
     if(len(p) == 2):
         if(p[1].type == None):
             print("Object", p[1].val, "can't appear on RHS")
-            raise(ERROR_MSG)
+            raise  Exception(ERROR_MSG)
         p[0] = Node("primary_no_new_array", [p[1]], p[1].type, None, None, p[1].code, p[1].place)
     else:
         child1 = create_leaf("LPAREN", p[1])
@@ -645,7 +661,7 @@ def p_method_invocation(p):
     code.append("call," + func_name)
     if(y.function_list[p[1].val]['ReturnType'] != 'Unit'):
         retval = newtmp()
-        code.append("pop," + retval)
+        code.append("get," + retval)
 
 
     print(y.function_list[p[1].val]['ReturnType'], 'this is returned!!!!!!!')
@@ -751,7 +767,8 @@ def p_variable_body(p):
     if(len(p) == 4) :
         if(p[1].type=='Undefined'):
             CURR.symbol_list[p[1].val]['Type'] = p[3].type
-            #print('variable declared', p[1].val, p[3].type)
+
+#            print('variable declared', p[1].val, p[3].type)
 
         elif(p[1].type != p[3].type):
             print("Type mismatch ", p[1].val)
@@ -940,10 +957,11 @@ def p_statement_expression2(p):
     ######what will be the place of method_invocation ?? Should be assigned later as temp.place() whenever  temp = func()
     '''  statement_expression : method_invocation'''
     p[0] = Node("statement_expression", [p[1]], None, None, None,p[1].code, p[1].place)
-    if(p[1].type != 'Unit'):
-        print("Return value not assigned to anything")
-        #print(p[1].type, p[1].val)
-        raise(ERROR_MSG);
+
+    # if(p[1].type != 'Unit'):
+    #     print("Return value not assigned to anything")
+    #     print(p[1].type, p[1].val)
+    #     raise  Exception(ERROR_MSG);
 
 
 def p_assignment1(p):
@@ -952,7 +970,7 @@ def p_assignment1(p):
     child1 = create_leaf("ASSIGN", p[2])
     if(p[1].type != p[3].type):
         print('Tyoe mismatch in assignment')
-        raise(ERROR_MSG)
+        raise  Exception(ERROR_MSG)
     p[0] = Node("assignment", [p[1], child1, p[3]], code = p[1].code + p[3].code + tas)
 
 def p_assignment2(p):

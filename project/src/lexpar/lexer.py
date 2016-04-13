@@ -75,7 +75,6 @@ tokens = list(reserved.values()) + [
     'STRING',
     'ARITH_OP',
     'REL_OP',
-    'LOGIC_OP',
     'BIT_OP',
     'UNARY_OP',
     'LPAREN',
@@ -132,7 +131,6 @@ t_MINUS = r'-'
 t_MULT = r'\*'
 t_DIVIDE = r'/'
 t_MOD = r'%'
-t_LOGIC_OP = r'&&|\|\|'
 t_AND = r'&&'
 t_OR = r'\|\|'
 t_LESS_THAN = r'<'
