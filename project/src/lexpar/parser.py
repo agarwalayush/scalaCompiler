@@ -453,7 +453,7 @@ def p_add_expression(p):
         types_possible= ['Int','Float']
         if(p[1].type not in types_possible or p[3].type not in types_possible):
             print('Operation not allowed with data types ', p[1].type, ',', p[3].type)
-            raise(ERROR_MSG)
+            raise Exception(ERROR_MSG)
         p[0] = Node("add_expression", [p[1], child, p[3]], higher(p[1].type,p[3].type), None, None, p[1].code + p[3].code + l1, temp)
 
 def p_mult_expression(p):
@@ -468,7 +468,7 @@ def p_mult_expression(p):
         # print(p[1].type == 'Int', p[3].type)
         if(p[1].type not in types_possible  or p[3].type not in types_possible):
             print('Operation not allowed with data types ', p[1].type, ',', p[3].type)
-            raise(ERROR_MSG)
+            raise Exception(ERROR_MSG)
 
         child = create_leaf("DIV_MOD", p[2])
         temp = newtmp()
@@ -485,7 +485,7 @@ def p_unary_expression(p):
         types_possible= ['Int','Float']
         if(p[2].type not in types_possible ):
             print('Operation not allowed with data types ', p[2].type)
-            raise(ERROR_MSG)
+            raise Exception(ERROR_MSG)
         if(p[1] == "-"):
             l1 = ["-, " + p[2].place + ", 0, " + p[2].place]
             p[0] = Node("unary_expression", [child, p[2]], p[2].type, None, None, p[2].code + l1, p[2].place)
@@ -520,7 +520,7 @@ def p_postfix_expression2(p):
     else:
         holding_variable = 'var_' + str(y.id) + "_" + p[1].val
 
-        print("rhs type" , y.symbol_list[p[1].val]['Type'], p[1].val )
+        #print("rhs type" , y.symbol_list[p[1].val]['Type'], p[1].val )
 
         p[0] = Node("postfix_expression", [p[1]], y.symbol_list[p[1].val]['Type'], None, None, p[1].code, holding_variable)
 
@@ -545,12 +545,12 @@ def p_primary_no_new_array(p):
 def p_literal1(p):
     '''literal : STRING'''
     temp = newtmp()
-    l1 = ["=," + temp + "," + str(p[1])]
+    #l1 = ["=," + temp + "," + '"' + str(p[1]) + '"']
     child = create_leaf("LITERAL", p[1])
     type = 'String'
     size=4
     
-    p[0] = Node("literal", [child], type, size, p[1], l1, temp)
+    p[0] = Node("literal", [child], type, size, p[1], [], '"' + str(p[1]) + '"')
 
 def p_literal2(p):
     '''literal : CHAR'''
@@ -625,13 +625,21 @@ def p_method_invocation(p):
     global CURR
     retval = None
     # check whether the function name is valid.
+    code = []
     if(p[1].val == "println"):
-        func_name = "print"
+        for i in range(0, len(p[3].type)):
+            if(p[3].type[i] == 'String'):
+                func_name = "printstr"
+                code.append("printstr," + p[3].place[i])
+            elif(p[3].type[i] == 'Int'):
+                func_name = "print"
+                code.append("print," + p[3].place[i])
+
         child1 = create_leaf("LPAREN", p[2])
         child2 = create_leaf("RPAREN", p[4])
-        code = ["print," + p[3].place[0]]
         p[0] = Node("method_invocation", [p[1], child1, p[3], child2], "Unit", None, code = p[1].code + p[3].code + code)
         return
+    
     (x, y) = CURR.check_for_function_declaration(p[1].val)
     if(x == 0):
         print("Fuction not in scope ", p[1].val)
@@ -664,7 +672,7 @@ def p_method_invocation(p):
         code.append("get," + retval)
 
 
-    print(y.function_list[p[1].val]['ReturnType'], 'this is returned!!!!!!!')
+    # print(y.function_list[p[1].val]['ReturnType'], 'this is returned!!!!!!!')
 
     p[0] = Node("method_invocation", [p[1], child1, p[3], child2],y.function_list[p[1].val]['ReturnType'] , None, p[1].val, p[1].code + p[3].code + code,retval)
 
@@ -772,7 +780,7 @@ def p_variable_body(p):
 
         elif(p[1].type != p[3].type):
             print("Type mismatch ", p[1].val)
-            raise(ERROR_MSG)
+            raise Exception(ERROR_MSG)
 
         code = ['=,' + p[1].place + ','+  p[3].place]
         child = create_leaf('ASSIGN', p[2])
@@ -782,7 +790,7 @@ def p_variable_body(p):
             CURR.symbol_list[p[1].val]['Type'] = p[3].type
         elif(p[1].type != p[3].type):
             print("Type mismatch ", p[1].val)
-            raise(ERROR_MSG)
+            raise Exception(ERROR_MSG)
 
         code = ['=,' + p[1].place + ','+  p[3].place]
         child1 = create_leaf('ASSIGN', p[2])
@@ -969,7 +977,7 @@ def p_assignment1(p):
     tas = ["=," + p[1].place + "," + p[3].place]
     child1 = create_leaf("ASSIGN", p[2])
     if(p[1].type != p[3].type):
-        print('Tyoe mismatch in assignment')
+        print('Type mismatch in assignment')
         raise  Exception(ERROR_MSG)
     p[0] = Node("assignment", [p[1], child1, p[3]], code = p[1].code + p[3].code + tas)
 
