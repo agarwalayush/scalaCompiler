@@ -300,7 +300,7 @@ def p_method_header(p):
     else:
     #    print(len(p))
         attr['ReturnType'] = p[7].type
-        print('###WOAH ', p[7].type)
+        # print('###WOAH ', p[7].type)
         child4 = create_leaf('COLON',p[6])
         child5= create_leaf('ASSIGN',p[8])
         p[0]=Node('method_header',[child1,child2,p[3],p[4],p[5],child4,p[7],child5], None, None, None, l1+p[4].code, func_label)
@@ -503,7 +503,7 @@ def p_postfix_expression2(p):
         raise Exception(ERROR_MSG)
     else:
         holding_variable = 'var_' + str(y.id) + "_" + p[1].val
-        print("rhs type" , y.symbol_list[p[1].val]['Type'], p[1].val )
+        #print("rhs type" , y.symbol_list[p[1].val]['Type'], p[1].val )
         p[0] = Node("postfix_expression", [p[1]], y.symbol_list[p[1].val]['Type'], None, None, p[1].code, holding_variable)
 
     # print('..++.',p[0].type)
@@ -619,7 +619,7 @@ def p_method_invocation(p):
     # implementing push in 3 address code
     expected_arg_type=y.function_list[p[1].val]['Type']
     received_arg_type = p[3].type
-    print(p[1].val,expected_arg_type, received_arg_type)
+    # print(p[1].val,expected_arg_type, received_arg_type)
     if(expected_arg_type!=received_arg_type):
         print("Function arguments don't match for function ", p[1].val )
         raise Exception(ERROR_MSG)
@@ -636,7 +636,7 @@ def p_method_invocation(p):
         retval = newtmp()
         code.append("pop," + retval)
 
-    print(y.function_list[p[1].val]['ReturnType'], 'this is returned!!!!!!!')
+    # print(y.function_list[p[1].val]['ReturnType'], 'this is returned!!!!!!!')
     p[0] = Node("method_invocation", [p[1], child1, p[3], child2],y.function_list[p[1].val]['ReturnType'] , None, p[1].val, p[1].code + p[3].code + code,retval)
 
 
@@ -736,7 +736,7 @@ def p_variable_body(p):
     if(len(p) == 4) :
         if(p[1].type=='Undefined'):
             CURR.symbol_list[p[1].val]['Type'] = p[3].type
-            print('variable declared', p[1].val, p[3].type)
+            #print('variable declared', p[1].val, p[3].type)
 
         elif(p[1].type != p[3].type):
             print("Type mismatch ", p[1].val)
@@ -927,7 +927,7 @@ def p_statement_expression2(p):
     p[0] = Node("statement_expression", [p[1]], None, None, None,p[1].code, p[1].place)
     if(p[1].type != 'Unit'):
         print("Return value not assigned to anything")
-        print(p[1].type, p[1].val)
+        #print(p[1].type, p[1].val)
         raise(ERROR_MSG);
 
 
