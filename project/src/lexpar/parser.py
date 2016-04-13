@@ -503,7 +503,7 @@ def p_postfix_expression2(p):
         raise Exception(ERROR_MSG)
     else:
         holding_variable = 'var_' + str(y.id) + "_" + p[1].val
-        print("rhs type" , y.symbol_list[p[1].val]['Type'], p[1].val )
+#        print("rhs type" , y.symbol_list[p[1].val]['Type'], p[1].val )
         p[0] = Node("postfix_expression", [p[1]], y.symbol_list[p[1].val]['Type'], None, None, p[1].code, holding_variable)
 
     # print('..++.',p[0].type)
@@ -619,7 +619,7 @@ def p_method_invocation(p):
     # implementing push in 3 address code
     expected_arg_type=y.function_list[p[1].val]['Type']
     received_arg_type = p[3].type
-    print(p[1].val,expected_arg_type, received_arg_type)
+#    print(p[1].val,expected_arg_type, received_arg_type)
     if(expected_arg_type!=received_arg_type):
         print("Function arguments don't match for function ", p[1].val )
         raise Exception(ERROR_MSG)
@@ -636,7 +636,7 @@ def p_method_invocation(p):
         retval = newtmp()
         code.append("pop," + retval)
 
-    print(y.function_list[p[1].val]['ReturnType'], 'this is returned!!!!!!!')
+#    print(y.function_list[p[1].val]['ReturnType'], 'this is returned!!!!!!!')
     p[0] = Node("method_invocation", [p[1], child1, p[3], child2],y.function_list[p[1].val]['ReturnType'] , None, p[1].val, p[1].code + p[3].code + code,retval)
 
 
