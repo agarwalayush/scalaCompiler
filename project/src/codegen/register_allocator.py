@@ -50,6 +50,9 @@ def transform(st):
         else:
             if data.curr_scope != "" and st in data.memmap[data.curr_scope].keys() :
                 return data.memmap[data.curr_scope][st]
+            for k in data.memmap.keys() :
+                if st in data.memmap[k].keys() :
+                    return data.memmap[k][st]
             else :
                 debug(frormtransform = st)
                 return str(st)

@@ -1,13 +1,10 @@
 object Test {
-       var iter_count : Int = 0; 
-       def println(a: Int) =  {
-           a = a + 3;
-           if( a == 10 ) {
-               iter_count = iter_count + 1;
-               println(a);
-               return;
-           }
-           return;
+       var anis : Int = 0; 
+       def gcd(a: Int, b: Int) : Int =  {
+           if( b == 0) {return a;}
+           val temp = gcd(b, a%b);
+           return temp;
        }
-       println(7);
+       anis = gcd(16,8);
+       println(anis);
 }
