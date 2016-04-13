@@ -503,7 +503,9 @@ def p_postfix_expression2(p):
         raise Exception(ERROR_MSG)
     else:
         holding_variable = 'var_' + str(y.id) + "_" + p[1].val
-        #print("rhs type" , y.symbol_list[p[1].val]['Type'], p[1].val )
+
+        print("rhs type" , y.symbol_list[p[1].val]['Type'], p[1].val )
+
         p[0] = Node("postfix_expression", [p[1]], y.symbol_list[p[1].val]['Type'], None, None, p[1].code, holding_variable)
 
     # print('..++.',p[0].type)
@@ -607,6 +609,13 @@ def p_method_invocation(p):
     global CURR
     retval = None
     # check whether the function name is valid.
+    if(p[1].val == "println"):
+        func_name = "print"
+        child1 = create_leaf("LPAREN", p[2])
+        child2 = create_leaf("RPAREN", p[4])
+        code = ["print," + p[3].place[0]]
+        p[0] = Node("method_invocation", [p[1], child1, p[3], child2], "Unit", None, code = p[1].code + p[3].code + code)
+        return
     (x, y) = CURR.check_for_function_declaration(p[1].val)
     if(x == 0):
         print("Fuction not in scope ", p[1].val)
@@ -619,7 +628,9 @@ def p_method_invocation(p):
     # implementing push in 3 address code
     expected_arg_type=y.function_list[p[1].val]['Type']
     received_arg_type = p[3].type
+
     # print(p[1].val,expected_arg_type, received_arg_type)
+
     if(expected_arg_type!=received_arg_type):
         print("Function arguments don't match for function ", p[1].val )
         raise Exception(ERROR_MSG)
@@ -636,7 +647,9 @@ def p_method_invocation(p):
         retval = newtmp()
         code.append("pop," + retval)
 
-    # print(y.function_list[p[1].val]['ReturnType'], 'this is returned!!!!!!!')
+
+    print(y.function_list[p[1].val]['ReturnType'], 'this is returned!!!!!!!')
+
     p[0] = Node("method_invocation", [p[1], child1, p[3], child2],y.function_list[p[1].val]['ReturnType'] , None, p[1].val, p[1].code + p[3].code + code,retval)
 
 
@@ -707,6 +720,8 @@ def p_block_statement_list(p):
     if(len(p) == 2):
         p[0] = Node("block_statement_list", [p[1]], None, None, None, p[1].code)
     else:
+ #       print (p[1].code)
+  #      print (p[2].code)
         p[0] = Node("block_statement_list", [p[1], p[2]], None, None, None, p[1].code + p[2].code)
 
 

@@ -22,7 +22,7 @@ def boilerplate() :
 
 
 def programEnd():
-    print("\tmovl $1, %eax\n\tmovl $0, %ebx\n\tint $0x80")
+    print("\tret")
 
 
 def assembly_generator() :
@@ -80,7 +80,7 @@ def assembly_generator() :
             else:
                 data.block = data.raw[breakpoints[i]:breakpoints[i+1]]
         block_assembly_generator()
-#    programEnd()
+#        programEnd()
 
 
 ###  OP_CODE SRC, DEST
@@ -409,9 +409,17 @@ def JL(i):
 def JNE(i):
     data.out.append("jne " + data.block[i].out)
 
+def check_variable(var_bar) :
+    try :
+        int(var_bar)
+        return False
+    except:
+        return True
+
+
 def PUSH_ARG(i) :
     var = data.block[i].out
-    if data.adesc[var] != None :
+    if check_variable(var) and data.adesc[var] != None :
         place = data.adesc[var]
     else :
         place = register_allocator.empty_reg(var)
