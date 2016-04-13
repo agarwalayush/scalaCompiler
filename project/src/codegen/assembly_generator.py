@@ -395,16 +395,16 @@ def JE(i):
     data.out.append("je " + data.block[i].out)
 
 def JLE(i):
-    data.out.append("jle " + data.block[i].out)
-
-def JGE(i):
     data.out.append("jge " + data.block[i].out)
 
+def JGE(i):
+    data.out.append("jle " + data.block[i].out)
+
 def JG(i):
-    data.out.append("jg " + data.block[i].out)
+    data.out.append("jl " + data.block[i].out)
 
 def JL(i):
-    data.out.append("jl " + data.block[i].out)
+    data.out.append("jg " + data.block[i].out)
 
 def JNE(i):
     data.out.append("jne " + data.block[i].out)

@@ -792,7 +792,8 @@ def p_variable_body(p):
 
         elif(p[1].type != p[3].type):
             print("Type mismatch ", p[1].val)
-            raise Exception(ERROR_MSG)
+            raise  Exception(ERROR_MSG)
+
 
         code = ['=,' + p[1].place + ','+  p[3].place]
         child = create_leaf('ASSIGN', p[2])
@@ -896,7 +897,7 @@ def p_if_then_statement(p):
     child2 = create_leaf("LPAREN", p[2])
     child3 = create_leaf("RPAREN", p[4])
     selse = newlabel()
-    l1 = ["cmp," + p[3].place + ",0"]
+    l1 = ["cmp," + "0," + p[3].place]
     l2 = ["je," + selse]
     l3 = ["label," + selse]
     p[0] = Node("if_then_statement", [child1, child2, p[3], child3, p[5]], None, None, None, p[3].code + l1 + l2 + p[5].code + l3)
@@ -910,7 +911,7 @@ def p_if_then_else_statement(p):
     child4 = create_leaf("K_ELSE", p[6])
     selse = newlabel()
     safter = newlabel()
-    l1 = ["cmp," + p[3].place + ",0"]
+    l1 = ["cmp," + "0," + p[3].place]
     l2 = ["je, " + selse]
     l3 = ["goto," + safter]
     l4 = ["label," + selse]
